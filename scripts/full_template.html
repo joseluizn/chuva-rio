@@ -37,6 +37,12 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Sans 3",
 a{color:var(--accent)}
 [hidden]{display:none!important}
 .wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+.sitenav{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 16px;padding:10px 0 8px;border-bottom:1px solid var(--border);font-size:15px}
+.sitenav .brand{font-weight:700}
+.sitenav .links{display:flex;flex-wrap:wrap;gap:4px 18px}
+.sitenav a{color:var(--ink2);text-decoration:none;padding:2px 0;border-bottom:2px solid transparent}
+.sitenav a:hover,.sitenav a:focus-visible{color:var(--ink);border-bottom-color:var(--axis)}
+.sitenav a[aria-current="page"]{color:var(--ink);font-weight:600;border-bottom-color:var(--accent)}
 header.top{padding:18px 0 6px}
 h1{font-size:clamp(1.35rem,3.6vw,1.9rem);line-height:1.15;margin:0 0 6px;font-weight:700;letter-spacing:-.01em}
 .explo{margin:0;padding:8px 12px;border-left:4px solid var(--c2);background:var(--wash);border-radius:0 6px 6px 0;font-size:.97rem}
@@ -111,6 +117,10 @@ footer{padding:12px 0 36px;color:var(--ink2);font-size:.88rem}
 </head>
 <body>
 <div class="wrap">
+<nav class="sitenav" aria-label="Seções do site">
+  <span class="brand">Chuva no Rio</span>
+  <span class="links"><a href="index.html">Principal</a><a href="completo.html" aria-current="page">Versão completa</a><a href="__REPO__">Código e dados</a></span>
+</nav>
 <header class="top">
   <button class="btn theme" id="themeBtn" type="button" aria-label="Alternar tema">Tema: automático</button>
   <h1>Chuva no Rio de Janeiro: versão completa</h1>
