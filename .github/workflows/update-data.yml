@@ -32,6 +32,15 @@ jobs:
       - name: Baixar e validar dados (Open-Meteo)
         run: python scripts/fetch_data.py
 
+      # Modelo por decêndio (abr-out) lê data/daily/ e grava data/derived/; as páginas leem esse JSON.
+      - name: Modelo por decêndio (abril a outubro)
+        run: |
+          if [ -f scripts/model_periods.py ]; then
+            python scripts/model_periods.py
+          else
+            echo "::warning::scripts/model_periods.py não existe; etapa pulada"
+          fi
+
       - name: Reconstruir páginas
         run: |
           for s in scripts/build_main.py scripts/build_full.py; do

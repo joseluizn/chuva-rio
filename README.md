@@ -16,12 +16,13 @@ Os números mudam a cada atualização mensal; veja-os no site.
 ## Estrutura
 
 ```
-data/daily/   era5.csv, ecmwf_ifs.csv, best_match.csv (date,precip_mm) e meta.json
+data/daily/   era5.csv, ecmwf_ifs.csv, best_match.csv (date,precip_mm), era5_cloud.csv (nebulosidade) e meta.json
+data/derived/ periodos_abr_out.json (modelo por decêndio, gerado por scripts/model_periods.py)
 data/refs/    referências estáticas (Alerta Rio, INMET, Galeão/NOAA)
-scripts/      fetch_data.py (coleta + validação), test_fetch_data.py, build_main.py, build_full.py, common.py,
+scripts/      fetch_data.py (coleta + validação), test_fetch_data.py, model_periods.py, build_main.py, build_full.py, common.py,
               main_template.html e full_template.html (modelos das duas páginas; os builds dependem deles)
 site/         index.html e completo.html (publicados no GitHub Pages)
-docs/         ATUALIZACAO.md, analise_modelos.md, revisao_opus.md
+docs/         ATUALIZACAO.md, analise_modelos.md, modelo_periodos.md, revisao_opus.md
 .github/workflows/   update-data.yml (mensal) e pages.yml (deploy)
 ```
 
@@ -38,8 +39,8 @@ Passo a passo completo, falhas comuns e checklist: [docs/ATUALIZACAO.md](docs/AT
 
 ## Dados, fontes e licença
 
-- Dados meteorológicos: [Open-Meteo.com](https://open-meteo.com/) Historical Weather API, licença [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Reanálise ERA5: Copernicus Climate Change Service (C3S) / ECMWF. As séries foram agregadas e processadas neste projeto; não há endosso da Open-Meteo. Uso da API gratuita restrito a fins não comerciais.
+- Dados meteorológicos: [Open-Meteo.com](https://open-meteo.com/) Historical Weather API, licença [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Reanálise ERA5: Copernicus Climate Change Service (C3S) / ECMWF. Nebulosidade e insolação: ERA5 via Open-Meteo, CC BY 4.0. As séries foram agregadas e processadas neste projeto; não há endosso da Open-Meteo. Uso da API gratuita restrito a fins não comerciais.
 - Referências: Sistema Alerta Rio (relatórios anuais de chuva), INMET (normais climatológicas, via Wikipédia), NOAA NCEI GHCN-Daily (estação Galeão). Seguem as condições de cada fonte.
 - Código: [MIT](LICENSE), Jose Luiz Nunes, 2026.
 
-Documentação: [docs/ATUALIZACAO.md](docs/ATUALIZACAO.md) · [docs/analise_modelos.md](docs/analise_modelos.md) · [docs/revisao_opus.md](docs/revisao_opus.md)
+Documentação: [docs/ATUALIZACAO.md](docs/ATUALIZACAO.md) · [docs/analise_modelos.md](docs/analise_modelos.md) · [docs/modelo_periodos.md](docs/modelo_periodos.md) · [docs/revisao_opus.md](docs/revisao_opus.md)

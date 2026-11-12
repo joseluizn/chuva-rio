@@ -259,6 +259,118 @@ class TestMalformed(Base):
         self.assertEqual(list(self.dir.glob("*.csv")), [])
 
 
+def cloud_urlopen(rain, cc_fn=lambda i: 40 + (i % 50), sun_fn=lambda i: 20000.0, grid=(-22.75, -43.25), day_s=45000.0,
+                  hourly_fn=lambda d, h: 30 + h, null_tail=0, end=END):
+    """urlopen falso para chuva + nebulosidade (diário e horário), tudo da mesma célula."""
+    def _open(req, timeout=None):
+        q = urllib.parse.parse_qs(urllib.parse.urlparse(req.full_url).query)
+        s, e = date.fromisoformat(q["start_date"][0]), date.fromisoformat(q["end_date"][0])
+        days = [(s + timedelta(days=i)) for i in range((e - s).days + 1)]
+        body = {"latitude": grid[0], "longitude": grid[1], "elevation": 12.0}
+        if "hourly" in q:
+            times = [f"{d.isoformat()}T{h:02d}:00" for d in days for h in range(24)]
+            body["hourly_units"] = {"time": "iso8601", "cloud_cover": "%"}
+            body["hourly"] = {"time": times, "cloud_cover": [hourly_fn(date.fromisoformat(t[:10]), int(t[11:13]))
+                                                             for t in times]}
+        elif "cloud_cover_mean" in q["daily"][0]:
+            ntot = (end - START).days + 1
+            idx = [(d - START).days for d in days]
+            body["daily_units"] = {"time": "iso8601", "cloud_cover_mean": "%", "sunshine_duration": "s",
+                                   "daylight_duration": "s"}
+            body["daily"] = {"time": [d.isoformat() for d in days],
+                             "cloud_cover_mean": [None if i >= ntot - null_tail else cc_fn(i) for i in idx],
+                             "sunshine_duration": [None if i >= ntot - null_tail else sun_fn(i) for i in idx],
+                             "daylight_duration": [day_s for _ in idx]}
+        else:
+            body["daily_units"] = {"time": "iso8601", "precipitation_sum": "mm"}
+            body["daily"] = {"time": [d.isoformat() for d in days],
+                             "precipitation_sum": [rain.get(d.isoformat()) for d in days]}
+        return FakeResp(json.dumps(body).encode())
+    return _open
+
+
+class TestCloud(Base):
+    def run_cloud(self, rain, urlopen, *extra):
+        argv = ["--data-dir", str(self.dir), "--today", TODAY, "--start-date", START.isoformat(),
+                "--end-date", END.isoformat(), "--backoff", "0", "--retries", "0", *extra]
+        # sem --model: baixa todos os modelos de chuva (o falso responde igual para todos) e a nebulosidade
+        with mock.patch("fetch_data.urllib.request.urlopen", urlopen), mock.patch("fetch_data.time.sleep"):
+            return fd.main(argv)
+
+    def test_writes_cloud_csv_and_meta(self):
+        rain = series()
+        self.assertEqual(self.run_cloud(rain, cloud_urlopen(rain)), 0)
+        lines = (self.dir / "era5_cloud.csv").read_text().splitlines()
+        self.assertEqual(lines[0], "date,cloud_cover_mean_pct,sunshine_min,daylight_min,cloud_daytime_0917_pct")
+        self.assertEqual(len(lines), 92)
+        # 20000 s = 333 min (333,33 arredonda para 333); 45000 s = 750 min; média das horas 09..17 de 30+h = 43,0
+        self.assertEqual(lines[1], "2024-01-01,40,333,750,43.0")
+        meta = json.loads((self.dir / "meta.json").read_text())
+        self.assertTrue(meta["cloud"]["same_grid_cell_as_rain_era5"])
+        self.assertEqual(meta["cloud"]["returned_latitude"], -22.75)
+        self.assertEqual(meta["cloud"]["null_days"], 0)
+        self.assertIn("columns", meta["cloud"])
+
+    def test_trailing_nulls_blank_daytime_too(self):
+        rain = series(fn=lambda i: 1.0)
+        for k in list(rain)[-3:]:
+            rain[k] = None
+        self.assertEqual(self.run_cloud(rain, cloud_urlopen(rain, null_tail=3)), 0)
+        last = (self.dir / "era5_cloud.csv").read_text().splitlines()[-1]
+        self.assertEqual(last, "2024-03-31,,,750,")
+        self.assertEqual(json.loads((self.dir / "meta.json").read_text())["cloud"]["null_days"], 3)
+
+    def test_default_model_run_skips_cloud_only_with_model(self):
+        rain = series()
+        self.assertEqual(self.run_main(rain), 0)               # --model era5: sem nebulosidade
+        self.assertFalse((self.dir / "era5_cloud.csv").exists())
+
+    def test_skip_cloud(self):
+        rain = series()
+        self.assertEqual(self.run_cloud(rain, make_urlopen(rain), "--skip-cloud"), 0)
+        self.assertFalse((self.dir / "era5_cloud.csv").exists())
+
+    def test_cloud_out_of_range_rejected_and_nothing_written(self):
+        rain = series()
+        self.assertEqual(self.run_cloud(rain, cloud_urlopen(rain, cc_fn=lambda i: 120 if i == 5 else 50)), 1)
+        self.assertFalse((self.dir / "era5_cloud.csv").exists())
+        self.assertFalse((self.dir / "era5.csv").exists())       # tudo ou nada, inclusive a chuva
+
+    def test_sunshine_above_daylight_rejected(self):
+        rain = series()
+        self.assertEqual(self.run_cloud(rain, cloud_urlopen(rain, sun_fn=lambda i: 50000.0)), 1)
+        self.assertFalse((self.dir / "era5_cloud.csv").exists())
+
+    def test_grid_cell_mismatch_with_rain_rejected(self):
+        rain = series()
+        base = cloud_urlopen(rain)
+
+        def mixed(req, timeout=None):
+            if "cloud_cover" in req.full_url:
+                return cloud_urlopen(rain, grid=(-22.9, -43.1))(req, timeout)
+            return base(req, timeout)
+        self.assertEqual(self.run_cloud(rain, mixed), 1)
+        self.assertFalse((self.dir / "era5_cloud.csv").exists())
+
+    def test_missing_hour_rejected(self):
+        rain = series()
+        self.assertEqual(self.run_cloud(rain, cloud_urlopen(
+            rain, hourly_fn=lambda d, h: None if (d.day == 3 and h == 12) else 50)), 1)
+
+    def test_cloud_revision_blocks_unless_allowed(self):
+        rain = series()
+        self.assertEqual(self.run_cloud(rain, cloud_urlopen(rain)), 0)
+        bad = cloud_urlopen(rain, cc_fn=lambda i: 40 + (i % 50) + (10 if i == 0 else 0))
+        self.assertEqual(self.run_cloud(rain, bad), 1)
+        self.assertEqual(self.run_cloud(rain, bad, "--allow-revisions"), 0)
+
+    def test_parse_cloud_hourly_daytime_mean(self):
+        times = [f"2024-01-01T{h:02d}:00" for h in range(24)]
+        out, _ = fd.parse_cloud_hourly({"hourly": {"time": times, "cloud_cover": list(range(24))},
+                                        "hourly_units": {"cloud_cover": "%"}}, "u")
+        self.assertEqual(out[date(2024, 1, 1)], 13.0)           # média de 9..17 = 13
+
+
 class TestHttp(unittest.TestCase):
     def test_retries_then_succeeds(self):
         ok = FakeResp(b'{"a": 1}')

@@ -16,7 +16,9 @@ OUT = os.path.join(C.ROOT, "site", "index.html")
 REPO = "https://github.com/joseluizn/chuva-rio"
 ATTR_HTML = ('Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> '
              '(<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), '
-             'reanálise ERA5 — Copernicus/ECMWF.')
+             'reanálise ERA5 — Copernicus/ECMWF. '
+             'Nebulosidade e insolação: ERA5 via Open-Meteo, CC BY 4.0.')
+NCEI_URL = C.NCEI_URL
 MN = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"]
 
 
@@ -178,7 +180,17 @@ def facts():
                      era_mm=s["mm"], era_wet=s["wet"])
     last = C.last_valid_date(daily)
     n29 = sum(1 for y in ys if y % 4 == 0)
-    return dict(daily=daily, meta=meta, refs=refs, ys=ys, y0=y0, y1=y1, mean_mm=mean_mm, mean_wet=mean_wet,
+    cl = C.load_cloud()
+    assert len(cl) == len(daily) and all(a[0] == b[0] for a, b in zip(cl, daily)), "nuvem e chuva desalinhadas"
+    of = C.open_flags(cl)
+    by_open = C.monthly_summary(C.monthly_pct_by_year(of, ys))
+    by_wet = C.monthly_summary(C.monthly_pct_by_year(C.rain_flags(daily, 1.0), ys))
+    ysx = set(ys)
+    nopen = sum(1 for d, f in of if d.year in ysx and f)
+    nval = sum(1 for d, f in of if d.year in ysx and f is not None)
+    cloudf = dict(cl=cl, by_open=by_open, by_wet=by_wet, mcloud=C.monthly_mean_cloud(cl, ys),
+                  open_all=nopen / nval, sun=C.sun_fraction_stats(cl, ys), msun=C.monthly_sun_fraction(cl, ys))
+    return dict(cloud=cloudf, daily=daily, meta=meta, refs=refs, ys=ys, y0=y0, y1=y1, mean_mm=mean_mm, mean_wet=mean_wet,
                 bias_mm=bias_mm, bias_mm_inm=bias_mm_inm, bias_wet=bias_wet, share_mm=share_mm,
                 share_wet=share_wet, dry=dry, wet_months=wet_months, d_ar=d_ar, d_in=d_in, d_iw=d_iw, ma=ma, mb=mb,
                 drop=mb / ma - 1, p_diff=p_diff, p_tr=p_tr, bm_drop=bmb / bma - 1, gal=g, last=last, ifs_ratio=ifs_ratio, err=err, ys_c=ys_c, part_cum=part_cum, norm_cum=norm_cum,
@@ -206,6 +218,95 @@ def pct(x, d=0, sign=False):
 
 def pval(p):
     return fmt(p, 3)
+
+
+# ---------------------------------------------------------------- modelo por decêndio (abr-out)
+PER_JSON = os.path.join(C.ROOT, "data", "derived", "periodos_abr_out.json")
+PER_OUT = [("rain", "Chuva (≥ 1 mm)", "dias chuvosos", "min"),
+           ("open", "Céu aberto", "dias de céu aberto", "max"),
+           ("bom", "Dia bom (aberto e seco)", "dias bons", "max")]
+
+
+def _run_around(idx, members):
+    """Trecho contíguo de índices (em ordem de calendário) que contém idx, dentro de members."""
+    a = b = idx
+    while a - 1 in members:
+        a -= 1
+    while b + 1 in members:
+        b += 1
+    return a, b
+
+
+def period_data():
+    """Lê o JSON do modelo por decêndio e devolve (dict compacto para a página, texto do limiar) ou (None, None)."""
+    if not os.path.exists(PER_JSON):
+        print("AVISO: data/derived/periodos_abr_out.json não existe; seção do modelo omitida.", file=sys.stderr)
+        return None, None
+    d = json.load(open(PER_JSON, encoding="utf-8"))
+    out = {"keys": [], "labels": [], "nd": [], "o": {}}
+    thr_model = d["meta"].get("open_threshold_pct")
+    if thr_model is None:
+        m = re.search(r"<=\s*([0-9.]+)\s*%", d["meta"]["definitions"]["open"])
+        thr_model = float(m.group(1)) if m else None
+    if thr_model is not None and abs(thr_model - C.OPEN_THR) > 1e-9:
+        print(f"AVISO: o JSON do modelo usa céu aberto <= {thr_model}% e a página usa <= {C.OPEN_THR}%.", file=sys.stderr)
+    for key, name, noun, mode in PER_OUT:
+        o = d["outcomes"][key]
+        dec = o["decendios"]
+        keys = [x["key"] for x in dec]
+        if not out["keys"]:
+            out["keys"] = keys
+            out["labels"] = [x["label"] for x in dec]
+            out["nd"] = [x["n_days_window"] for x in dec]
+        assert keys == out["keys"]
+        ib = keys.index(o["best_point"])
+        tied = {keys.index(k) for k in o["within_noise_of_best"]}
+        a, b = _run_around(ib, tied | {ib})
+        ibr = keys.index(o["best_modal_raw"])
+        pm = [x["p_model"] for x in dec]
+        worst = max(range(21), key=lambda i: pm[i]) if mode == "min" else min(range(21), key=lambda i: pm[i])
+        lab = out["labels"]
+        lab = out["labels"]
+        run_n = b - a + 1
+        ext = "mínimo" if mode == "min" else "máximo"
+        pbr_max = max(x["P_best_raw"] for x in dec)
+        head = (f"{name}: o modelo põe o {ext} em {lab[ib]}, com {pct(pm[ib])} de {noun} "
+                f"(~{fmt(dec[ib]['expected_days'], 1)} dias em {dec[ib]['n_days_window']}); esse é o centro da curva suave "
+                f"(melhor em {pct(dec[ib]['P_best'])} das réplicas bootstrap). ")
+        if run_n > 1:
+            head += (f"A curva é plana em torno do melhor: de {lab[a]} a {lab[b]}, {run_n} decêndios consecutivos não se distinguem de "
+                     f"{lab[ib]} (diferença bruta pareada com IC 90% que inclui zero), e sem impor forma à curva nenhum "
+                     f"decêndio passa de {pct(pbr_max)} de chance de ser o melhor. ")
+        else:
+            head += (f"Sem impor forma à curva, nenhum decêndio passa de {pct(pbr_max)} de chance de ser o melhor. ")
+        extra = len(tied) - (run_n - 1)
+        if extra > 0:
+            head += (f"Mais {extra} {'período fora' if extra == 1 else 'períodos fora'} desse trecho também não se "
+                     f"{'distingue' if extra == 1 else 'distinguem'} do melhor. ")
+        head += f"O extremo oposto é {lab[worst]}, com {pct(pm[worst])} de {noun}."
+        out["o"][key] = {
+            "name": name, "mode": mode, "noun": noun, "ib": ib, "ibr": ibr, "K": o["K"], "head": head,
+            "run": [a, b], "tied": sorted(tied),
+            "pm": pm, "pml": [x["p_model_boot90"][0] for x in dec], "pmh": [x["p_model_boot90"][1] for x in dec],
+            "pr": [x["p_raw"] for x in dec], "prl": [x["p_raw_boot90"][0] for x in dec],
+            "prh": [x["p_raw_boot90"][1] for x in dec], "ed": [x["expected_days"] for x in dec],
+            "pb": [x["P_best"] for x in dec], "pbr": [x["P_best_raw"] for x in dec],
+            "pt3": [x["P_top3_raw"] for x in dec], "n": [x["n_obs"] for x in dec],
+        }
+    o5 = d["outcomes"]["rain_ge5mm"]
+    k5 = [x["key"] for x in o5["decendios"]]
+    l5 = {x["key"]: x["label"] for x in o5["decendios"]}
+    out["ge5"] = {"best": l5[o5["best_point"]], "best_raw": l5[o5["best_modal_raw"]],
+                  "p_best_raw": [x["P_best_raw"] for x in o5["decendios"] if x["key"] == o5["best_modal_raw"]][0],
+                  "p_raw": [x["p_raw"] for x in o5["decendios"] if x["key"] == o5["best_modal_raw"]][0]}
+    meta = d["meta"]
+    out["meta"] = {"n_boot": meta["model"]["n_boot"], "years": meta["years_used_rain"], "n_years": meta["n_years_rain"],
+                   "last": meta["last_rain_date"], "thr_model": thr_model,
+                   "pers_after_rain": meta["persistence_rain_ge1mm"]["p_rain_after_rain"],
+                   "pers_after_dry": meta["persistence_rain_ge1mm"]["p_rain_after_dry"],
+                   "vif": meta["persistence_rain_ge1mm"]["variance_inflation_median"],
+                   "K": {k: out["o"][k]["K"] for k in out["o"]}}
+    return out, thr_model
 
 
 def build():
@@ -309,8 +410,62 @@ def build():
         f"{a}: observado {fmt(g['obs_mm'])} mm e {g['obs_wet']} dias, ERA5 {fmt(g['era_mm'])} mm e {g['era_wet']} dias"
         for a, g in gal.items())
 
+    # ---- dias de tempo aberto
+    CF = F["cloud"]
+    thr_open = C.OPEN_THR
+    mo, mw_ = CF["by_open"], CF["by_wet"]
+    hi = max(range(12), key=lambda m: mo[m]["mean"])
+    lo = min(range(12), key=lambda m: mo[m]["mean"])
+    cl_last = max(c[0] for c in CF["cl"] if c[4] is not None)
+    open_head = (f"Em {y0}–{y1}, {pct(CF['open_all'])} dos dias do ERA5 têm céu aberto (nebulosidade média das 09 às 17 h de até "
+                 f"{fmt(thr_open)}%). {FULL[hi].capitalize()} é o mês mais aberto, com {pct(mo[hi]['mean'] / 100)} dos dias "
+                 f"(faixa p10–p90 entre anos: {fmt(mo[hi]['p10'])}–{fmt(mo[hi]['p90'])}%), e {FULL[lo]} o menos aberto, com "
+                 f"{pct(mo[lo]['mean'] / 100)} ({fmt(mo[lo]['p10'])}–{fmt(mo[lo]['p90'])}%); nesses meses, {pct(mw_[hi]['mean'] / 100)} "
+                 f"e {pct(mw_[lo]['mean'] / 100)} dos dias têm chuva ≥ 1 mm.")
+    sun = CF["sun"]
+    ms_ = [x for x in CF["msun"]]
+    open_note = (f"<b>Dias de tempo aberto.</b> Nebulosidade: variável horária <code>cloud_cover</code> (cobertura total de nuvens, %) "
+                 f"do ERA5 via Open-Meteo, na mesma célula da chuva; dados até {fdate(cl_last)}. Dia de tempo aberto = média das 9 horas locais "
+                 f"de 09 a 17 h de até {fmt(thr_open)}%, que corresponde à classe &ldquo;clear&rdquo; do NOAA/NCEI (cobertura média do céu de 0 a 3/10 "
+                 f"nas horas de luz; parcialmente nublado é 4–7/10 e nublado 8–10/10; "
+                 f"<a href=\"{NCEI_URL}\">Comparative Climatic Data</a>). Usei a média diurna, e não a de 24 h, porque esta inclui a noite. "
+                 f"O limiar é convencional; a versão completa permite variá-lo. A nebulosidade do ERA5 é saída de modelo, não observação, e não "
+                 f"achei referência observada para conferi-la: os percentuais servem para comparar meses e datas entre si, não como "
+                 f"frequência observada de dias claros. Os totais por mês usam os anos completos; cada ponto do gráfico mensal é a "
+                 f"porcentagem de dias abertos de um ano, e a mediana e a faixa p10–p90 são calculadas entre anos (interpolação linear). "
+                 f"Insolação checada e descartada: a fração de insolação do ERA5 (<code>sunshine_duration</code> / <code>daylight_duration</code>) "
+                 f"é quase constante no ano (médias mensais de {fmt(min(ms_), 2)} a {fmt(max(ms_), 2)}; média geral {fmt(sun['mean_fraction'], 2)}) e "
+                 f"correlaciona só r = {fmt(sun['r'], 2)} com a nebulosidade diurna diária; o ranking dos decêndios por insolação inverte o da "
+                 f"nebulosidade (ver <a href=\"{REPO}/blob/main/docs/modelo_periodos.md\">docs/modelo_periodos.md</a>). Por isso a página usa só a nebulosidade.")
+    PD, thr_model = period_data()
+    per_note = ""
+    if PD:
+        mt = PD["meta"]
+        kk = mt["K"]
+        g5 = PD["ge5"]
+        diff_thr = (f" No JSON do modelo, &ldquo;aberto&rdquo; usa limiar de {fmt(mt['thr_model'], 1)}%, diferente do {fmt(thr_open)}% desta página."
+                    if mt["thr_model"] is not None and abs(mt["thr_model"] - thr_open) > 1e-9 else "")
+        per_note = (f"<b>Modelo por decêndio (abril a outubro).</b> Regressão logística da probabilidade diária com K pares de Fourier "
+                    f"(K = {kk['rain']} para chuva, {kk['open']} para céu aberto e {kk['bom']} para dia bom, escolhido por validação cruzada deixando um ano "
+                    f"de fora, menor K a até 1 erro-padrão do mínimo), ajustada no ano inteiro; a probabilidade do decêndio é a média das probabilidades "
+                    f"diárias. Faixas de 90% por bootstrap de {fmt(mt['n_boot'])} réplicas de anos inteiros, que preserva a dependência entre dias "
+                    f"(P(chuva | ontem choveu) = {pct(mt['pers_after_rain'])}, contra {pct(mt['pers_after_dry'])} se ontem foi seco). "
+                    f"Dia bom = céu aberto e chuva &lt; 1 mm. &ldquo;Melhor&rdquo; = decêndio de menor chuva ou de mais céu aberto. Com K pequeno a curva é "
+                    f"uma senoide e o P(melhor) do modelo mede a incerteza do <i>centro</i> da curva, não de um decêndio específico; por isso o gráfico mostra também o "
+                    f"P(melhor) sem impor forma, com as proporções brutas. &ldquo;Sem diferença distinguível&rdquo; = o IC 90% pareado da diferença bruta para o melhor inclui zero. "
+                    f"Com chuva ≥ 5 mm, o centro do modelo fica em {g5['best']}, e sem impor forma o decêndio mais provável como melhor é {g5['best_raw']} "
+                    f"({pct(g5['p_raw'])} dos dias, melhor em {pct(g5['p_best_raw'])} das réplicas).{diff_thr} "
+                    f"Escolhas de método (K, regra de 1 EP, diferenças pareadas) são julgamentos meus; detalhes e limitações em "
+                    f"<a href=\"{REPO}/blob/main/docs/modelo_periodos.md\">docs/modelo_periodos.md</a>.")
+    cl_tenths = C.encode_cloud_tenths(F["cloud"]["cl"])
+    ramps_open = make_ramps(hue=165.0)
+    static["rampsOpen"] = ramps_open
+    static["openThr"] = thr_open
+    static["per"] = PD
     tpl = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "main_template.html"), encoding="utf-8").read()
     repl = {
+        "OPEN_HEAD": open_head, "OPEN_NOTE": open_note, "PER_NOTE": per_note, "OPENTHR": fmt(thr_open),
+        "CLOUD": ",".join(str(v) for v in cl_tenths),
         "TITLE": title, "LEAD1": lead1, "LEAD2": lead2, "LEAD3": lead3, "LEAD4": lead4, "BIASTXT": biastxt, "SOURCELINE": sourceline,
         "NOTE_DROP": note_drop, "STATIC": json.dumps(static, ensure_ascii=False, separators=(",", ":")),
         "TENTHS": ",".join(str(v) for v in tenths),

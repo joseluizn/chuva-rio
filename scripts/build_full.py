@@ -10,6 +10,9 @@ import math
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import common as C  # noqa: E402
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DAILY = os.path.join(ROOT, "data", "daily")
 REFS = os.path.join(ROOT, "data", "refs")
@@ -115,6 +118,19 @@ def hex2rgb(h):
     return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
 
 
+def make_hue_ramp(hue, chroma, n=33):
+    """Rampa sequencial (claro e escuro) de uma matiz, mais escuro = mais; contraste >= 3:1 no extremo baixo."""
+    light, dark = [], []
+    for i in range(n):
+        t = i / (n - 1)
+        light.append(oklch_to_rgb(0.645 - 0.405 * t, chroma * (1 + 0.7 * math.sin(math.pi * t)), hue))
+        dark.append(oklch_to_rgb(0.92 - 0.50 * t, chroma * (0.7 + 1.5 * t), hue))
+    s_light, s_dark = hex2rgb("#fcfcfb"), hex2rgb("#1a1a19")
+    if contrast(light[0], s_light) < 3 or contrast(dark[0], s_dark) < 3:
+        sys.exit(f"rampa de matiz {hue} sem contraste 3:1 no extremo baixo")
+    return {"light": light, "dark": dark}
+
+
 def make_ramps(n=33):
     """Rampa sequencial (matiz azul) com L linear em OKLab: uniforme por construção.
     Extremo baixo com contraste >= 3:1 contra a superfície de cada tema (WCAG 1.4.11)."""
@@ -164,7 +180,31 @@ def derive(dates, ser):
                 splice=None if first_diff is None else dates[first_diff], era5_trailing=trailing)
 
 
+def cloud_method_html(dates):
+    cl = C.load_cloud()
+    assert [c[0].isoformat() for c in cl] == dates, "datas da nebulosidade divergem das da chuva"
+    years = [y for y in range(int(dates[0][:4]), int(dates[-1][:4]) + 1) if y < int(dates[-1][:4]) or dates[-1].endswith("-12-31")]
+    sun = C.sun_fraction_stats(cl, years)
+    ms = C.monthly_sun_fraction(cl, years)
+    last = max(c[0] for c in cl if c[4] is not None).isoformat()
+    meta_c = json.load(open(os.path.join(DAILY, "meta.json"), encoding="utf-8")).get("cloud", {})
+    return (f"<p>Variável horária <code>cloud_cover</code> (cobertura total de nuvens, %) do ERA5 via Open-Meteo, na mesma célula da chuva "
+            f"({br(meta_c.get('returned_latitude', float('nan')), 2)}; {br(meta_c.get('returned_longitude', float('nan')), 2)}), com valores até {pt_date(last)}. "
+            f"<strong>Nebulosidade diurna</strong> = média das 9 horas locais de 09 a 17 h (a média de 24 h inclui a noite). "
+            f"<strong>Dia de céu aberto</strong> = nebulosidade diurna ≤ limiar escolhido no controle da barra superior; o padrão é {br(C.OPEN_THR)}%, "
+            f"que corresponde à classe “clear” do NOAA/NCEI (cobertura média do céu de 0 a 3/10 nas horas de luz; parcialmente nublado = 4–7/10, "
+            f"nublado = 8–10/10; <a href=\"{C.NCEI_URL}\">Comparative Climatic Data</a>). O limiar é convencional: "
+            f"as frequências mudam bastante com ele, e o controle serve para ver essa sensibilidade. A nebulosidade do ERA5 é saída de modelo, "
+            f"não observação, e não achei referência observada para conferi-la; ela é sempre do ERA5, mesmo quando a fonte de chuva é outra. "
+            f"Médias por mês usam anos completos; mediana e p10–p90 são entre anos.</p>"
+            f"<p><strong>Insolação checada e descartada.</strong> A fração de insolação do ERA5 (<code>sunshine_duration</code> ÷ <code>daylight_duration</code>) "
+            f"é quase constante no ano (médias mensais de {br(min(ms), 2)} a {br(max(ms), 2)}; média geral {br(sun['mean_fraction'], 2)}) e correlaciona só "
+            f"r = {br(sun['r'], 2)} com a nebulosidade diurna diária; por isso não é oferecida como definição de céu aberto "
+            f"(<a href=\"{REPO}/blob/main/docs/modelo_periodos.md\">docs/modelo_periodos.md</a>).</p>")
+
+
 def method_html(meta, refs, ser, dates, cl, cd, dv):
+    cloud_html = cloud_method_html(dates)
     era_t, era_w, era_n = year_stats(dates, ser["era5"])
     ifs_t, ifs_w, _ = year_stats(dates, ser["ifs"])
     y0, yl = dv["y0"], dv["ylast"]
@@ -206,7 +246,7 @@ def method_html(meta, refs, ser, dates, cl, cd, dv):
 <details class="method" id="metodo">
 <summary>Nota metodológica (fonte, células, viés, estatística)</summary>
 <div class="mbody">
-<p class="attrib">Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), reanálise ERA5 e ECMWF IFS — Copernicus/ECMWF.</p>
+<p class="attrib">Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), reanálise ERA5 e ECMWF IFS — Copernicus/ECMWF. Nebulosidade e insolação: ERA5 via Open-Meteo, CC BY 4.0.</p>
 <h3>Fonte dos dados</h3>
 <p>Precipitação diária (<code>precipitation_sum</code>, mm, fuso {meta['requested']['timezone']}) da API de arquivo histórico da
 Open-Meteo, consultada em {pt_date(meta['accessed'])} para o ponto solicitado ({br(meta['requested']['latitude'], 4)}; {br(meta['requested']['longitude'], 4)}),
@@ -246,6 +286,8 @@ sobre a célula (a latitude do ERA5 difere do ponto em ~{km:.0f} km).</p>
 <li><strong>Cumulativo:</strong> soma ao longo do dia do ano (dia 1 = 1º de jan); em anos bissextos a data real se desloca 1 dia após fevereiro.</li>
 </ul>
 
+<h3>Nebulosidade e dias de céu aberto</h3>
+{cloud_html}
 <h3>Cuidados de leitura</h3>
 <ul>
 <li>Uma única célula de grade, poucas décadas e forte variabilidade interanual: diferenças entre períodos são frequentemente indistinguíveis do acaso. A queda de patamar aparente do best_match após a emenda é em boa parte troca de produto, não clima (detalhes e testes de permutação em <a href="{REPO}/blob/main/docs/analise_modelos.md">docs/analise_modelos.md</a>).</li>
@@ -266,11 +308,18 @@ def main():
     refs = json.load(open(os.path.join(REFS, "refs.json"), encoding="utf-8"))
     gal = json.load(open(os.path.join(REFS, "galeao_ghcn.json"), encoding="utf-8"))
     light, dark, cl, cd = make_ramps()
+    ramp_open = make_hue_ramp(165, 0.075)
+    ramp_cloud = make_hue_ramp(250, 0.012)
     dv = derive(dates, ser)
+    cloud = C.load_cloud()
+    if [c[0].isoformat() for c in cloud] != dates:
+        sys.exit("datas da nebulosidade divergem das da chuva")
+    opts = sorted({10.0, 20.0, C.OPEN_THR, 40.0, 50.0})
 
     data = {"t0": T0, "n": len(dates), "last": dates[-1], "accessed": meta["accessed"],
             "ylast": dv["ylast"], "ypart": dv["ypart"], "ifs0": dv["ifs0"], "splice": dv["splice"],
-            "era5": ser["era5"], "ifs": ser["ifs"], "bm": ser["bm"]}
+            "era5": ser["era5"], "ifs": ser["ifs"], "bm": ser["bm"],
+            "cl": C.encode_cloud_tenths(cloud), "openThr": C.OPEN_THR, "openOpts": opts}
     ref = {
         "alertario": {k: refs["alertario"][k] for k in ("monthly_mm", "annual_mm", "label")},
         "inmet": {k: refs["inmet"][k] for k in ("monthly_mm", "annual_mm", "wet_days", "annual_wet_days", "label")},
@@ -280,9 +329,9 @@ def main():
     html = TEMPLATE
     html = html.replace("/*__DATA__*/", json.dumps(data, separators=(",", ":")))
     html = html.replace("/*__REF__*/", json.dumps(ref, ensure_ascii=False, separators=(",", ":")))
-    html = html.replace("/*__RAMP__*/", json.dumps({"light": light, "dark": dark}, separators=(",", ":")))
+    html = html.replace("/*__RAMP__*/", json.dumps({"light": light, "dark": dark, "open": ramp_open, "cloud": ramp_cloud}, separators=(",", ":")))
     html = html.replace("<!--__METHOD__-->", method_html(meta, refs, ser, dates, cl, cd, dv))
-    html = html.replace("__ACCESSED__", meta["accessed"])
+    html = html.replace("__ACCESSED__", meta["accessed"]).replace("__NCEI__", C.NCEI_URL)
     html = html.replace("__REPO__", REPO)
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
     with open(OUT, "w", encoding="utf-8") as f:

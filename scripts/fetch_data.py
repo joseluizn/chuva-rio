@@ -8,6 +8,10 @@ com o CSV atual e detectar revisões históricas (ver --recent-days/--tolerance)
 Uma estratégia incremental economizaria requisições irrelevantes e perderia
 essa checagem.
 
+Também baixa a nebulosidade do ERA5 (era5_cloud.csv): cloud_cover_mean, sunshine_duration e
+daylight_duration diários, e o cloud_cover horário de que se tira a média diurna (09h-17h locais).
+É a base do "dia de tempo aberto" (ver docs/ATUALIZACAO.md e common.py).
+
 Nada é gravado se qualquer validação falhar (all-or-nothing). Só biblioteca
 padrão. Fonte/licença: https://open-meteo.com/en/terms (CC BY 4.0).
 
@@ -16,6 +20,8 @@ Uso:
   python3 scripts/fetch_data.py --dry-run        # baixa e valida, não grava
   python3 scripts/fetch_data.py --model era5     # só um modelo (repetível)
   python3 scripts/fetch_data.py --allow-revisions  # aceita revisões grandes
+  python3 scripts/fetch_data.py --skip-cloud     # não baixa a nebulosidade
+  python3 scripts/fetch_data.py --model era5 --cloud   # --model sozinho não baixa nebulosidade
 """
 import argparse
 import csv
@@ -41,6 +47,23 @@ TOLERANCE_MM = 0.2      # mudança máxima aceita em dias históricos
 RECENT_DAYS = 60        # dias mais novos que isso podem ser revisados à vontade
 MAX_LAG_DAYS = 15       # último valor não nulo não pode ficar mais atrás que isso
 CHUNK_YEARS = 10
+CLOUD_HOURLY_CHUNK_YEARS = 5      # blocos menores para a série horária (87 mil valores em 10 anos)
+CLOUD_TOLERANCE_PCT = 2.0         # revisão máxima aceita em cloud_cover_mean de dias antigos
+DAY_HOURS = range(9, 18)          # 09h..17h locais (9 valores) para a nebulosidade diurna
+CLOUD_DOC = {
+    "columns": {
+        "cloud_cover_mean_pct": "média diária das 24 horas da cobertura total de nuvens, % (API: cloud_cover_mean)",
+        "sunshine_min": "sunshine_duration/60, em minutos inteiros (WMO: irradiância direta normal > 120 W/m2)",
+        "daylight_min": "daylight_duration/60, em minutos inteiros",
+        "cloud_daytime_0917_pct": "média do cloud_cover horário das 09:00 às 17:00 locais (9 valores), 1 decimal",
+    },
+    "notes": {
+        "nulls": "dias finais sem cloud_cover_mean (atraso do ERA5) ficam vazios; a nebulosidade diurna é "
+                 "esvaziada nos mesmos dias, para alinhar com a série diária",
+        "source": "mesma célula de grade da chuva ERA5; modelo/reanálise, não observação",
+    },
+}
+CLOUD_COLUMNS = ["date", "cloud_cover_mean_pct", "sunshine_min", "daylight_min", "cloud_daytime_0917_pct"]
 USER_AGENT = "chuva-rio-data-updater/1.0 (+https://github.com/joseluizn/chuva-rio)"
 DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "daily"
 
@@ -150,6 +173,154 @@ def validate_series(model, dates, vals, start, end, today, max_lag=MAX_LAG_DAYS)
                               f"{end} (máx. {max_lag}); a fonte pode estar atrasada")
 
 
+def build_cloud_url(lat, lon, start, end, kind):
+    var = ("daily", "cloud_cover_mean,sunshine_duration,daylight_duration") if kind == "daily" \
+        else ("hourly", "cloud_cover")
+    q = [("latitude", lat), ("longitude", lon), ("start_date", start), ("end_date", end),
+         var, ("timezone", TIMEZONE), ("models", "era5")]
+    return API + "?" + urllib.parse.urlencode(q, quote_via=urllib.parse.quote)
+
+
+def _num_list(block, key, url, unit_expect=None, units=None):
+    vals = block.get(key)
+    if not isinstance(vals, list) or len(vals) != len(block.get("time", [])):
+        raise ValidationError(f"resposta sem {key} ou com tamanho diferente de time: {url}")
+    if unit_expect is not None and (units or {}).get(key) != unit_expect:
+        raise ValidationError(f"unidade inesperada {(units or {}).get(key)!r} em {key} "
+                              f"(esperado {unit_expect!r}): {url}")
+    for v in vals:
+        if v is not None and (isinstance(v, bool) or not isinstance(v, (int, float))
+                              or not math.isfinite(v)):
+            raise ValidationError(f"valor inválido {v!r} em {key}: {url}")
+    return vals
+
+
+def parse_cloud_daily(payload, url):
+    """-> (datas, cloud_mean %, sunshine_s, daylight_s, info)."""
+    if not isinstance(payload, dict) or payload.get("error"):
+        raise ValidationError(f"resposta inválida/erro da API: {url}")
+    d = payload.get("daily")
+    if not isinstance(d, dict) or "time" not in d:
+        raise ValidationError(f"resposta sem daily.time: {url}")
+    u = payload.get("daily_units") or {}
+    cc = _num_list(d, "cloud_cover_mean", url, "%", u)
+    sun = _num_list(d, "sunshine_duration", url, "s", u)
+    day = _num_list(d, "daylight_duration", url, "s", u)
+    try:
+        dates = [date.fromisoformat(t) for t in d["time"]]
+    except (TypeError, ValueError) as e:
+        raise ValidationError(f"data inválida ({e}): {url}")
+    info = {"returned_latitude": payload.get("latitude"), "returned_longitude": payload.get("longitude"),
+            "elevation_m": payload.get("elevation")}
+    return dates, cc, sun, day, info
+
+
+def parse_cloud_hourly(payload, url):
+    """-> {data: média das horas 09..17 locais (1 decimal) ou None} + info.
+    Só vale dia com as 9 horas presentes e não nulas."""
+    if not isinstance(payload, dict) or payload.get("error"):
+        raise ValidationError(f"resposta inválida/erro da API: {url}")
+    h = payload.get("hourly")
+    if not isinstance(h, dict) or "time" not in h:
+        raise ValidationError(f"resposta sem hourly.time: {url}")
+    cc = _num_list(h, "cloud_cover", url, "%", payload.get("hourly_units"))
+    by = {}
+    for t, v in zip(h["time"], cc):
+        try:
+            hour = int(t[11:13])
+            day = date.fromisoformat(t[:10])
+        except (TypeError, ValueError):
+            raise ValidationError(f"hora inválida {t!r}: {url}")
+        if hour in DAY_HOURS:
+            by.setdefault(day, []).append(v)
+    out = {d: (round(sum(v) / len(v), 1) if len(v) == len(DAY_HOURS) and None not in v else None)
+           for d, v in by.items()}
+    info = {"returned_latitude": payload.get("latitude"), "returned_longitude": payload.get("longitude"),
+            "elevation_m": payload.get("elevation")}
+    return out, info
+
+
+def validate_cloud(dates, cc, sun, day, dayt, start, end, today, max_lag=MAX_LAG_DAYS):
+    """Mesmas regras da chuva + limites físicos. Nulos só no fim (cloud/sunshine) da série."""
+    validate_series("cloud", dates, [None if v is None else float(v) for v in cc], start, end, today, max_lag)
+    for i, d in enumerate(dates):
+        for name, v, hi in (("cloud_cover_mean", cc[i], 100), ("cloud_daytime", dayt[i], 100)):
+            if v is not None and not (0 <= v <= hi + 1e-9):
+                raise ValidationError(f"[cloud] {name}={v} fora de 0..{hi} em {d}")
+        if day[i] is None:
+            raise ValidationError(f"[cloud] daylight_duration nulo em {d}")
+        if not 0 < day[i] <= 24 * 60:
+            raise ValidationError(f"[cloud] daylight_min={day[i]} implausível em {d}")
+        if sun[i] is not None and not (0 <= sun[i] <= day[i] + 1):
+            raise ValidationError(f"[cloud] sunshine_min={sun[i]} fora de 0..daylight ({day[i]}) em {d}")
+        if (cc[i] is None) != (sun[i] is None):
+            raise ValidationError(f"[cloud] nulos inconsistentes entre cloud_cover_mean e sunshine em {d}")
+
+
+def cloud_to_csv_text(dates, cc, sun, day, dayt):
+    f = lambda v, fmt="{}": "" if v is None else fmt.format(v)
+    lines = [",".join(CLOUD_COLUMNS)]
+    for i, d in enumerate(dates):
+        lines.append(",".join([d.isoformat(), f(cc[i]), f(sun[i]), f(day[i]), f(dayt[i], "{:.1f}")]))
+    return "\n".join(lines) + "\n"
+
+
+def read_cloud_csv(path):
+    if not Path(path).exists():
+        return None
+    out = {}
+    with open(path, newline="", encoding="utf-8") as f:
+        rd = csv.reader(f)
+        next(rd, None)
+        for row in rd:
+            if len(row) >= 2 and row[0]:
+                out[row[0]] = float(row[1]) if row[1] != "" else None
+    return out
+
+
+def fetch_cloud(args, start, end, today):
+    """Baixa e valida a nebulosidade ERA5. Devolve (texto_csv, meta_cloud, dados p/ revisão)."""
+    dates, cc, sun, day, info = [], [], [], [], None
+    for s, e in split_ranges(start, end):
+        url = build_cloud_url(args.lat, args.lon, s.isoformat(), e.isoformat(), "daily")
+        print(f"  cloud diário: {s} .. {e}", file=sys.stderr)
+        d, c, su, da, i = parse_cloud_daily(http_get_json(url, args.retries, args.backoff, args.timeout), url)
+        if info is None:
+            info = i
+        elif i != info:
+            raise ValidationError(f"[cloud] ponto de grade/elevação mudou entre blocos: {info} vs {i}")
+        dates += d
+        cc += c
+        sun += su
+        day += da
+    hourly = {}
+    for s, e in split_ranges(start, end, CLOUD_HOURLY_CHUNK_YEARS):
+        url = build_cloud_url(args.lat, args.lon, s.isoformat(), e.isoformat(), "hourly")
+        print(f"  cloud horário: {s} .. {e}", file=sys.stderr)
+        h, i = parse_cloud_hourly(http_get_json(url, args.retries, args.backoff, args.timeout), url)
+        if i != info:
+            raise ValidationError(f"[cloud] grade do horário difere do diário: {info} vs {i}")
+        hourly.update(h)
+    sun_min = [None if v is None else round(v / 60) for v in sun]
+    day_min = [None if v is None else round(v / 60) for v in day]
+    # nebulosidade diurna: alinhada aos nulos do diário (a hora pode existir um dia a mais que o diário)
+    dayt = [hourly.get(d) if cc[i] is not None else None for i, d in enumerate(dates)]
+    validate_cloud(dates, cc, sun_min, day_min, dayt, start, end, today, args.max_lag)
+    nd = sum(1 for i in range(len(dates)) if cc[i] is not None and dayt[i] is None)
+    if nd:
+        raise ValidationError(f"[cloud] {nd} dias com cloud_cover_mean mas sem as 9 horas diurnas")
+    old = read_cloud_csv(Path(args.data_dir) / "era5_cloud.csv")
+    revisions = find_revisions(old, dates, [None if v is None else float(v) for v in cc],
+                               today, args.recent_days, CLOUD_TOLERANCE_PCT)
+    nn = [d for d, v in zip(dates, cc) if v is not None]
+    meta_cloud = {"accessed": today.isoformat(), "file": "era5_cloud.csv", "model": "era5",
+                  "url": build_cloud_url(args.lat, args.lon, start.isoformat(), end.isoformat(), "daily"),
+                  "hourly_url_pattern": build_cloud_url(args.lat, args.lon, "YYYY-01-01", "YYYY-12-31", "hourly"),
+                  **info, "days": len(dates), "first_date": start.isoformat(),
+                  "last_date_with_value": nn[-1].isoformat(), "null_days": len(dates) - len(nn)}
+    return cloud_to_csv_text(dates, cc, sun_min, day_min, dayt), meta_cloud, info, revisions
+
+
 def read_csv(path):
     if not Path(path).exists():
         return None
@@ -237,6 +408,9 @@ def main(argv=None):
     p.add_argument("--tolerance", type=float, default=TOLERANCE_MM, help="mm (padrão %(default)s)")
     p.add_argument("--recent-days", type=int, default=RECENT_DAYS,
                    help="dias recentes isentos da checagem de revisão (padrão %(default)s)")
+    p.add_argument("--cloud", action="store_true",
+                   help="baixa também a nebulosidade quando --model é usado (sem --model já baixa)")
+    p.add_argument("--skip-cloud", action="store_true", help="não baixa a nebulosidade ERA5")
     p.add_argument("--lat", default=str(LATITUDE))
     p.add_argument("--lon", default=str(LONGITUDE))
     p.add_argument("--start-date", default=START_DATE)
@@ -257,13 +431,19 @@ def main(argv=None):
     data_dir = Path(args.data_dir)
     print(f"Open-Meteo: {start} .. {end}, modelos {models}", file=sys.stderr)
 
-    results, revisions = {}, {}
+    do_cloud = args.cloud or (not args.model and not args.skip_cloud)
+    results, revisions, cloud = {}, {}, None
     try:
         for m in models:
             dates, vals, info = fetch_model(m, args, start, end, today)
             old = read_csv(data_dir / f"{m}.csv")
             revisions[m] = find_revisions(old, dates, vals, today, args.recent_days, args.tolerance)
             results[m] = (dates, vals, info, old)
+        if do_cloud:
+            cloud = fetch_cloud(args, start, end, today)
+            if "era5" in results and results["era5"][2] != cloud[2]:
+                raise ValidationError(f"[cloud] célula de grade difere da série de chuva ERA5: "
+                                      f"{cloud[2]} vs {results['era5'][2]}")
     except ValidationError as e:
         print(f"ERRO de validação: {e}\nNada foi gravado.", file=sys.stderr)
         return 1
@@ -277,6 +457,10 @@ def main(argv=None):
               f"dias alterados {count_changed(old, dates, vals)}, "
               f"revisões acima da tolerância {len(revisions[m])}")
 
+    if cloud is not None:
+        revisions["cloud"] = cloud[3]
+        print(f"cloud: {cloud[1]['days']} dias, valores até {cloud[1]['last_date_with_value']}, "
+              f"{cloud[1]['null_days']} nulos, revisões acima da tolerância {len(cloud[3])}")
     bad = {m: r for m, r in revisions.items() if r}
     if bad and not args.allow_revisions:
         print(f"\nERRO: valores anteriores a {today - timedelta(days=args.recent_days)} mudaram "
@@ -321,6 +505,11 @@ def main(argv=None):
         del notes[k]
     if end < date(end.year, 12, 31):
         notes[str(end.year)] = f"partial year (through {end.isoformat()})"
+    if cloud is not None:
+        meta["cloud"] = {**CLOUD_DOC, **cloud[1]}
+        meta["cloud"]["same_grid_cell_as_rain_era5"] = (
+            "era5" not in results or results["era5"][2] == cloud[2])
+        write_atomic(data_dir / "era5_cloud.csv", cloud[0])
     for m, (dates, vals, _i, _o) in results.items():
         write_atomic(data_dir / f"{m}.csv", to_csv_text(dates, vals))
     write_atomic(meta_path, json.dumps(meta, indent=2, ensure_ascii=False) + "\n")

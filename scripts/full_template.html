@@ -12,14 +12,14 @@
   color-scheme:light;
   --bg:#f6f6f3;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#6b6a66;
   --grid:#e4e3dc;--axis:#b9b8ae;--border:rgba(11,11,11,.14);--wash:rgba(11,11,11,.05);
-  --c1:#2a78d6;--c2:#eb6834;--c3:#1baf7a;--c4:#eda100;--c5:#e87ba4;
+  --c1:#2a78d6;--c2:#eb6834;--c3:#1baf7a;--c4:#eda100;--c5:#e87ba4;--c6:#007A5A;
   --warn:#8a5200;--warnbg:#fff3dc;--warnbd:#e2b45c;--accent:#1c5fb0;--dim:#8d8c85;
 }
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#a3a29b;
   --grid:#2c2c2a;--axis:#4c4c47;--border:rgba(255,255,255,.16);--wash:rgba(255,255,255,.07);
-  --c1:#3987e5;--c2:#d95926;--c3:#199e70;--c4:#c98500;--c5:#d55181;
+  --c1:#3987e5;--c2:#d95926;--c3:#199e70;--c4:#c98500;--c5:#d55181;--c6:#2FBF93;
   --warn:#f0c46a;--warnbg:#2b2310;--warnbd:#6b5420;--accent:#6da7ec;--dim:#7d7c76;
 }
 @media (prefers-color-scheme:dark){
@@ -27,7 +27,7 @@
     color-scheme:dark;
     --bg:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#a3a29b;
     --grid:#2c2c2a;--axis:#4c4c47;--border:rgba(255,255,255,.16);--wash:rgba(255,255,255,.07);
-    --c1:#3987e5;--c2:#d95926;--c3:#199e70;--c4:#c98500;--c5:#d55181;
+    --c1:#3987e5;--c2:#d95926;--c3:#199e70;--c4:#c98500;--c5:#d55181;--c6:#2FBF93;
     --warn:#f0c46a;--warnbg:#2b2310;--warnbd:#6b5420;--accent:#6da7ec;--dim:#7d7c76;
   }
 }
@@ -137,6 +137,7 @@ footer{padding:12px 0 36px;color:var(--ink2);font-size:.88rem}
     <div class="ctl"><span class="lab">Atalhos</span><div class="pre" id="presets"></div></div>
     <div class="ctl"><label for="thr">Dia chuvoso (mm/dia, mínimo)</label>
       <select id="thr"><option value="0.1">0,1</option><option value="1" selected>1</option><option value="5">5</option><option value="10">10</option><option value="25">25</option></select></div>
+    <div class="ctl"><label for="othr">Céu aberto: nebulosidade diurna até (%)</label><select id="othr"></select></div>
     <div class="ctl"><label for="met">Métrica</label>
       <select id="met"><option value="vol">Volume (mm)</option><option value="freq">Frequência (dias chuvosos)</option><option value="int">Intensidade (mm por dia chuvoso)</option></select></div>
     <div class="ctl"><label for="grp">Agrupamento</label>
@@ -169,6 +170,8 @@ footer{padding:12px 0 36px;color:var(--ink2);font-size:.88rem}
   <div class="card"><h3 id="s1t"></h3><div class="legend" id="s1l"></div><div class="chart" id="s1"></div><div class="cap" id="s1c"></div></div>
   <div class="card" id="s2card"><h3 id="s2t"></h3><div class="legend" id="s2l"></div><div class="chart" id="s2"></div><div class="cap" id="s2c"></div></div>
   <div id="s3wrap" hidden></div>
+  <div class="card" id="s4card"><h3 id="s4t"></h3><div class="legend" id="s4l"></div><div class="chart" id="s4"></div><div class="cap" id="s4c"></div></div>
+  <div class="card" id="s5card"><h3 id="s5t"></h3><div class="legend" id="s5l"></div><div class="chart" id="s5"></div><div class="cap" id="s5c"></div></div>
   <details class="tbl"><summary>Ver tabela</summary><div class="tw" id="s-table"></div></details>
 </section>
 <!-- 2 -->
@@ -176,6 +179,7 @@ footer{padding:12px 0 36px;color:var(--ink2);font-size:.88rem}
   <h2>Calendário mês × dia</h2>
   <p class="lede">Cada célula agrupa o mesmo dia do ano em todos os anos selecionados. Sem suavização, cada célula tem poucas observações e a textura é em grande parte ruído amostral.</p>
   <div class="local">
+    <div class="ctl"><label for="cmet">Métrica do calendário</label><select id="cmet"><option value="rain">Chuva (métrica global acima)</option><option value="open">Céu aberto (% dos anos)</option><option value="cloud">Nebulosidade diurna média (%)</option></select></div>
     <div class="ctl"><label for="mf">Mês inicial</label><select id="mf"></select></div>
     <div class="ctl"><label for="mt">Mês final</label><select id="mt"></select></div>
     <div class="ctl"><label for="sm">Suavização</label><select id="sm"><option value="0">Desligada</option><option value="3" selected>7 dias (±3)</option><option value="7">15 dias (±7)</option></select></div>
@@ -239,7 +243,7 @@ footer{padding:12px 0 36px;color:var(--ink2);font-size:.88rem}
 <!--__METHOD__-->
 
 <footer>
-  <p>Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), reanálise ERA5 e ECMWF IFS — Copernicus/ECMWF. Referências: Alerta Rio, INMET, NOAA GHCN. Consulta em __ACCESSED__.</p>
+  <p>Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), reanálise ERA5 e ECMWF IFS — Copernicus/ECMWF. Nebulosidade e insolação: ERA5 via Open-Meteo, CC BY 4.0. Referências: Alerta Rio, INMET, NOAA GHCN. Consulta em __ACCESSED__.</p>
   <p><a href="index.html">Versão principal</a> · <a href="__REPO__">Código e dados no GitHub</a></p>
 </footer>
 </div>
@@ -252,6 +256,7 @@ footer{padding:12px 0 36px;color:var(--ink2);font-size:.88rem}
 const DATA=/*__DATA__*/;
 const REF=/*__REF__*/;
 const RAMP=/*__RAMP__*/;
+const CLD=Int16Array.from(DATA.cl);
 const Y0=+DATA.t0.slice(0,4), YLAST=DATA.ylast, YPART=DATA.ypart, YMAX=YPART||YLAST, NY=YMAX-Y0+1;
 const N=DATA.n;
 const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -283,14 +288,14 @@ function lin(d0,d1,r0,r1){const k=(r1-r0)/(d1-d0||1);return v=>r0+(v-d0)*k;}
 function pad(n){return String(n).padStart(2,'0');}
 function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
 const dark=()=>{const a=document.documentElement.getAttribute('data-theme');return a?a==='dark':matchMedia('(prefers-color-scheme: dark)').matches;};
-function ramp(t){const R=dark()?RAMP.dark:RAMP.light;t=Math.max(0,Math.min(1,t));const p=t*(R.length-1),i=Math.min(R.length-2,Math.floor(p)),f=p-i;const a=R[i],b=R[i+1];return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')';}
+function ramp(t,key){const RR=key?RAMP[key]:RAMP,R=dark()?RR.dark:RR.light;t=Math.max(0,Math.min(1,t));const p=t*(R.length-1),i=Math.min(R.length-2,Math.floor(p)),f=p-i;const a=R[i],b=R[i+1];return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')';}
 const HLV=['--c1','--c2','--c3','--c4','--c5'];
 const hv=i=>'var('+HLV[i]+')';
 
 /* ============ estado ============ */
 const st={src:'era5',y0:Y0,y1:YLAST,thr:1,met:'vol',grp:'m',tab:'sazon',abs:false,refs:true,
-  mf:0,mt:11,sm:3,hl:[],A:[Y0,Y0],B:[YLAST,YLAST],rel:false,ecm:'ecdf',topn:20,eab:true,fe:'va'};
-const MN={vol:{name:'Volume',unit:'mm',uy:'mm'},freq:{name:'Frequência',unit:'dias',uy:'dias chuvosos'},int:{name:'Intensidade',unit:'mm/dia chuvoso',uy:'mm por dia chuvoso'}};
+  mf:0,mt:11,sm:3,ot:DATA.openThr,cmet:'rain',hl:[],A:[Y0,Y0],B:[YLAST,YLAST],rel:false,ecm:'ecdf',topn:20,eab:true,fe:'va'};
+const MN={vol:{name:'Volume',unit:'mm',uy:'mm'},freq:{name:'Frequência',unit:'dias',uy:'dias chuvosos'},int:{name:'Intensidade',unit:'mm/dia chuvoso',uy:'mm por dia chuvoso'},open:{name:'Céu aberto',unit:'% dos anos',uy:'% dos anos'},cloud:{name:'Nebulosidade diurna média',unit:'% de nuvem',uy:'% de nuvem'}};
 
 /* ============ agregação ============ */
 const cache={};
@@ -358,7 +363,38 @@ function warnings(){const w=[];const vy=validYears(st.src);
   else if(n<10)w.push(['crit','<strong>Apenas '+n+' ano'+(n>1?'s':'')+' selecionado'+(n>1?'s':'')+'.</strong> Médias, medianas e faixas p10–p90 com menos de 10 anos são instáveis.']);
   return w;}
 function renderAlerts(){$('alerts').innerHTML=warnings().map(x=>'<div class="alert '+(x[0]==='info'?'info':'')+'"'+(x[0]==='crit'?' role="alert"':'')+'>'+x[1]+'</div>').join('');}
-function renderStatus(){const m=MN[st.met];$('status').textContent=SRCN[st.src]+' · '+periodNote()+' · dia chuvoso ≥ '+fmt(st.thr,st.thr<1?1:0)+' mm · '+m.name.toLowerCase()+' · '+(st.grp==='m'?'meses':'estações')+(YPART?' · '+YPART+' parcial (até '+lastDS(st.src)+') fora das médias':'');}
+function renderStatus(){const m=MN[st.met];$('status').textContent=SRCN[st.src]+' · '+periodNote()+' · dia chuvoso ≥ '+fmt(st.thr,st.thr<1?1:0)+' mm · céu aberto ≤ '+fmt(st.ot,st.ot%1?1:0)+'% · '+m.name.toLowerCase()+' · '+(st.grp==='m'?'meses':'estações')+(YPART?' · '+YPART+' parcial (até '+lastDS(st.src)+') fora das médias':'');}
+
+
+/* ============ nebulosidade ============ */
+const ccache={};
+function cAgg(ot){const k=ot;if(ccache[k])return ccache[k];const n=new Float64Array(NY*12),op=new Float64Array(NY*12),cs=new Float64Array(NY*12),lim=Math.round(ot*10);
+  for(let i=0;i<N;i++){const v=CLD[i];if(v<0)continue;const q=(yr[i]-Y0)*12+mo[i];n[q]++;cs[q]+=v/10;if(v<=lim)op[q]++;}
+  return ccache[k]={n,op,cs};}
+const otTxt=()=>fmt(st.ot,st.ot%1?1:0);
+// por ano e grupo (mês ou estação): % de dias abertos e nebulosidade média
+function cGroupStats(ys,gr){const c=cAgg(st.ot),G=gr.G,o=[];
+  for(let gi=0;gi<G;gi++){const a=[],b=[],w=[];
+    for(const y of ys){let n=0,op=0,cs=0,rn=0,rw=0;const yi=y-Y0;
+      for(let m=0;m<12;m++){if(gr.map(m)!==gi)continue;const k=yi*12+m;n+=c.n[k];op+=c.op[k];cs+=c.cs[k];}
+      if(n>0){a.push(op/n*100);b.push(cs/n);}
+      // dias chuvosos do mesmo grupo, em % dos dias com valor
+      const ag=agg(st.src,Tt());let nn=0,ww=0;for(let m=0;m<12;m++){if(gr.map(m)!==gi)continue;const k=yi*12+m;nn+=ag.n[k];ww+=ag.wet[k];}
+      if(nn>0)w.push(ww/nn*100);}
+    o.push({open:statOf(a),cloud:statOf(b),wet:statOf(w),meanOpen:a.length?a.reduce((x,y)=>x+y,0)/a.length:NaN});}
+  return o;}
+function viewCloudSazon(ys,gr,w){
+  const G=gr.G,names=gr.names,cs=cGroupStats(ys,gr),pf=v=>fmt(v,0)+'%';
+  const hiI=cs.reduce((b,t,i)=>t.open.n&&(b<0||t.open.p50>cs[b].open.p50)?i:b,-1),loI=cs.reduce((b,t,i)=>t.open.n&&(b<0||t.open.p50<cs[b].open.p50)?i:b,-1);
+  $('s4t').textContent=hiI<0?'Céu aberto: sem dados':'Céu aberto (nebulosidade diurna ≤ '+otTxt()+'%): maior fatia de dias em '+gr.long[hiI]+' (mediana '+pf(cs[hiI].open.p50)+'), menor em '+gr.long[loI]+' ('+pf(cs[loI].open.p50)+'); dias chuvosos ≥ '+fmt(st.thr,st.thr<1?1:0)+' mm no mesmo eixo';
+  $('s4').innerHTML=bandPanel(w,{title:'Céu aberto e dia chuvoso, % dos dias',G,names,series:[{name:'Céu aberto',col:'--c6',stats:cs.map(t=>t.open),off:-1},{name:'Dia chuvoso',col:'--c2',stats:cs.map(t=>t.wet),off:1,dash:true,shape:'sq'}],refs:[],yfmt:v=>fmt(v,0)+'%',tfmt:v=>fmt(v,0)+'%',ytitle:'% dos dias do '+(G===12?'mês':'grupo')});
+  legend('s4l',[['dot','--c6','Céu aberto (mediana)'],['sq','--c2','Dia chuvoso (mediana)'],['band','--c6','faixa p10–p90 entre anos']]);
+  $('s4c').textContent='Cada ponto resume '+ys.length+' valores, um por ano ('+periodNote()+'). Nebulosidade do ERA5 (modelo), sempre ERA5 mesmo com outra fonte de chuva; o limiar de céu aberto vem do controle da barra superior. Faixas de meses vizinhos se sobrepõem bastante: a ordem entre eles não é firme.';
+  $('s5t').textContent=hiI<0?'Nebulosidade: sem dados':'Nebulosidade diurna média (09–17 h): de '+pf(Math.min(...cs.map(t=>t.cloud.p50)))+' a '+pf(Math.max(...cs.map(t=>t.cloud.p50)))+' (mediana entre anos, por '+(G===12?'mês':'grupo')+')';
+  $('s5').innerHTML=bandPanel(w,{title:'Nebulosidade diurna média',G,names,series:[{name:'Nebulosidade diurna',col:'--c5',stats:cs.map(t=>t.cloud),off:0}],refs:[],yfmt:v=>fmt(v,0)+'%',tfmt:v=>fmt(v,0)+'%',ytitle:'% de cobertura de nuvens',h:230});
+  legend('s5l',[['dot','--c5','Mediana'],['band','--c5','faixa p10–p90 entre anos']]);
+  $('s5c').textContent='Média das 9 horas locais de 09 a 17 h; a média de 24 h inclui a noite e não é usada.';
+  return cs;}
 
 /* ============ 1 Sazonalidade ============ */
 function bandPanel(w,o){ // o:{G,names,series:[{name,col,stats,off,dash,shape}],refs:[{name,vals,shape,col,off}],yfmt,ytitle,uniform,h,ymax}
@@ -424,50 +460,53 @@ function viewSazon(){
     for(let k=1;k<3;k++){const d=defs[k];$('sx'+k).innerHTML=bandPanel(wOf('sx'+k),{title:d[0],G,names,series:[{name:d[0],col:d[2],stats:d[1],off:0}],refs:d[5],yfmt:d[3],tfmt:d[4],ytitle:d[0],h:230});}
     $('s1c').textContent='Absolutos herdam o viés do modelo (ERA5: volume e frequência acima das referências). Prefira as participações para comparar com observações.';
   }
+  const cst=viewCloudSazon(ys,gr,wOf('s4'));
   // tabela
-  const rows=[];for(let i=0;i<G;i++)rows.push([names[i],fmt(sv[i].p50,1)+' ('+fmt(sv[i].p10,1)+'–'+fmt(sv[i].p90,1)+')',fmt(sf[i].p50,1)+' ('+fmt(sf[i].p10,1)+'–'+fmt(sf[i].p90,1)+')',fmt(av[i].p50,0),fmt(af[i].p50,1),fmt(ai[i].p50,1)]);
-  $('s-table').innerHTML=table([G===12?'Mês':'Estação','Volume, % do ano (mediana, p10–p90)','Dias, % do ano (mediana, p10–p90)','Volume mediano (mm)','Dias chuvosos medianos','Intensidade mediana (mm)'],rows);
+  const rows=[];for(let i=0;i<G;i++)rows.push([names[i],fmt(sv[i].p50,1)+' ('+fmt(sv[i].p10,1)+'–'+fmt(sv[i].p90,1)+')',fmt(sf[i].p50,1)+' ('+fmt(sf[i].p10,1)+'–'+fmt(sf[i].p90,1)+')',fmt(av[i].p50,0),fmt(af[i].p50,1),fmt(ai[i].p50,1),fmt(cst[i].open.p50,1)+' ('+fmt(cst[i].open.p10,1)+'–'+fmt(cst[i].open.p90,1)+')',fmt(cst[i].cloud.p50,1)]);
+  $('s-table').innerHTML=table([G===12?'Mês':'Estação','Volume, % do ano (mediana, p10–p90)','Dias, % do ano (mediana, p10–p90)','Volume mediano (mm)','Dias chuvosos medianos','Intensidade mediana (mm)','Céu aberto, % dos dias (mediana, p10–p90)','Nebulosidade diurna mediana (%)'],rows);
 }
 
 /* ============ 2 Calendário ============ */
 function viewCal(){
-  const a=agg(st.src,Tt()),ys=years(),w=wOf('hm'),met=st.met;
-  const S={vol:new Float64Array(366),wet:new Float64Array(366),wv:new Float64Array(366),n:new Float64Array(366)};
+  const a=agg(st.src,Tt()),ys=years(),w=wOf('hm'),cm=st.cmet,met=cm==='rain'?st.met:cm,isC=cm!=='rain',rk=cm==='open'?'open':cm==='cloud'?'cloud':undefined;
+  const S={vol:new Float64Array(366),wet:new Float64Array(366),wv:new Float64Array(366),n:new Float64Array(366),co:new Float64Array(366),cn:new Float64Array(366),cs:new Float64Array(366)};
   const ysSet=new Set(ys),T=Tt(),s=SRC[st.src];
   for(let i=0;i<N;i++){if(!ysSet.has(yr[i]))continue;const v=s[i];if(v<0)continue;const k=slot[i];S.n[k]++;S.vol[k]+=v/10;if(v>=T){S.wet[k]++;S.wv[k]+=v/10;}}
+  {const lim=Math.round(st.ot*10);for(let i=0;i<N;i++){if(!ysSet.has(yr[i]))continue;const v=CLD[i];if(v<0)continue;const k=slot[i];S.cn[k]++;S.cs[k]+=v/10;if(v<=lim)S.co[k]++;}}
   const kk=st.sm;const sm=f=>{const o=new Float64Array(366);for(let i=0;i<366;i++){let t=0;for(let d=-kk;d<=kk;d++)t+=S[f][(i+d+366)%366];o[i]=t;}return o;};
-  const V=kk?sm('vol'):S.vol,W=kk?sm('wet'):S.wet,WV=kk?sm('wv'):S.wv,NN=kk?sm('n'):S.n;
-  const val=k=>{if(!NN[k])return NaN;if(met==='vol')return V[k]/NN[k];if(met==='freq')return W[k]/NN[k]*100;return W[k]>=5?WV[k]/W[k]:NaN;};
+  const V=kk?sm('vol'):S.vol,W=kk?sm('wet'):S.wet,WV=kk?sm('wv'):S.wv,NN0=kk?sm('n'):S.n,CO=kk?sm('co'):S.co,CNn=kk?sm('cn'):S.cn,CS=kk?sm('cs'):S.cs,NN=isC?CNn:NN0;
+  const val=k=>{if(!NN[k])return NaN;if(met==='open')return CO[k]/NN[k]*100;if(met==='cloud')return CS[k]/NN[k];if(met==='vol')return V[k]/NN[k];if(met==='freq')return W[k]/NN[k]*100;return W[k]>=5?WV[k]/W[k]:NaN;};
   const R=((st.mt-st.mf+12)%12)+1,rows=[];for(let r=0;r<R;r++)rows.push((st.mf+r)%12);
   let mx=0;const grid=rows.map(m=>{const row=[];for(let d=0;d<ML[m];d++){const v=val(MS[m]+d);row.push(v);if(isFinite(v))mx=Math.max(mx,v);}return row;});
   if(!(mx>0))mx=1;
   const mo_=mobile(w),m={l:mo_?32:40,r:mo_?44:60,t:34,b:10},rh=mo_?24:28,pw=w-m.l-m.r,cw=pw/31,h=m.t+R*rh+m.b+54;
-  const unit=met==='vol'?'mm/dia':met==='freq'?'% dos anos':'mm por dia chuvoso';
+  const unit=met==='vol'?'mm/dia':met==='freq'||met==='open'?'% dos anos':met==='cloud'?'% de nuvem':'mm por dia chuvoso';
   let sv=svgOpen(w,h,'Calendário mês por dia, '+MN[met].name);
   for(const d of [1,5,10,15,20,25,30])sv+='<text class="tick" x="'+(m.l+(d-.5)*cw)+'" y="'+(m.t-8)+'" text-anchor="middle">'+d+'</text>';
-  sv+='<text class="tick" x="'+(w-m.r+6)+'" y="'+(m.t-8)+'">'+(met==='vol'?'mm/dia':met==='freq'?'% dias':'mm')+'</text>';
+  sv+='<text class="tick" x="'+(w-m.r+6)+'" y="'+(m.t-8)+'">'+(met==='vol'?'mm/dia':met==='freq'||met==='open'?'% dias':met==='cloud'?'% nuvem':'mm')+'</text>';
   rows.forEach((mm,r)=>{const y=m.t+r*rh;sv+='<text class="lab" x="'+(m.l-6)+'" y="'+(y+rh/2+4)+'" text-anchor="end">'+MES[mm]+'</text>';
     for(let d=0;d<ML[mm];d++){const v=grid[r][d],k=MS[mm]+d;const x=m.l+d*cw;
-      const tipTxt=(d+1)+' de '+MESL[mm]+'\n'+(isFinite(v)?fmt(v,met==='freq'?0:1)+' '+unit:'poucos dias chuvosos (< 5) para estimar')+'\n'+(kk?'janela de '+(2*kk+1)+' dias; ':'')+fmt(NN[k])+' observações-dia';
-      sv+='<rect class="cell" data-tip="'+esc(tipTxt)+'" x="'+(x+.5)+'" y="'+(y+.5)+'" width="'+Math.max(1,cw-1)+'" height="'+(rh-1)+'" rx="2" style="fill:'+(isFinite(v)?ramp(v/mx):'transparent')+';'+(isFinite(v)?'':'stroke:var(--axis);stroke-dasharray:2 2')+'"/>';}
+      const tipTxt=(d+1)+' de '+MESL[mm]+'\n'+(isFinite(v)?fmt(v,met==='freq'||met==='open'?0:1)+' '+unit:(isC?'sem dados':'poucos dias chuvosos (< 5) para estimar'))+'\n'+(kk?'janela de '+(2*kk+1)+' dias; ':'')+fmt(NN[k])+' observações-dia';
+      sv+='<rect class="cell" data-tip="'+esc(tipTxt)+'" x="'+(x+.5)+'" y="'+(y+.5)+'" width="'+Math.max(1,cw-1)+'" height="'+(rh-1)+'" rx="2" style="fill:'+(isFinite(v)?ramp(v/mx,rk):'transparent')+';'+(isFinite(v)?'':'stroke:var(--axis);stroke-dasharray:2 2')+'"/>';}
     // média do mês
-    let nn=0,vv=0,ww=0,wvv=0;for(let d=0;d<ML[mm];d++){const k=MS[mm]+d;nn+=S.n[k];vv+=S.vol[k];ww+=S.wet[k];wvv+=S.wv[k];}
-    const mv=met==='vol'?vv/nn:met==='freq'?ww/nn*100:(ww>0?wvv/ww:NaN);
-    sv+='<text class="lab" x="'+(w-m.r+6)+'" y="'+(y+rh/2+4)+'">'+fmt(mv,met==='freq'?0:1)+'</text>';});
+    let nn=0,vv=0,ww=0,wvv=0,cn=0,co=0,cs_=0;for(let d=0;d<ML[mm];d++){const k=MS[mm]+d;nn+=S.n[k];vv+=S.vol[k];ww+=S.wet[k];wvv+=S.wv[k];cn+=S.cn[k];co+=S.co[k];cs_+=S.cs[k];}
+    const mv=met==='open'?co/cn*100:met==='cloud'?cs_/cn:met==='vol'?vv/nn:met==='freq'?ww/nn*100:(ww>0?wvv/ww:NaN);
+    sv+='<text class="lab" x="'+(w-m.r+6)+'" y="'+(y+rh/2+4)+'">'+fmt(mv,met==='freq'||met==='open'?0:1)+'</text>';});
   // legenda de cor
   const ly=m.t+R*rh+22,lw=Math.min(260,pw);
-  sv+='<defs><linearGradient id="hmg" x1="0" x2="1">'+Array.from({length:12},(_,i)=>'<stop offset="'+i/11+'" stop-color="'+ramp(i/11)+'"/>').join('')+'</linearGradient></defs>';
+  sv+='<defs><linearGradient id="hmg" x1="0" x2="1">'+Array.from({length:12},(_,i)=>'<stop offset="'+i/11+'" stop-color="'+ramp(i/11,rk)+'"/>').join('')+'</linearGradient></defs>';
   sv+='<rect x="'+m.l+'" y="'+ly+'" width="'+lw+'" height="10" rx="2" fill="url(#hmg)"/>';
   const tk=ticks(0,mx,4).filter(t=>t<=mx+1e-9);for(const t of tk)sv+='<text class="tick" x="'+(m.l+t/mx*lw)+'" y="'+(ly+24)+'" text-anchor="middle">'+fmt(t,mx<5?1:0)+'</text>';
   sv+='<text class="tick" x="'+(m.l+lw+10)+'" y="'+(ly+9)+'">'+unit+'</text></svg>';
   $('hm').innerHTML=sv;
-  $('hmt').textContent=MN[met].name+' por dia do ano, '+MESL[st.mf]+(R>1?' a '+MESL[st.mt]:'')+(R>1&&st.mf>st.mt?' (atravessa a virada do ano)':'');
-  $('hmc').textContent=(met==='vol'?'Média de mm por dia':met==='freq'?'Porcentagem dos anos em que o dia foi chuvoso (≥ '+fmt(st.thr,st.thr<1?1:0)+' mm)':'mm médios nos dias chuvosos (células com menos de 5 dias chuvosos ficam vazias)')+', '+ys.length+' anos ('+periodNote()+'), '+SRCN[st.src]+(kk?', suavizado em janela de '+(2*kk+1)+' dias':', sem suavização')+'. Coluna à direita: média do mês, sem suavização. Escala de 0 ao máximo exibido.';
+  $('hmt').textContent=(met==='open'?'Céu aberto (nebulosidade diurna ≤ '+otTxt()+'%)':MN[met].name)+' por dia do ano, '+MESL[st.mf]+(R>1?' a '+MESL[st.mt]:'')+(R>1&&st.mf>st.mt?' (atravessa a virada do ano)':'');
+  $('hmc').textContent=(met==='open'?'Porcentagem dos anos em que o dia foi de céu aberto (nebulosidade diurna de 09 a 17 h ≤ '+otTxt()+'%; mais escuro = mais dias abertos)':met==='cloud'?'Nebulosidade diurna média (09–17 h; mais escuro = mais nuvem)':met==='vol'?'Média de mm por dia':met==='freq'?'Porcentagem dos anos em que o dia foi chuvoso (≥ '+fmt(st.thr,st.thr<1?1:0)+' mm)':'mm médios nos dias chuvosos (células com menos de 5 dias chuvosos ficam vazias)')+', '+ys.length+' anos ('+periodNote()+'), '+SRCN[st.src]+(kk?', suavizado em janela de '+(2*kk+1)+' dias':', sem suavização')+'. Coluna à direita: média do mês, sem suavização. Escala de 0 ao máximo exibido.'+(isC?' Nebulosidade do ERA5 (modelo), sempre ERA5 independentemente da fonte de chuva.':'');
   // diagnóstico de ruído
-  let so=0,se=0;for(const mm of rows){let nw=0,nt=0;for(let d=0;d<ML[mm];d++){nw+=S.wet[MS[mm]+d];nt+=S.n[MS[mm]+d];}const pm=nt?nw/nt:0;
-    for(let d=0;d<ML[mm];d++){const k=MS[mm]+d;if(!S.n[k])continue;const p=S.wet[k]/S.n[k];so+=(p-pm)*(p-pm);se+=pm*(1-pm)/S.n[k];}}
+  const fw=met==='open'?S.co:S.wet,fn=met==='open'?S.cn:S.n;let so=0,se=0;for(const mm of rows){let nw=0,nt=0;for(let d=0;d<ML[mm];d++){nw+=fw[MS[mm]+d];nt+=fn[MS[mm]+d];}const pm=nt?nw/nt:0;
+    for(let d=0;d<ML[mm];d++){const k=MS[mm]+d;if(!fn[k])continue;const p=fw[k]/fn[k];so+=(p-pm)*(p-pm);se+=pm*(1-pm)/fn[k];}}
   const ratio=se>0?so/se:NaN;
-  $('hmn').innerHTML='<strong>Diagnóstico de ruído</strong> (frequência de dias ≥ '+fmt(st.thr,st.thr<1?1:0)+' mm, dados brutos, meses exibidos): variância observada entre dias do mesmo mês ÷ variância binomial esperada = <strong>'+fmt(ratio,2)+'</strong>. '+(isFinite(ratio)?(ratio<1.5?'Valor perto de 1: a textura dia a dia é compatível com ruído amostral; só o gradiente sazonal é confiável.':'Acima de 1,5: há estrutura além do ruído binomial (inclui o gradiente sazonal dentro do mês), mas confirme com outro limiar ou período.'):'');
+  if(met==='cloud'){$('hmn').textContent='Diagnóstico de ruído não se aplica à nebulosidade média; veja o céu aberto para a razão contra o ruído binomial.';return;}
+  $('hmn').innerHTML='<strong>Diagnóstico de ruído</strong> (frequência de dias '+(met==='open'?'de céu aberto':'≥ '+fmt(st.thr,st.thr<1?1:0)+' mm')+', dados brutos, meses exibidos): variância observada entre dias do mesmo mês ÷ variância binomial esperada = <strong>'+fmt(ratio,2)+'</strong>. '+(isFinite(ratio)?(ratio<1.5?'Valor perto de 1: a textura dia a dia é compatível com ruído amostral; só o gradiente sazonal é confiável.':'Acima de 1,5: há estrutura além do ruído binomial (inclui o gradiente sazonal dentro do mês), mas confirme com outro limiar ou período.'):'');
 }
 
 /* ============ 3 Anos ============ */
@@ -759,6 +798,8 @@ function init(){
   mkp('todo o período',Y0,YLAST);mkp('1ª metade',Y0,mid);mkp('2ª metade',mid+1,YLAST);mkp('últimos 10',YLAST-9,YLAST);
   $('subline').textContent='Precipitação diária em grade para a cidade do Rio de Janeiro, '+Y0+'–'+(YPART||YLAST)+(YPART?' ('+YPART+' parcial, até '+lastDS('era5')+', sempre marcado e fora das médias)':'')+'. Reanálise e modelo, não pluviômetro: use a nota metodológica para o viés.';
   const bind=(id,key,conv,after)=>{$(id).addEventListener('change',e=>{const v=e.target.type==='checkbox'?e.target.checked:e.target.value;st[key]=conv?conv(v):v;if(after)after();render();});};
+  {const o=$('othr');DATA.openOpts.forEach(v=>{const e=document.createElement('option');e.value=v;e.textContent=fmt(v,v%1?1:0)+(v===DATA.openThr?' (padrão: “clear” do NOAA/NCEI)':'');if(v===st.ot)e.selected=true;o.appendChild(e);});}
+  bind('othr','ot',parseFloat);bind('cmet','cmet');
   bind('src','src');bind('thr','thr',parseFloat);bind('met','met');bind('grp','grp');
   $('y0').addEventListener('change',e=>{st.y0=+e.target.value;if(st.y0>st.y1){st.y1=st.y0;syncYears();}render();});
   $('y1').addEventListener('change',e=>{st.y1=+e.target.value;if(st.y1<st.y0){st.y0=st.y1;syncYears();}render();});

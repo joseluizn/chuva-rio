@@ -8,7 +8,8 @@ Este documento descreve como os dados diários de chuva do Rio de Janeiro são a
 Open-Meteo Historical Weather API (sem chave)
    │   scripts/fetch_data.py   (baixa, valida, grava atomicamente)
    ▼
-data/daily/era5.csv  ecmwf_ifs.csv  best_match.csv  meta.json
+data/daily/era5.csv  ecmwf_ifs.csv  best_match.csv  era5_cloud.csv  meta.json
+   │   scripts/model_periods.py → data/derived/periodos_abr_out.json   (modelo por decêndio; ver docs/modelo_periodos.md)
    │   scripts/build_main.py   → site/index.html      (usa scripts/main_template.html)
    │   scripts/build_full.py   → site/completo.html   (usa scripts/full_template.html; ambos usam scripts/common.py)
    ▼
@@ -17,11 +18,12 @@ site/  ──(push na main)──►  GitHub Actions "Deploy Pages"  ──►  
 
 - **Fonte**: `https://archive-api.open-meteo.com/v1/archive`, variável `daily=precipitation_sum`, ponto (-22.9068, -43.1729), fuso `America/Sao_Paulo`, de 1995-01-01 até ontem. Modelos: `era5` (série principal), `ecmwf_ifs` e `best_match` (comparação). Ver `docs/analise_modelos.md` para o motivo de a série principal ser o ERA5 (o `best_match` passa a ser ECMWF IFS em 2017 e cria uma descontinuidade).
 - **CSV**: colunas `date,precip_mm`; célula vazia = dado ausente. O arquivo é sempre o período completo.
+- **Nebulosidade** (`era5_cloud.csv`): mesma API e mesma célula do ERA5 de chuva (`models=era5`). Diário: `cloud_cover_mean`, `sunshine_duration`, `daylight_duration`; horário: `cloud_cover`, de que se calcula a média das 9 horas locais de 09 a 17 h (`cloud_daytime_0917_pct`). Colunas: `date,cloud_cover_mean_pct,sunshine_min,daylight_min,cloud_daytime_0917_pct`; célula vazia = dado ausente (os últimos dias, pelo mesmo atraso do ERA5). **Dia de céu aberto** = nebulosidade diurna ≤ 30% (`OPEN_THR` em `scripts/common.py`), a classe "clear" (0 a 3/10) do NOAA/NCEI ([Comparative Climatic Data](https://www.ncei.noaa.gov/products/land-based-station/comparative-climatic-data)). Só é baixada na execução padrão (sem `--model`); `--cloud` força e `--skip-cloud` pula. Nebulosidade de reanálise é modelo, não observação, e não há referência observada conferida; a fração de insolação foi checada e descartada (ver `docs/modelo_periodos.md`).
 - **Referências estáticas** (`data/refs/`) não passam por esse fluxo; ver seção 5.
 
 ### Por que baixar tudo a cada vez (e não só o recente)
 
-São 4 requisições por modelo (blocos de 10 anos), cerca de 12 no total, muito abaixo do limite gratuito. Baixar o período completo permite comparar toda a série com o CSV atual e detectar revisões silenciosas da reanálise. Uma atualização incremental (só os últimos 30 dias) seria mais leve, mas não enxergaria revisões antigas.
+São 4 requisições por modelo (blocos de 10 anos), cerca de 12 no total, mais cerca de 4 diárias e 7 horárias (blocos de 5 anos) para a nebulosidade, muito abaixo do limite gratuito. Baixar o período completo permite comparar toda a série com o CSV atual e detectar revisões silenciosas da reanálise. Uma atualização incremental (só os últimos 30 dias) seria mais leve, mas não enxergaria revisões antigas.
 
 ### Validações antes de gravar (tudo ou nada)
 
@@ -33,6 +35,8 @@ O `fetch_data.py` só grava se **todos** os modelos passarem:
 4. Nulos só no início (o `ecmwf_ifs` começa em 2017) ou no fim (atraso do ERA5, ~5-6 dias); nulo no meio da série é erro. Último valor com mais de 15 dias de atraso também é erro.
 5. **Nenhum dia anterior a hoje − 60 dias mudou mais que 0,2 mm** em relação ao CSV atual (nem virou nulo). Dias mais recentes podem ser revisados livremente.
 
+A nebulosidade passa por validações análogas, no mesmo "tudo ou nada" (uma falha nela também impede gravar a chuva): células de grade iguais às do ERA5 de chuva; nebulosidade entre 0 e 100%; `sunshine` entre 0 e `daylight`; `daylight` presente e plausível; nulos coerentes entre `cloud_cover_mean` e `sunshine`; as 9 horas de 09 a 17 h de cada dia presentes (dia com hora faltando vira nulo e, no meio da série, é erro); e, para dias antigos, nenhuma revisão acima de 2 pontos percentuais (`--allow-revisions` libera, como na chuva).
+
 Se algo falha, o script sai com código 1, imprime o motivo (e os 10 maiores desvios, no caso de revisões) e não altera nenhum arquivo.
 
 ## 2. Atualização automática (GitHub Actions)
@@ -40,7 +44,7 @@ Se algo falha, o script sai com código 1, imprime o motivo (e os 10 maiores des
 Workflow `.github/workflows/update-data.yml` ("Update data"):
 
 - **Quando**: dia 7 de cada mês, 09:17 UTC (≈ 06:17 em Brasília), depois do atraso do ERA5. Também pode ser disparado à mão.
-- **O que faz**: checkout → Python 3.12 → testes do coletor → `python scripts/fetch_data.py` → `python scripts/build_main.py` → `python scripts/build_full.py` (pula com aviso se o script não existir) → se houver diferença em `data/` ou `site/`, faz commit `dados: atualização automática AAAA-MM-DD` e push na `main`.
+- **O que faz**: checkout → Python 3.12 → testes do coletor → `python scripts/fetch_data.py` → `python scripts/model_periods.py` (pula com aviso se não existir; grava `data/derived/periodos_abr_out.json`) → `python scripts/build_main.py` → `python scripts/build_full.py` (pula com aviso se o script não existir) → se houver diferença em `data/` ou `site/`, faz commit `dados: atualização automática AAAA-MM-DD` e push na `main`.
 - **Publicação**: o commit altera `site/`. Como pushes feitos com o `GITHUB_TOKEN` não disparam outros workflows, o workflow `pages.yml` também escuta o término bem-sucedido de "Update data" (`workflow_run`) e publica o site.
 - **Permissões**: o repositório precisa permitir que Actions escrevam: Settings → Actions → General → Workflow permissions → "Read and write permissions" (o workflow já declara `contents: write`). Se a `main` tiver proteção de branch que bloqueie pushes do bot, é preciso liberar o `github-actions[bot]`.
 
@@ -84,7 +88,8 @@ python3 -m unittest scripts/test_fetch_data.py -v
 python3 scripts/fetch_data.py --dry-run
 python3 scripts/fetch_data.py
 
-# 4. reconstruir as páginas
+# 4. recalcular o modelo por decêndio e reconstruir as páginas
+python3 scripts/model_periods.py   # data/derived/periodos_abr_out.json
 python3 scripts/build_main.py      # site/index.html
 python3 scripts/build_full.py      # site/completo.html
 
@@ -148,6 +153,7 @@ Depois de qualquer mudança em `data/refs/`, rode os builds e confira os número
 - [ ] `python3 scripts/fetch_data.py` terminou com código 0 e imprimiu "Gravado em …".
 - [ ] `git diff --stat data/daily`: as três CSVs ganharam linhas novas só no fim (e valores dos últimos dias do ERA5 preenchidos); nenhuma mudança espalhada em anos antigos.
 - [ ] `data/daily/meta.json`: `accessed` é hoje; `last_date_with_value` do `era5` está ~5-6 dias atrás; `end_date` é ontem; `returned_latitude/longitude` e `elevation_m` iguais aos de antes (-22.75, -43.25 para o ERA5).
+- [ ] `data/daily/era5_cloud.csv` ganhou linhas só no fim; `meta.json` → `cloud`: `last_date_with_value` ~5-6 dias atrás, `same_grid_cell_as_rain_era5` verdadeiro. `data/derived/periodos_abr_out.json` mudou pouco (mesmas sementes).
 - [ ] Abra `site/index.html` e `site/completo.html` no navegador: carregam sem erro no console.
 - [ ] O ano parcial avançou (a data "até" mostrada no site é a nova) e o ano corrente continua marcado como parcial.
 - [ ] Totais anuais de anos fechados não mudaram. Confira também o texto de abertura (o "lead") e os totais e razões citados; frases com números escritos à mão em `scripts/build_*.py` ou `docs/` podem ficar desatualizadas.
@@ -159,10 +165,11 @@ Depois de qualquer mudança em `data/refs/`, rode os builds e confira os número
 - **ERA5-Land vazio**: a API devolve apenas nulos para este ponto (testado também com `cell_selection=land` e outras coordenadas próximas), então não é usado.
 - **`best_match` descontínuo em 2017**: muda internamente para ECMWF IFS, com queda de volume anual; por isso a série principal é o ERA5.
 - **`ecmwf_ifs` só existe a partir de 2017**.
+- **Nebulosidade do ERA5**: saída de modelo, não observação; sem referência observada conferida. O limiar de 30% é convencional (ver acima). A fração de insolação do ERA5 é quase constante no ano e foi descartada.
 - **Atraso de ~5-6 dias** no ERA5: os últimos dias vêm nulos e são preenchidos nas atualizações seguintes. Valores provisórios (ERA5T) podem ser revisados semanas depois; a checagem de revisão ignora os últimos 60 dias, mas dias com 60 a ~90 dias podem ainda mudar um pouco.
 - **Mudanças de versão da reanálise** podem alterar o histórico inteiro; é para isso que existe a validação.
 - **Licença e atribuição**: ver seção 8.
-- **Não foi possível testar daqui** a chamada real à API nem a execução real das Actions (ambiente sem rede); os testes usam respostas simuladas. A primeira execução real deve ser feita com `--dry-run` e, no GitHub, via "Run workflow".
+- **Não foi possível testar daqui** a chamada real à API (inclusive a da nebulosidade, só exercitada com respostas simuladas) nem a execução real das Actions (ambiente sem rede); os testes usam respostas simuladas. A primeira execução real deve ser feita com `--dry-run` e, no GitHub, via "Run workflow".
 
 ## 8. Licença, atribuição e limites de uso do Open-Meteo
 
