@@ -133,6 +133,43 @@ def facts():
     yi = [y for y in ys if y >= 2017]
     ifs_st = C.annual_stats(ifs, 1.0, yi)
     ifs_ratio = sum(ifs_st[y]["mm"] for y in yi) / sum(mm[y] for y in yi)
+    # contraste sazonal vs Alerta Rio (período comum 1997..<=2024)
+    ys_c = [y for y in ys if 1997 <= y <= 2024]
+    mc = C.monthly_stats(daily, ys_c, 1.0)
+    err = [mc[m]["mm_mean"] / ar["monthly_mm"][m] - 1 for m in range(12)]
+    # 2026 (ano parcial) contra a normal na mesma data
+    last_d = C.last_valid_date(daily)
+    part_cum = norm_cum = None
+    if last_d.year > ys[-1]:
+        md = (last_d.month, last_d.day)
+        part_cum = sum(v for d, v in daily if d.year == last_d.year and v is not None)
+        cums = [sum(v for d, v in daily if d.year == y and (d.month, d.day) <= md and v is not None) for y in ys]
+        norm_cum = C.quantile(cums, 0.5)
+    # probabilidade suavizada (7 dias circular, ponderada por n), limiar 1 mm, anos completos
+    sl = C.slot_stats(daily, ys, 1.0)
+    keys = [(m, d) for m in range(1, 13) for d in range(1, [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1] + 1)]
+    ps = []
+    for i in range(366):
+        nn = sum(sl[keys[(i + k) % 366]]["n"] for k in range(-3, 4))
+        ww = sum(sl[keys[(i + k) % 366]]["wet"] for k in range(-3, 4))
+        ps.append(ww / nn)
+    imax = max(range(366), key=lambda i: ps[i])
+    imin = min(range(366), key=lambda i: ps[i])
+    # razão de ruído (sem tendência linear dentro do mês), mesma definição da página
+    o2 = e2 = 0.0
+    for m in range(1, 13):
+        ks = [k for k in keys if k[0] == m and k != (2, 29)]
+        D = len(ks)
+        W = sum(sl[k]["wet"] for k in ks)
+        Nn = sum(sl[k]["n"] for k in ks)
+        pb = W / Nn
+        pv = [sl[k]["wet"] / sl[k]["n"] for k in ks]
+        xm = (D - 1) / 2
+        pm = sum(pv) / D
+        b = sum((i - xm) * (pv[i] - pm) for i in range(D)) / sum((i - xm) ** 2 for i in range(D))
+        o2 += sum((pv[i] - (pm + b * (i - xm))) ** 2 for i in range(D))
+        e2 += sum(pb * (1 - pb) / sl[k]["n"] for k in ks) * (D - 2) / D
+    noise_r2 = o2 / e2
     # Galeão
     g = {}
     for yy in ("2020", "2021"):
@@ -144,7 +181,8 @@ def facts():
     return dict(daily=daily, meta=meta, refs=refs, ys=ys, y0=y0, y1=y1, mean_mm=mean_mm, mean_wet=mean_wet,
                 bias_mm=bias_mm, bias_mm_inm=bias_mm_inm, bias_wet=bias_wet, share_mm=share_mm,
                 share_wet=share_wet, dry=dry, wet_months=wet_months, d_ar=d_ar, d_in=d_in, d_iw=d_iw, ma=ma, mb=mb,
-                drop=mb / ma - 1, p_diff=p_diff, p_tr=p_tr, bm_drop=bmb / bma - 1, gal=g, last=last, ifs_ratio=ifs_ratio, n29=n29,
+                drop=mb / ma - 1, p_diff=p_diff, p_tr=p_tr, bm_drop=bmb / bma - 1, gal=g, last=last, ifs_ratio=ifs_ratio, err=err, ys_c=ys_c, part_cum=part_cum, norm_cum=norm_cum,
+                keys=keys, ps=ps, imax=imax, imin=imin, noise_r2=noise_r2, last_d=last_d, n29=n29,
                 ms=ms)
 
 
@@ -187,27 +225,64 @@ def build():
     FULL = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro",
             "novembro", "dezembro"]
     season = f"de {FULL[wm[0]]} a {FULL[wm[-1]]}"
-    title = (f"A chuva no Rio se concentra {season}; o ERA5 acerta o calendário, "
-             "mas superestima o volume e a frequência")
-    verdict = ("sugestivo, não conclusivo" if max(F["p_diff"], F["p_tr"]) >= 0.05
+    mw = F["ms"]
+    order_w = sorted(range(12), key=lambda m: -mw[m]["mm_mean"])
+    wetm = sorted([order_w[0]] + [m for m in order_w[1:] if mw[order_w[0]]["mm_mean"] - mw[m]["mm_mean"] < 1.0])
+    ctr_mm = max(x["mm_share"] for x in mw) / min(x["mm_share"] for x in mw)
+    ctr_wet = max(x["wet_share"] for x in mw) / min(x["wet_share"] for x in mw)
+    stronger = F["share_mm"] > F["share_wet"]
+    title = (f"A chuva no Rio se concentra {season}"
+             + (": nesses meses chove mais vezes e, sobretudo, mais forte" if stronger else ""))
+    kd = lambda i: f"{F['keys'][i][1]}/{MN[F['keys'][i][0] - 1]}"
+    lead1 = (f"Em média, o ERA5 registra {fmt(F['mean_mm'])} mm e {fmt(F['mean_wet'])} dias com ≥ 1 mm por ano ({y0}–{y1}). "
+             f"O período {season} concentra {pct(F['share_mm'])} do volume e {pct(F['share_wet'])} dos dias chuvosos.")
+    fulls = lambda l: " e ".join(FULL[m] for m in l)
+    lead2 = (f"{fulls(wetm).capitalize()} {'é o mês mais chuvoso' if len(wetm) == 1 else 'são os meses mais chuvosos'} e "
+             f"{fulls(F['dry'])} {'é o mais seco' if len(F['dry']) == 1 else 'são os mais secos'}; o contraste entre o mês mais e o menos "
+             f"chuvoso é de {fmt(ctr_mm, 1)}× no volume e de {fmt(ctr_wet, 1)}× nos dias chuvosos.")
+    if F["part_cum"] is not None:
+        lead3 = (f"{F['last_d'].year} acumula {fmt(F['part_cum'])} mm até {F['last_d'].day}/{MN[F['last_d'].month - 1]}, "
+                 f"{fmt(100 * F['part_cum'] / F['norm_cum'])}% da mediana dos anos completos na mesma data.")
+    else:
+        lead3 = f"{y1} foi o último ano completo da série."
+    lead4 = (f"Dentro do ano, a probabilidade suavizada de dia chuvoso vai de {pct(F['ps'][F['imax']])} (em {kd(F['imax'])}) "
+             f"a {pct(F['ps'][F['imin']])} (em {kd(F['imin'])}); " +
+             ("fora desse gradiente sazonal, as diferenças entre dias vizinhos são compatíveis com acaso."
+              if F["noise_r2"] < 1.25 else "há também variação entre dias vizinhos além do esperado por acaso."))
+    verdict = ("sugestiva, não conclusiva" if max(F["p_diff"], F["p_tr"]) >= 0.05
                else "consistente nos dois testes, mas de uma única célula")
-    lead1 = (f"Entre {y0} e {y1}, o ERA5 (reanálise em célula de ~25 km) dá {fmt(F['mean_mm'])} mm por ano e "
-             f"{fmt(F['mean_wet'])} dias com ≥ 1 mm. Frente a pluviômetros, ele superestima o volume em cerca de "
-             f"{pct(F['bias_mm'])} (Alerta Rio, 1997–2024: {fmt(refs['alertario']['annual_mm'])} mm) e a frequência em "
-             f"cerca de {pct(F['bias_wet'])} (INMET: {refs['inmet']['annual_wet_days']} dias).")
-    lead2 = (f"O padrão sazonal relativo é o que se aproveita: {season} caem {pct(F['share_mm'])} do volume e "
-             f"{pct(F['share_wet'])} dos dias chuvosos, e {dry} são os meses mais secos; as participações mensais ficam a "
-             f"até {fmt(max(F['d_ar'], F['d_in'], F['d_iw']), 1)} pontos percentuais das referências observadas.")
-    lead3 = (f"A média anual {'cai' if F['drop'] < 0 else 'sobe'} {pct(abs(F['drop']))} de 1995–2009 para 2010–{y1}: {verdict} "
-             f"(p = {pval(F['p_diff'])} na diferença de médias; {pval(F['p_tr'])} na tendência linear).")
+    e = F["err"]
+    emax = max(range(12), key=lambda m: e[m])
+    emin = min(range(12), key=lambda m: e[m])
+    def runs(ms_):
+        ms_ = sorted(ms_)
+        if not ms_:
+            return "nenhum mês"
+        out, cur = [], [ms_[0]]
+        for m in ms_[1:]:
+            if m == cur[-1] + 1:
+                cur.append(m)
+            else:
+                out.append(cur)
+                cur = [m]
+        out.append(cur)
+        if len(out) > 1 and out[0][0] == 0 and out[-1][-1] == 11:
+            out[0] = out[-1] + out[0]
+            out.pop()
+        return " e ".join(MN[r[0]] if len(r) == 1 else f"{MN[r[0]]}–{MN[r[-1]]}" for r in out)
+    biastxt = (f"Frente ao Alerta Rio (média de 33 pluviômetros, 1997–2024), o ERA5 superestima o volume em cerca de "
+               f"{pct(F['bias_mm'])}; frente ao INMET, a frequência em cerca de {pct(F['bias_wet'])} "
+               f"({fmt(F['mean_wet'])} contra {refs['inmet']['annual_wet_days']} dias ≥ 1 mm por ano). As participações mensais "
+               f"do ERA5 ficam a até {fmt(max(F['d_ar'], F['d_in'], F['d_iw']), 1)} pontos percentuais das referências, mas o "
+               f"ERA5 exagera o contraste sazonal: contra o Alerta Rio, no período comum {F['ys_c'][0]}–{F['ys_c'][-1]}, o erro "
+               f"relativo do volume mensal vai de {pct(e[emax], 0, True)} em {MN[emax]} a {pct(e[emin], 0, True)} em {MN[emin]}; "
+               f"é positivo em {runs([m for m in range(12) if e[m] > 0])} e negativo em {runs([m for m in range(12) if e[m] < 0])}.")
     import datetime as _dt
     partial = [y for y in range(y1 + 1, last.year + 1)]
     ptxt = (f"{last.year} é parcial e fica fora das médias" if last.year > y1
             else "todos os anos são completos")
-    sourceline = (f"Fonte: Open-Meteo Historical Weather API, modelo ERA5. Célula de grade em "
-                  f"{fmt(era['returned_latitude'], 2).replace('-', '−')}; {fmt(era['returned_longitude'], 2).replace('-', '−')} "
-                  f"(ponto pedido: −22,9068; −43,1729). Período {fdate(_dt.date(y0, 1, 1))} a {fdate(last)}; {ptxt}. "
-                  f"Consulta em {meta['accessed']}. " + ATTR_HTML)
+    sourceline = (f"Fonte: Open-Meteo, modelo ERA5, célula de grade de ~25 km; {fdate(_dt.date(y0, 1, 1))} a {fdate(last)}"
+                  f"{'' if last.year == y1 else f' ({last.year} parcial, fora das médias)'}. " + ATTR_HTML)
 
     static = {
         "ar": refs["alertario"]["monthly_mm"], "ar_annual": refs["alertario"]["annual_mm"],
@@ -236,7 +311,7 @@ def build():
 
     tpl = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "main_template.html"), encoding="utf-8").read()
     repl = {
-        "TITLE": title, "LEAD1": lead1, "LEAD2": lead2, "LEAD3": lead3, "SOURCELINE": sourceline,
+        "TITLE": title, "LEAD1": lead1, "LEAD2": lead2, "LEAD3": lead3, "LEAD4": lead4, "BIASTXT": biastxt, "SOURCELINE": sourceline,
         "NOTE_DROP": note_drop, "STATIC": json.dumps(static, ensure_ascii=False, separators=(",", ":")),
         "TENTHS": ",".join(str(v) for v in tenths),
         "ERA5_URL": era["url"], "ERA5_LAT": fmt(era["returned_latitude"], 2).replace("-", "−"), "ERA5_LON": fmt(era["returned_longitude"], 2).replace("-", "−"),

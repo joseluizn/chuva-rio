@@ -105,18 +105,33 @@ details.tbl{margin-top:8px}
 .ramp .bar{width:min(300px,100%);height:12px;border-radius:3px;border:1px solid var(--axis)}
 .hatch{display:inline-block;width:14px;height:14px;vertical-align:-3px;border:1px solid var(--axis);
   background:repeating-linear-gradient(45deg,var(--axis) 0 2px,transparent 2px 5px)}
+.sitenav{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 16px;padding:10px 0 8px;margin:0 0 12px;border-bottom:1px solid var(--border);font-size:15px}
+.sitenav .brand{font-weight:700}
+.sitenav ul{display:flex;flex-wrap:wrap;gap:4px 18px;list-style:none;margin:0;padding:0}
+.sitenav a{color:var(--ink2);text-decoration:none;padding:2px 0;border-bottom:2px solid transparent}
+.sitenav a:hover,.sitenav a:focus-visible{color:var(--ink);border-bottom-color:var(--axis)}
+.sitenav a[aria-current="page"]{color:var(--ink);font-weight:600;border-bottom-color:var(--c-mm)}
 footer{font-size:14px;color:var(--ink2);padding:6px 2px 0}
 footer p{margin:6px 0;max-width:88ch}
 </style>
 </head>
 <body>
 <main>
+<nav class="sitenav" aria-label="Seções do site">
+  <span class="brand">Chuva no Rio</span>
+  <ul>
+    <li><a href="index.html" aria-current="page">Principal</a></li>
+    <li><a href="completo.html">Versão completa</a></li>
+    <li><a href="https://github.com/joseluizn/chuva-rio">Código e dados</a></li>
+  </ul>
+</nav>
 <header>
-  <h1>A chuva no Rio se concentra de novembro a março; o ERA5 acerta o calendário, mas superestima o volume e a frequência</h1>
-  <p class="lead">Entre 1995 e 2025, o ERA5 (reanálise em célula de ~25 km) dá 1.615 mm por ano e 170 dias com ≥ 1 mm. Frente a pluviômetros, ele superestima o volume em cerca de 30% (Alerta Rio, 1997–2024: 1.238 mm) e a frequência em cerca de 83% (INMET: 93 dias).</p>
-  <p class="lead">O padrão sazonal relativo é o que se aproveita: de novembro a março caem 68% do volume e 58% dos dias chuvosos, e jun–jul são os meses mais secos; as participações mensais ficam a até 3,6 pontos percentuais das referências observadas.</p>
-  <p class="lead">A média anual cai 13% de 1995–2009 para 2010–2025: sugestivo, não conclusivo (p = 0,024 na diferença de médias; 0,071 na tendência linear).</p>
-  <p class="meta">Fonte: Open-Meteo Historical Weather API, modelo ERA5. Célula de grade em −22,75; −43,25 (ponto pedido: −22,9068; −43,1729). Período 1/jan/1995 a 5/nov/2026; 2026 é parcial e fica fora das médias. Consulta em 2026-11-12. Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), reanálise ERA5 — Copernicus/ECMWF.</p>
+  <h1>A chuva no Rio se concentra de novembro a março: nesses meses chove mais vezes e, sobretudo, mais forte</h1>
+  <p class="lead">Em média, o ERA5 registra 1.615 mm e 170 dias com ≥ 1 mm por ano (1995–2025). O período de novembro a março concentra 68% do volume e 58% dos dias chuvosos.</p>
+  <p class="lead">Janeiro é o mês mais chuvoso e junho e julho são os mais secos; o contraste entre o mês mais e o menos chuvoso é de 6,0× no volume e de 3,0× nos dias chuvosos.</p>
+  <p class="lead">2026 acumula 1.632 mm até 5/nov, 144% da mediana dos anos completos na mesma data.</p>
+  <p class="lead">Dentro do ano, a probabilidade suavizada de dia chuvoso vai de 80% (em 1/jan) a 18% (em 25/jun); fora desse gradiente sazonal, as diferenças entre dias vizinhos são compatíveis com acaso.</p>
+  <p class="meta">Fonte: Open-Meteo, modelo ERA5, célula de grade de ~25 km; 1/jan/1995 a 5/nov/2026 (2026 parcial, fora das médias). Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), reanálise ERA5 — Copernicus/ECMWF. <a href="#metodo" id="lnkMet">Sobre os dados e limitações</a></p>
 </header>
 
 <section id="dash" aria-labelledby="h-dash">
@@ -155,7 +170,6 @@ footer p{margin:6px 0;max-width:88ch}
     <h3 id="tA"></h3>
     <div id="chA"></div>
     <p class="cap" id="capA"></p>
-    <p class="note">No ERA5 homogêneo, a média anual cai de 1.731 mm (1995–2009, 15 anos) para 1.506 mm (2010–2025, 16 anos): −13% (teste de permutação da diferença de médias, p = 0,024; tendência linear 1995–2025, p = 0,071). Leitura: sugestiva, não conclusiva (uma única célula e alta variabilidade entre anos). Com o modelo padrão do Open-Meteo (best_match), que troca de ERA5 para ECMWF IFS em 2017-01-01, a mesma comparação daria −28%: queda exagerada, em boa parte artefato da troca de produto.</p>
     <details class="tbl"><summary>Ver totais anuais em tabela</summary><div class="tw" id="tblA"></div></details>
   </figure>
 
@@ -218,10 +232,18 @@ footer p{margin:6px 0;max-width:88ch}
   <div class="ramp" id="rampI"></div>
   <p class="cap" id="capI"></p>
   <p class="note" id="noiseI"></p>
+  <figure id="figD" style="margin-top:18px">
+    <h3 id="tD"></h3>
+    <label class="chk" style="margin:0 0 6px"><input type="checkbox" id="followMap"> Usar os meses escolhidos no mapa (padrão ao abrir: março a setembro)</label>
+    <div id="chD"></div>
+    <div class="keyl" id="keyD"></div>
+    <p class="cap" id="capD"></p>
+  </figure>
   <div class="sr" id="live" aria-live="polite"></div>
   <details class="tbl"><summary>Ver valores por mês em tabela</summary><div class="tw" id="tblI"></div></details>
 </section>
 
+<p class="meta" style="margin:18px 2px 8px">Valores de reanálise em grade, não de pluviômetro; ver limitações.</p>
 <section id="metodo" class="method" aria-labelledby="h-met">
   <details id="detMet">
     <summary><h2 id="h-met" style="display:inline">Nota metodológica</h2></summary>
@@ -229,11 +251,15 @@ footer p{margin:6px 0;max-width:88ch}
       <li><b>Fonte.</b> Open-Meteo Historical Weather API, modelo <code>era5</code>, variável <code>precipitation_sum</code>, fuso America/Sao_Paulo. Consulta: <a href="https://archive-api.open-meteo.com/v1/archive?latitude=-22.9068&longitude=-43.1729&start_date=1995-01-01&end_date=2026-11-11&daily=precipitation_sum&timezone=America%2FSao_Paulo&models=era5">https://archive-api.open-meteo.com/v1/archive?latitude=-22.9068&longitude=-43.1729&start_date=1995-01-01&end_date=2026-11-11&daily=precipitation_sum&timezone=America%2FSao_Paulo&models=era5</a> (acesso em 2026-11-12). Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), reanálise ERA5 — Copernicus/ECMWF.</li>
       <li><b>Célula retornada.</b> O ponto pedido foi −22,9068; −43,1729, mas a API devolve a célula de grade do ERA5 centrada em −22,75; −43,25 (~25 km, elevação 12 m). É média de área, não um pluviômetro.</li>
       <li><b>Por que ERA5 e não o modelo padrão.</b> O <code>best_match</code> do Open-Meteo usa ERA5 até 2016-12-31 e passa para o ECMWF IFS em 2017-01-01 (idêntico ao respectivo modelo em todos os dias de cada trecho). O IFS dá, neste ponto, cerca de 70% do total anual do ERA5, o que cria uma queda artificial em 2017. O ERA5 é o único produto homogêneo na série inteira. Análise completa: <a href="https://github.com/joseluizn/chuva-rio/blob/main/docs/analise_modelos.md">docs/analise_modelos.md</a>.</li>
+      <li><b>Queda após 2010.</b> No ERA5 homogêneo, a média anual cai de 1.731 mm (1995–2009, 15 anos) para 1.506 mm (2010–2025, 16 anos): −13% (teste de permutação da diferença de médias, p = 0,024; tendência linear 1995–2025, p = 0,071). Leitura: sugestiva, não conclusiva (uma única célula e alta variabilidade entre anos). Com o modelo padrão do Open-Meteo (best_match), que troca de ERA5 para ECMWF IFS em 2017-01-01, a mesma comparação daria −28%: queda exagerada, em boa parte artefato da troca de produto.</li>
+      <li><b>Viés do ERA5 frente a observações.</b> Frente ao Alerta Rio (média de 33 pluviômetros, 1997–2024), o ERA5 superestima o volume em cerca de 30%; frente ao INMET, a frequência em cerca de 83% (170 contra 93 dias ≥ 1 mm por ano). As participações mensais do ERA5 ficam a até 3,6 pontos percentuais das referências, mas o ERA5 exagera o contraste sazonal: contra o Alerta Rio, no período comum 1997–2024, o erro relativo do volume mensal vai de +62% em dez a −27% em jun; é positivo em set–mar e negativo em abr–ago.</li>
+      <li><b>Comparação por mês e por período.</b> <span id="aboveRef"></span><div id="tblRef" style="margin-top:6px"></div></li>
       <li><b>Período e anos parciais.</b> 1995–2025 são os anos completos (31 anos); dados até 5/nov/2026. O ano parcial aparece marcado nos gráficos e nunca entra em médias, faixas, participações ou no mapa. Dia chuvoso: precipitação diária ≥ limiar (1, 10 ou 25 mm). Percentis por interpolação linear.</li>
       <li><b>29 de fevereiro.</b> Tem dados em apenas 8 dos 31 anos completos; no mapa sem suavização a célula é tracejada e fica fora da escala e dos extremos. No acumulado do ano, em anos não bissextos o 29/fev repete o valor de 28/fev. A suavização de 7 dias é circular sobre 366 posições do calendário e ponderada por n (soma das contagens, não média de médias).</li>
-      <li><b>Ruído.</b> A razão exibida no mapa compara a variância observada de p(dia chuvoso) entre dias do mesmo mês com a variância binomial esperada com o n de anos do período, supondo anos independentes; dias vizinhos são autocorrelacionados, então é uma aproximação.</li>
+      <li><b>Ruído no mapa de calor.</b> <span id="noiseM"></span> A razão compara a variância observada de p(dia chuvoso) entre dias do mesmo mês com a variância binomial esperada com o n de anos do período, supondo anos independentes; dias vizinhos são autocorrelacionados, então é uma aproximação.</li>
+      <li><b>Gráfico contínuo (mar–set ou meses do mapa).</b> Suavização como no mapa (média móvel de 7 dias, circular, ponderada por n). Faixa de probabilidade: intervalo de Wilson de 90%. Faixa de mm/dia: bootstrap por anos, <span id="bootM"></span></li>
       <li><b>Checagem com o Galeão (GHCN-Daily, NOAA).</b> Só 2020 e 2021 têm cobertura acima de 95%. 2020: observado 930 mm e 96 dias, ERA5 1.733 mm e 158 dias; 2021: observado 765 mm e 79 dias, ERA5 1.663 mm e 164 dias. Ponto único, a ~15 km da célula; indicativo.</li>
-      <li><b>Referências observadas <span class="tag">não conferidas no original</span>.</b> Alerta Rio: média de 33 pluviômetros, 1997–2024, 1.238 mm/ano (<a href="https://www.sistema-alerta-rio.com.br/wp-content/uploads/2016/07/RELATORIO_ANUAL_CHUVA_2025.pdf">Relatório Anual de Chuva 2025</a>; valores lidos por resumo automático). INMET, estação Saúde: 1.069 mm/ano e 93 dias, normal citada na <a href="https://en.wikipedia.org/wiki/Rio_de_Janeiro">Wikipédia</a>; período inconsistente na fonte (período inconsistente na fonte (1981–2010 ou 1961–1990)). Frente a elas, o ERA5 superestima volume em cerca de 30% (Alerta Rio, mesmo período) e frequência em cerca de 83% (INMET).</li>
+      <li><b>Referências observadas <span class="tag">não conferidas no original</span>.</b> Alerta Rio: média de 33 pluviômetros, 1997–2024, 1.238 mm/ano (<a href="https://www.sistema-alerta-rio.com.br/wp-content/uploads/2016/07/RELATORIO_ANUAL_CHUVA_2025.pdf">Relatório Anual de Chuva 2025</a>; valores lidos por resumo automático). INMET, estação Saúde: 1.069 mm/ano e 93 dias, normal citada na <a href="https://en.wikipedia.org/wiki/Rio_de_Janeiro">Wikipédia</a>; período inconsistente na fonte (1981–2010 ou 1961–1990). Frente a elas, o ERA5 superestima volume em cerca de 30% (Alerta Rio, mesmo período) e frequência em cerca de 83% (INMET).</li>
       <li><b>Versão completa.</b> Exploração adicional em <a href="completo.html">completo.html</a>. Código e dados: <a href="https://github.com/joseluizn/chuva-rio">repositório</a>.</li>
     </ul>
   </details>
@@ -296,7 +322,7 @@ function yearStats(){const r={};for(let y=YMIN;y<=YLAST;y++)r[y]={mm:0,wet:0,n:0
 let geoA=null;
 function renderA(){
   const ys=yearStats(),box=$('#chA'),W=Math.max(300,box.clientWidth),mob=W<560;
-  const H=mob?250:290,ml=mob?42:48,mr=mob?98:128,mt=30,mb=26,pw=W-ml-mr,ph=H-mt-mb;
+  const H=mob?250:290,ml=mob?42:48,mr=mob?78:128,mt=30,mb=26,pw=W-ml-mr,ph=H-mt-mb;
   const nB=YLAST-YMIN+1,bx=pw/nB,X=y=>ml+(y-YMIN+.5)*bx,ymax=2500,Yp=v=>mt+ph*(1-v/ymax);
   geoA={ml,bx,X,W,H,mt,ph,pw};
   let s=`<svg id="svgA" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Total anual de chuva (mm) no ERA5, por ano, com o período selecionado em destaque e as referências Alerta Rio e INMET como linhas horizontais. A tabela abaixo traz os valores.">`;
@@ -304,9 +330,6 @@ function renderA(){
   for(let v=0;v<=ymax;v+=500){s+=`<line class="gl" x1="${ml}" x2="${W-mr}" y1="${Yp(v)}" y2="${Yp(v)}"/><text class="tx" x="${ml-6}" y="${Yp(v)+4}" text-anchor="end">${nf(v)}</text>`;}
   s+=`<rect id="selA" x="${X(st.y0)-bx/2}" y="${mt}" width="${(st.y1-st.y0+1)*bx}" height="${ph}" fill="var(--wash2)"/>`;
   const labs=[];
-  [['Alerta Rio',S.ar_annual],['INMET',S.inm_annual]].forEach(([n,v])=>{
-    s+=`<line x1="${ml}" x2="${W-mr+4}" y1="${Yp(v)}" y2="${Yp(v)}" stroke="var(--ink2)" stroke-width="1.2" stroke-dasharray="5 3"/>`;
-    labs.push({y:Yp(v)+4,t:`${n} ${nf(v)}`});});
   const pts=[];for(let y=YMIN;y<=YMAX;y++)if(complete[y])pts.push([y,ys[y].mm]);
   s+=`<polyline fill="none" stroke="var(--c-mm)" stroke-opacity=".55" stroke-width="1.5" points="${pts.map(p=>X(p[0])+','+Yp(p[1])).join(' ')}"/>`;
   pts.forEach(([y,v])=>{const inn=y>=st.y0&&y<=st.y1;s+=`<circle data-y="${y}" cx="${X(y)}" cy="${Yp(v)}" r="${inn?4:3}" fill="${inn?'var(--c-mm)':'var(--muted)'}" fill-opacity="${inn?1:.7}"/>`;});
@@ -324,7 +347,9 @@ function renderA(){
   const yy=years(),vals=yy.map(y=>ys[y].mm),mean=vals.reduce((a,b)=>a+b,0)/vals.length;
   const iMin=vals.indexOf(Math.min(...vals)),iMax=vals.indexOf(Math.max(...vals));
   $('#tA').textContent=`Totais anuais do ERA5 em ${st.y0}–${st.y1}: média de ${nf(mean)} mm, de ${nf(vals[iMin])} mm (${yy[iMin]}) a ${nf(vals[iMax])} mm (${yy[iMax]})`;
-  $('#capA').textContent=`Pontos cheios: período selecionado (${yy.length} anos); cinza: fora dele${PART?`; ${PART} (círculo vazado${mob?', *':''}) é parcial, até ${dstr(LASTI)}, e não entra em nenhuma média`:''}. Linhas tracejadas: Alerta Rio (1997–2024) e INMET, referências observadas, não conferidas no original. `+(()=>{const n=yy.length,a=yy.filter(y=>ys[y].mm>S.ar_annual).length,b=yy.filter(y=>ys[y].mm>S.inm_annual).length;return `Neste período, o total do ERA5 supera a linha do Alerta Rio em ${a} de ${n} anos e a do INMET em ${b} de ${n}.`;})();
+  $('#capA').textContent=`Pontos cheios: período selecionado (${yy.length} anos); cinza: fora dele${PART?`; ${PART} (círculo vazado${mob?', *':''}) é parcial, até ${dstr(LASTI)}, e não entra em nenhuma média`:''}. Linha clara: ligação entre anos, só para guiar o olho.`;
+  {const n=yy.length,a2=yy.filter(y=>ys[y].mm>S.ar_annual).length,b2=yy.filter(y=>ys[y].mm>S.inm_annual).length;
+   $('#aboveRef').textContent=`No período selecionado (${st.y0}–${st.y1}, ${n} anos), o total anual do ERA5 supera o do Alerta Rio (${nf(S.ar_annual)} mm) em ${a2} anos e o do INMET (${nf(S.inm_annual)} mm) em ${b2}.`;}
   let t=`<table><thead><tr><th>Ano</th><th>Total (mm)</th><th>Dias ≥ ${st.thr} mm</th><th>Dias com valor</th></tr></thead><tbody>`;
   for(let y=YMIN;y<=YLAST;y++)t+=`<tr><td>${y}${complete[y]?'':' (parcial)'}</td><td>${nf(ys[y].mm,1)}</td><td>${ys[y].wet}</td><td>${ys[y].n}</td></tr>`;
   $('#tblA').innerHTML=t+'</tbody></table>';
@@ -373,7 +398,7 @@ function renderB(yy){
   const arS=shr(S.ar),inS=shr(S.inm),iwS=shr(S.inm_wet);
   const box=$('#chB'),W=Math.max(300,box.clientWidth),mob=W<560;
   const H=mob?270:310,ml=mob?34:44,mr=mob?70:112,mt=30,mb=26,pw=W-ml-mr,ph=H-mt-mb;
-  const all=[...A.mmSh,...A.wetSh,...arS,...inS];if(showINW)all.push(...iwS);
+  const all=[...A.mmSh,...A.wetSh];
   const ymax=Math.ceil(Math.max(...all.filter(Number.isFinite))/5)*5||5;
   const X=m=>ml+(m+.5)*pw/12,Yp=v=>mt+ph*(1-v/ymax);geoB={X,ml,pw,W,ph,mt};
   let s=`<svg id="svgB" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Participação de cada mês no volume anual de chuva (mm) e no total de dias chuvosos, em porcentagem, num eixo único, com marcadores das referências observadas. Valores na tabela abaixo.">`;
@@ -382,37 +407,38 @@ function renderB(yy){
   for(let m=0;m<12;m++)s+=`<text class="tx" x="${X(m)}" y="${H-8}" text-anchor="middle">${mob?MN[m][0]:MN[m]}</text>`;
   const line=(arr,col)=>`<polyline fill="none" stroke="${col}" stroke-width="2.2" points="${arr.map((v,m)=>X(m)+','+Yp(v)).join(' ')}"/>`;
   s+=line(A.wetSh,'var(--c-wet)')+line(A.mmSh,'var(--c-mm)');
-  const dia=(x,y,c)=>`<path d="M${x} ${y-5.5}L${x+5.5} ${y}L${x} ${y+5.5}L${x-5.5} ${y}Z" fill="var(--surface)" stroke="${c}" stroke-width="1.8"/>`;
-  const sq=(x,y,c)=>`<rect x="${x-4.5}" y="${y-4.5}" width="9" height="9" fill="var(--surface)" stroke="${c}" stroke-width="1.8"/>`;
-  for(let m=0;m<12;m++){s+=dia(X(m),Yp(arS[m]),'var(--c-mm)')+sq(X(m),Yp(inS[m]),'var(--c-mm)');if(showINW)s+=sq(X(m),Yp(iwS[m]),'var(--c-wet)');}
   for(let m=0;m<12;m++){s+=`<circle cx="${X(m)}" cy="${Yp(A.mmSh[m])}" r="3.6" fill="var(--c-mm)"/><circle cx="${X(m)}" cy="${Yp(A.wetSh[m])}" r="3.6" fill="var(--c-wet)"/>`;}
   const labs=placeLabels([{y:Yp(A.mmSh[11])+4,t:mob?'volume':'volume (mm)',c:'lbl-mm'},{y:Yp(A.wetSh[11])+4,t:mob?'dias':'dias chuvosos',c:'lbl-wet'}]);
   labs.forEach(l=>s+=`<text class="${l.c}" x="${W-mr+10}" y="${l.y}">${l.t}</text>`);
   for(let m=0;m<12;m++)s+=`<rect data-m="${m}" x="${X(m)-pw/24}" y="${mt}" width="${pw/12}" height="${ph}" fill="transparent"/>`;
   box.innerHTML=s+'</svg>';
   box.onpointermove=e=>{const r=e.target.dataset&&e.target.dataset.m;if(r===undefined){hideTip();return;}const m=+r;
-    showTip(`<span class="h">${MNF[m]}</span><span class="k">Volume:</span> ${nf(A.mmSh[m],1)}% do ano (${nf(A.mmMean[m],1)} mm)<br><span class="k">Dias ≥ ${st.thr} mm:</span> ${nf(A.wetSh[m],1)}% (${nf(A.wetMean[m],1)} por ano)<br><span class="k">Alerta Rio:</span> ${nf(arS[m],1)}% do volume<br><span class="k">INMET:</span> ${nf(inS[m],1)}% do volume${showINW?`, ${nf(iwS[m],1)}% dos dias`:''}`,e);};
+    showTip(`<span class="h">${MNF[m]}</span><span class="k">Volume:</span> ${nf(A.mmSh[m],1)}% do ano (${nf(A.mmMean[m],1)} mm)<br><span class="k">Dias ≥ ${st.thr} mm:</span> ${nf(A.wetSh[m],1)}% (${nf(A.wetMean[m],1)} por ano)`,e);};
   box.onpointerleave=hideTip;
-  $('#keyB').innerHTML=`<span><svg width="14" height="14"><path d="M7 1.5L12.5 7L7 12.5L1.5 7Z" fill="none" stroke="var(--ink2)" stroke-width="1.8"/></svg>Alerta Rio (só volume)</span><span><svg width="14" height="14"><rect x="2.5" y="2.5" width="9" height="9" fill="none" stroke="var(--ink2)" stroke-width="1.8"/></svg>INMET (volume em azul${showINW?', dias em laranja':''})</span><span>Marcadores vazados: referências observadas, não conferidas no original${showINW?'':'; a referência INMET de dias existe só para ≥ 1 mm'}.</span>`;
+  $('#keyB').innerHTML=`<span>Cada ponto é a participação do mês no total anual do período selecionado (mm ou dias ≥ ${st.thr} mm).</span>`;
   // título
   const ex=extremes(A.mmMean,1),exw=extremes(A.wetMean,.3);
   const wetM=ex.wet,dryM=ex.dry;
   const ctrMM=Math.max(...A.mmSh)/Math.min(...A.mmSh),ctrW=Math.max(...A.wetSh)/Math.min(...A.wetSh);
   $('#tB').textContent=`${st.y0}–${st.y1}: ${listMonths(wetM)} é o mês mais chuvoso (${nf(A.mmSh[wetM[0]],1)}% do volume) e ${listMonths(dryM)} o mais seco (${nf(A.mmSh[dryM[0]],1)}%); o contraste entre os extremos é de ${nf(ctrMM,1)}× no volume e ${nf(ctrW,1)}× nos dias chuvosos`;
-  // tabela de absolutos
+  // tabela de absolutos (só ERA5)
   const row=(n,arr,d,tot)=>`<tr><td>${n}</td>${arr.map(v=>`<td>${nf(v,d)}</td>`).join('')}<td><b>${tot}</b></td></tr>`;
-  let t=`<p class="cap" style="margin:0 0 6px"><b>Valores absolutos médios por mês</b> <span class="seal">ERA5 — superestima</span> Período ${st.y0}–${st.y1}: ERA5 ${nf(A.totMM)} mm/ano, ${nf(A.totMM/S.ar_annual*100-100)}% acima do Alerta Rio e ${nf(A.totMM/S.inm_annual*100-100)}% acima do INMET${showINW?`; ${nf(A.totWet)} dias ≥ 1 mm/ano contra ${S.inm_wet_annual} no INMET`:''}.</p><table><thead><tr><th></th>${MN.map(m=>`<th>${m}</th>`).join('')}<th>Ano</th></tr></thead><tbody>`;
+  const head=`<thead><tr><th></th>${MN.map(m=>`<th>${m}</th>`).join('')}<th>Ano</th></tr></thead>`;
+  $('#tblB').innerHTML=`<table><caption>Médias por mês, ${st.y0}–${st.y1}</caption>${head}<tbody>${row('Chuva, mm/mês',A.mmMean,1,nf(A.totMM))}${row(`Dias ≥ ${st.thr} mm`,A.wetMean,1,nf(A.totWet,0))}</tbody></table>`;
+  // tabela comparativa (vai para a nota metodológica)
+  let t=`<p class="cap" style="margin:0 0 6px"><b>Valores absolutos médios por mês</b> <span class="seal">ERA5 — superestima</span> Período ${st.y0}–${st.y1}: ERA5 ${nf(A.totMM)} mm/ano, ${nf(A.totMM/S.ar_annual*100-100)}% acima do Alerta Rio e ${nf(A.totMM/S.inm_annual*100-100)}% acima do INMET${showINW?`; ${nf(A.totWet)} dias ≥ 1 mm/ano contra ${S.inm_wet_annual} no INMET`:` (a referência INMET de dias existe só para ≥ 1 mm)`}.</p><div class="tw"><table>${head}<tbody>`;
   t+=row('ERA5, mm/mês',A.mmMean,1,nf(A.totMM));
   t+=row(`ERA5, dias ≥ ${st.thr} mm`,A.wetMean,1,nf(A.totWet,0));
   t+=row('Alerta Rio, mm',S.ar,1,nf(S.ar_annual));
   t+=row('INMET, mm',S.inm,1,nf(S.inm_annual));
   if(showINW)t+=row('INMET, dias ≥ 1 mm',S.inm_wet,0,S.inm_wet_annual);
-  $('#tblB').innerHTML=t+'</tbody></table>';
+  t+=`<tr><td>Participação no volume: ERA5 − Alerta Rio (p.p.)</td>${A.mmSh.map((v,m)=>`<td>${nf(v-arS[m],1)}</td>`).join('')}<td></td></tr>`;
+  $('#tblRef').innerHTML=t+'</tbody></table></div>';
 }
 
 /* ---------- C: acumulado do ano ---------- */
 function cumYear(y){const a=new Float64Array(366).fill(NaN);let c=0,last=-1;const mode=st.cum;
-  for(let i=yIdx[y][0];i<yIdx[y][1];i++){if(T[i]<0)break;c+=mode==='mm'?T[i]/10:(T[i]>=st.thr*10?1:0);a[SL[i]]=c;last=SL[i];}
+  for(let i=yIdx[y][0];i<yIdx[y][1];i++){if(T[i]<0)break;c+=mode==='mm'?T[i]:(T[i]>=st.thr*10?1:0);a[SL[i]]=mode==='mm'?c/10:c;last=SL[i];}
   if(!isLeap(y)&&last>=59)a[59]=a[58];return {a,last};}
 function renderC(yy){
   const box=$('#chC'),W=Math.max(300,box.clientWidth),mob=W<560;
@@ -457,7 +483,7 @@ function hex2rgb(h){return [1,3,5].map(i=>parseInt(h.substr(i,2),16));}
 function rampColor(t){const r=(dark()?RAMP.dark:RAMP.light);t=Math.max(0,Math.min(1,t));const x=t*(r.length-1),i=Math.min(r.length-2,Math.floor(x)),f=x-i;
   const a=hex2rgb(r[i]),b=hex2rgb(r[i+1]);return `rgb(${a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',')})`;}
 function monthSeq(){const r=[];let m=st.m0;for(let k=0;k<12;k++){r.push(m);if(m===st.m1)break;m=(m+1)%12;}return r;}
-let heat=null,cursor={r:0,d:1};
+let heat=null,cursor={r:0,d:1};let contState={i:0};
 function heatCalc(yy){
   const set=new Set(yy),n=new Int32Array(366),w=new Int32Array(366),sum=new Float64Array(366),vals=Array.from({length:366},()=>[]);
   for(let i=0;i<N;i++){const v=T[i];if(v<0||!set.has(YR[i]))continue;const s=SL[i];n[s]++;sum[s]+=v;if(v>=st.thr*10){w[s]++;vals[s].push(v/10);}}
@@ -523,18 +549,100 @@ function renderHeat(yy){
   const rng=ms.length===1?MNF[ms[0]]:(ms.length===12?'Janeiro a dezembro':`${MNF[ms[0]]} a ${MNF[ms[ms.length-1]]}`);
   $('#tI').textContent=`${rng.charAt(0).toUpperCase()+rng.slice(1)}${ms.length>1&&ms.length<12?` (${ms.length} meses em sequência)`:''}: ${metName.toLowerCase()} por dia do calendário, ${yy[0]}–${yy[yy.length-1]}`;
   // ruído
-  const ns=noiseStat(H.n.length?{n:H.n,w:H.w}:null,ms);const nz=$('#noiseI');
+  const ns=noiseStat({n:H.n,w:H.w},ms);const nz=$('#noiseI'),nm=$('#noiseM');
   if(ns){const share=Math.min(1,1/ns.R);
-    const t1=`Razão entre a variância observada de p(dia chuvoso) entre dias do mesmo mês e a esperada só por amostragem binomial (n ≈ ${nf(ns.n)} anos por dia): ${nf(ns.R,2)}. ${ns.R>1?`Cerca de ${nf(100*share)}% da variação dia a dia (sem suavização) é ruído amostral esperado.`:'A variação observada não excede o ruído esperado.'}`;
-    const t2=ns.R2<1.25?` Descontada uma tendência linear dentro de cada mês, a razão cai para ${nf(ns.R2,2)}: fora o gradiente sazonal, não há padrão intra-mês robusto na seleção.`
-      :` Mesmo descontada uma tendência linear dentro de cada mês, a razão é ${nf(ns.R2,2)}: há alguma estrutura além do ruído e do gradiente sazonal, que merece teste específico antes de ser lida como padrão.`;
-    nz.textContent=t1+t2;nz.hidden=false;}else nz.hidden=true;
+    nz.textContent=ns.R2<1.25?'Leitura: fora o gradiente sazonal, as diferenças entre dias vizinhos são compatíveis com acaso; não há padrão claro dentro do mês.':'Leitura: há variação dia a dia além do esperado por acaso nesta seleção; vale confirmar com outro limiar ou período.';nz.hidden=false;
+    nm.textContent=`Na seleção atual (${yy[0]}–${yy[yy.length-1]}, ${MN[ms[0]]} a ${MN[ms[ms.length-1]]}, dia chuvoso ≥ ${st.thr} mm): razão entre a variância observada de p(dia chuvoso) entre dias do mesmo mês e a esperada só por amostragem binomial (n ≈ ${nf(ns.n)} anos por dia) = ${nf(ns.R,2)}; ${ns.R>1?`cerca de ${nf(100*share)}% da variação dia a dia sem suavização é ruído amostral esperado`:'a variação observada não excede o ruído esperado'}. Descontada uma tendência linear dentro de cada mês, a razão é ${nf(ns.R2,2)}.`;}
+  else{nz.hidden=true;nm.textContent='';}
   // tabela por mês
   let t=`<p class="cap" style="margin:0 0 6px">Valores brutos (sem suavização) por mês da seleção, ${yy.length} anos.</p><table><thead><tr><th>Mês</th><th>P(dia ≥ ${st.thr} mm)</th><th>Média (mm/dia)</th><th>p90 dos dias chuvosos (mm)</th><th>Eventos</th></tr></thead><tbody>`;
   ms.forEach(m=>{let nn=0,ww=0,ss=0,vv=[];for(let d=1;d<=MD[m];d++){const s2=SL0[m]+d-1;nn+=H.n[s2];ww+=H.w[s2];ss+=H.sum[s2];vv=vv.concat(H.vals[s2]);}
     t+=`<tr><td>${MNF[m]}</td><td>${nf(100*ww/nn,1)}%</td><td>${nf(ss/nn/10,2)}</td><td>${vv.length>=5?nf(quant(vv,.9),1):'–'}</td><td>${vv.length}</td></tr>`;});
   $('#tblI').innerHTML=t+'</tbody></table>';
   $('#subI').textContent=`Cada célula resume um dia do calendário nos ${yy.length} anos do período (${yy[0]}–${yy[yy.length-1]}), com o limiar de dia chuvoso definido no painel. Mostra só os meses escolhidos, na ordem da sequência.`;
+  renderCont(yy,H);
+}
+
+/* ---------- distribuição contínua (padrão mar–set) ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const NBOOT=500;
+let yrMat={key:''},bootC={key:''};
+function bootstrapMean(yy,K){
+  const kY=yy.join(',');
+  if(yrMat.key!==kY){const nY=yy.length,sum=new Float64Array(nY*366),cnt=new Int32Array(nY*366),pos={};yy.forEach((y,i)=>pos[y]=i);
+    for(let i=0;i<N;i++){const v=T[i];if(v<0)continue;const k=pos[YR[i]];if(k===undefined)continue;sum[k*366+SL[i]]+=v;cnt[k*366+SL[i]]++;}
+    yrMat={key:kY,sum,cnt,nY};}
+  const key=kY+'|'+K;if(bootC.key===key)return bootC;
+  const {sum,cnt,nY}=yrMat,rng=mulberry32(20241112),res=Array.from({length:366},()=>new Float64Array(NBOOT));
+  const cs=new Int32Array(nY),sS=new Float64Array(366),sN=new Int32Array(366);
+  for(let b=0;b<NBOOT;b++){cs.fill(0);for(let k=0;k<nY;k++)cs[Math.floor(rng()*nY)]++;sS.fill(0);sN.fill(0);
+    for(let k=0;k<nY;k++){const c=cs[k];if(!c)continue;const o=k*366;for(let s=0;s<366;s++){sS[s]+=c*sum[o+s];sN[s]+=c*cnt[o+s];}}
+    for(let s=0;s<366;s++){let a=0,n=0;for(let j=-K;j<=K;j++){const x=(s+j+366)%366;a+=sS[x];n+=sN[x];}res[s][b]=n?a/n/10:NaN;}}
+  const lo=new Float64Array(366),hi=new Float64Array(366);
+  for(let s=0;s<366;s++){const v=Array.from(res[s]).filter(Number.isFinite);lo[s]=quant(v,.05);hi[s]=quant(v,.95);}
+  bootC={key,lo,hi};return bootC;}
+function wilson(w,n){const z=1.645;if(!n)return [NaN,NaN];const p=w/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;return [Math.max(0,c-h),Math.min(1,c+h)];}
+function renderCont(yy,Hc){
+  const follow=$('#followMap').checked,months=follow?monthSeq():[2,3,4,5,6,7,8];
+  const slots=[],mStart=[];months.forEach(m=>{mStart.push(slots.length);for(let d=1;d<=MD[m];d++)slots.push(SL0[m]+d-1);});
+  const nn=slots.length,K=Hc.K,sm=st.smooth,t0=performance.now(),bs=bootstrapMean(yy,K),tb=performance.now()-t0;
+  const P=[],Pl=[],Ph=[],Pr=[],M=[],Ml=[],Mh=[],Mr=[],Nw=[];
+  slots.forEach(s=>{const c=Hc.cell[s],w=wilson(c.w,c.n);P.push(c.p);Pl.push(w[0]);Ph.push(w[1]);Nw.push(c.n);
+    Pr.push(Hc.n[s]?Hc.w[s]/Hc.n[s]:NaN);M.push(c.mean);Ml.push(bs.lo[s]);Mh.push(bs.hi[s]);Mr.push(Hc.n[s]?Hc.sum[s]/Hc.n[s]/10:NaN);});
+  const box=$('#chD'),W=Math.max(300,box.clientWidth),mob=W<560,ml=mob?38:48,mr=mob?10:16,pw=W-ml-mr,hp=mob?120:150,gap=36,top1=20,top2=top1+hp+gap,Ht=top2+hp+26;
+  const X=i=>ml+(i+.5)*pw/nn;
+  const g1=nice(Math.max(...Ph.filter(Number.isFinite),...Pr.filter(Number.isFinite))*100*1.03,4),g2=nice(Math.max(...Mh.filter(Number.isFinite),...Mr.filter(Number.isFinite))*1.05,4);
+  const Y1=v=>top1+hp*(1-v*100/g1.max),Y2=v=>top2+hp*(1-v/g2.max);
+  const path=(arr,Y)=>{let d='',pen=false;arr.forEach((v,i)=>{if(!Number.isFinite(v)){pen=false;return;}d+=(pen?'L':'M')+X(i).toFixed(1)+' '+Y(v).toFixed(1);pen=true;});return d;};
+  const band=(lo,hi,Y)=>{const a=[],b=[];for(let i=0;i<nn;i++)if(Number.isFinite(lo[i])&&Number.isFinite(hi[i])){a.push(X(i).toFixed(1)+','+Y(hi[i]).toFixed(1));b.unshift(X(i).toFixed(1)+','+Y(lo[i]).toFixed(1));}return a.join(' ')+' '+b.join(' ');};
+  let s=`<svg id="svgD" width="${W}" height="${Ht}" viewBox="0 0 ${W} ${Ht}" tabindex="0" role="img" aria-label="Dois painéis com eixo de datas comum, de ${slots.length?SLD[slots[0]]+'/'+MN[SLM[slots[0]]]:''} a ${SLD[slots[nn-1]]}/${MN[SLM[slots[nn-1]]]}: probabilidade de dia chuvoso e média de mm por dia, com faixa de incerteza de 90%. Use as setas esquerda e direita para percorrer as datas." aria-describedby="capD">`;
+  const panel=(top,g,Y,ttl,fmtT)=>{let o=`<text class="ttl" x="${ml}" y="${top-8}">${ttl}</text>`;
+    for(let v=0;v<=g.max+1e-9;v+=g.step){const yy2=top+hp*(1-v/g.max);o+=`<line class="gl" x1="${ml}" x2="${W-mr}" y1="${yy2}" y2="${yy2}"/><text class="tx" x="${ml-6}" y="${yy2+4}" text-anchor="end">${fmtT(v)}</text>`;}
+    mStart.forEach(i0=>{o+=`<line class="gl" x1="${ml+i0*pw/nn}" x2="${ml+i0*pw/nn}" y1="${top}" y2="${top+hp}" stroke-dasharray="2 3"/>`;});return o;};
+  s+=panel(top1,g1,Y1,`probabilidade de dia chuvoso (≥ ${st.thr} mm), %`,v=>nf(v));
+  s+=panel(top2,g2,Y2,'média de chuva por dia, mm',v=>nf(v,g2.step<1?1:0));
+  s+=`<polygon points="${band(Pl,Ph,Y1)}" fill="var(--c-mm)" fill-opacity=".20"/><polygon points="${band(Ml,Mh,Y2)}" fill="var(--c-mm)" fill-opacity=".20"/>`;
+  for(let i=0;i<nn;i++){if(Number.isFinite(Pr[i]))s+=`<circle cx="${X(i).toFixed(1)}" cy="${Y1(Pr[i]).toFixed(1)}" r="1.7" fill="var(--c-mm)" fill-opacity=".38"/>`;
+    if(Number.isFinite(Mr[i]))s+=`<circle cx="${X(i).toFixed(1)}" cy="${Y2(Mr[i]).toFixed(1)}" r="1.7" fill="var(--c-mm)" fill-opacity=".38"/>`;}
+  s+=`<path d="${path(P,Y1)}" fill="none" stroke="var(--c-mm)" stroke-width="2.4" stroke-linejoin="round"/><path d="${path(M,Y2)}" fill="none" stroke="var(--c-mm)" stroke-width="2.4" stroke-linejoin="round"/>`;
+  s+=`<line class="ax" x1="${ml}" x2="${W-mr}" y1="${top2+hp}" y2="${top2+hp}"/>`;
+  months.forEach((m,k)=>{const i0=mStart[k],i1=(k+1<months.length?mStart[k+1]:nn);s+=`<line class="ax" x1="${ml+i0*pw/nn}" x2="${ml+i0*pw/nn}" y1="${top2+hp}" y2="${top2+hp+5}"/><text class="tx" x="${ml+(i0+i1)/2*pw/nn}" y="${top2+hp+19}" text-anchor="middle">${mob&&months.length>7?MN[m][0]:MN[m]}</text>`;});
+  s+=`<line id="cxD" y1="${top1}" y2="${top2+hp}" stroke="var(--ink)" stroke-width="1" visibility="hidden"/><circle id="d1" r="4" fill="var(--c-mm)" stroke="var(--surface)" stroke-width="1.5" visibility="hidden"/><circle id="d2" r="4" fill="var(--c-mm)" stroke="var(--surface)" stroke-width="1.5" visibility="hidden"/>`;
+  s+=`<rect id="ovD" x="${ml}" y="${top1}" width="${pw}" height="${top2+hp-top1}" fill="transparent"/></svg>`;
+  box.innerHTML=s;
+  const dl=i=>`${SLD[slots[i]]}/${MN[SLM[slots[i]]]}`,pc=v=>nf(100*v,0)+'%',pc1=v=>nf(100*v,1)+'%';
+  const info=i=>{const c=Hc.cell[slots[i]];const a=`<span class="h">${SLD[slots[i]]} de ${MNF[SLM[slots[i]]]}</span>`;
+    const raw=`<span class="k">Dia a dia:</span> ${nf(100*Pr[i])}% (${Hc.w[slots[i]]} de ${Hc.n[slots[i]]} dias), média ${nf(Mr[i],1)} mm`;
+    if(!sm)return {html:a+`<span class="k">Prob. (≥ ${st.thr} mm):</span> ${pc1(P[i])}, Wilson 90%: ${pc1(Pl[i])}–${pc1(Ph[i])}<br><span class="k">Média:</span> ${nf(M[i],2)} mm/dia, bootstrap 90%: ${nf(Ml[i],2)}–${nf(Mh[i],2)}`,
+      plain:`${dl(i)}: probabilidade ${pc1(P[i])}, faixa ${pc1(Pl[i])} a ${pc1(Ph[i])}; média ${nf(M[i],2)} mm por dia, faixa ${nf(Ml[i],2)} a ${nf(Mh[i],2)}.`};
+    return {html:a+`<span class="k">Prob. suavizada (≥ ${st.thr} mm):</span> ${pc1(P[i])}<br><span class="k">Wilson 90% (n = ${c.n} dias-ano):</span> ${pc1(Pl[i])}–${pc1(Ph[i])}<br><span class="k">Média suavizada:</span> ${nf(M[i],2)} mm/dia<br><span class="k">Bootstrap 90%:</span> ${nf(Ml[i],2)}–${nf(Mh[i],2)}<br>${raw}`,
+      plain:`${dl(i)}: probabilidade suavizada ${pc1(P[i])}, faixa ${pc1(Pl[i])} a ${pc1(Ph[i])}; média suavizada ${nf(M[i],2)} mm por dia, faixa ${nf(Ml[i],2)} a ${nf(Mh[i],2)}.`};};
+  const place=i=>{const x=X(i);const c=$('#cxD');c.setAttribute('x1',x);c.setAttribute('x2',x);c.setAttribute('visibility','visible');
+    [['d1',Y1(P[i])],['d2',Y2(M[i])]].forEach(([id,y])=>{const e=document.getElementById(id);e.setAttribute('cx',x);e.setAttribute('cy',y);e.setAttribute('visibility',Number.isFinite(y)?'visible':'hidden');});};
+  contState.i=Math.min(contState.i,nn-1);
+  const svg=$('#svgD'),ov=$('#ovD');
+  const idxAt=e=>Math.max(0,Math.min(nn-1,Math.round((e.clientX-svg.getBoundingClientRect().left-ml)/(pw/nn)-.5)));
+  ov.addEventListener('pointermove',e=>{const i=idxAt(e);contState.i=i;place(i);showTip(info(i).html,e);});
+  ov.addEventListener('pointerleave',()=>{hideTip();if(document.activeElement!==svg){['cxD','d1','d2'].forEach(id=>document.getElementById(id).setAttribute('visibility','hidden'));}});
+  const kb=()=>{const i=contState.i;place(i);$('#live').textContent=info(i).plain;const r=svg.getBoundingClientRect();showTipAt(info(i).html,{left:r.left+X(i),width:0,top:r.top+top1});};
+  svg.addEventListener('focus',kb);svg.addEventListener('blur',()=>{hideTip();['cxD','d1','d2'].forEach(id=>document.getElementById(id).setAttribute('visibility','hidden'));});
+  svg.addEventListener('keydown',e=>{let i=contState.i;const k=e.key;if(k==='ArrowRight')i++;else if(k==='ArrowLeft')i--;else if(k==='PageDown')i+=7;else if(k==='PageUp')i-=7;else if(k==='Home')i=0;else if(k==='End')i=nn-1;else if(k==='Escape'){hideTip();return;}else return;
+    e.preventDefault();contState.i=Math.max(0,Math.min(nn-1,i));kb();});
+  // legenda
+  $('#keyD').innerHTML=`<span><svg width="24" height="10"><line x1="1" x2="23" y1="5" y2="5" stroke="var(--c-mm)" stroke-width="2.4"/></svg>${sm?'média móvel de 7 dias (circular, ponderada por n)':'valor diário bruto (sem suavização)'}</span><span><svg width="12" height="10"><circle cx="6" cy="5" r="2" fill="var(--c-mm)" fill-opacity=".45"/></svg>dias brutos (${yy.length} anos por dia)</span><span><svg width="16" height="10"><rect width="16" height="10" fill="var(--c-mm)" fill-opacity=".22"/></svg>faixa de 90%</span>`;
+  // título-achado
+  const fin=P.map((v,i)=>i).filter(i=>Number.isFinite(P[i]));
+  if(!fin.length)return;
+  let imin=fin[0],imax=fin[0];fin.forEach(i=>{if(P[i]<P[imin])imin=i;if(P[i]>P[imax])imax=i;});
+  const lvl=(P[imin]+P[imax])/2,sg=P.map(v=>Number.isFinite(v)?(v>=lvl?1:-1):0),cr=[];
+  for(let i=1;i<nn&&cr.length<2;i++){if(!sg[i]||!sg[i-1]||sg[i]===sg[i-1])continue;let ok=true;for(let j=i;j<Math.min(nn,i+10);j++)if(sg[j]!==sg[i]){ok=false;break;}if(ok)cr.push({i,dir:sg[i]<0?'caindo':'subindo'});}
+  let imM=fin[0];fin.forEach(i=>{if(Number.isFinite(M[i])&&(!Number.isFinite(M[imM])||M[i]<M[imM]))imM=i;});
+  let a=imin,b=imin;while(a>0&&Pl[a-1]<=Ph[imin])a--;while(b<nn-1&&Pl[b+1]<=Ph[imin])b++;
+  const rng=`${dl(0)} a ${dl(nn-1)}`;
+  $('#tD').textContent=`De ${rng}, a probabilidade de dia chuvoso (≥ ${st.thr} mm) tem máximo de ${pc(P[imax])} em ${dl(imax)} e mínimo de ${pc(P[imin])} em ${dl(imin)}`+
+    (cr.length?`; cruza ${pc(lvl)} (metade entre os extremos) ${cr.map(c=>`${c.dir} em ${dl(c.i)}`).join(' e depois ')}`:'')+`. A chuva média é mínima (${nf(M[imM],1)} mm/dia) em ${dl(imM)}.`;
+  $('#capD').textContent=`Faixas de 90%: intervalo de Wilson (probabilidade) e bootstrap por anos (mm/dia). A transição é gradual; oscilações menores que a faixa são ruído. A faixa do mínimo (${dl(imin)}) se sobrepõe à das datas de ${dl(a)} a ${dl(b)}: dentro desse intervalo, a data exata do mínimo não é distinguível.`;
+  $('#bootM').textContent=`${NBOOT} reamostragens de anos com reposição, semente fixa; percentis 5 e 95. A banda de Wilson usa o n efetivo da janela (≈ ${nf(yy.length*(Hc.K*2+1))} dias-ano com suavização, ${yy.length} sem); dias vizinhos são correlacionados, então a banda é um pouco otimista.`;
 }
 
 /* ---------- avisos ---------- */
@@ -573,6 +681,7 @@ function init(){
   document.querySelectorAll('input[name=cum]').forEach(r=>r.addEventListener('change',()=>{st.cum=r.value;schedule(true);}));
   document.querySelectorAll('input[name=met]').forEach(r=>r.addEventListener('change',()=>{st.met=r.value;schedule(true);}));
   $('#hl').addEventListener('change',e=>{st.hl=+e.target.value;schedule();});
+  $('#followMap').addEventListener('change',()=>{contState.i=0;schedule(true);});
   $('#smooth').addEventListener('change',e=>{st.smooth=e.target.checked;schedule(true);});
   const setM=(a,b)=>{st.m0=a;st.m1=b;syncInputs();schedule(true);};
   $('#m0').addEventListener('change',e=>setM(+e.target.value,st.m1));$('#m1').addEventListener('change',e=>setM(st.m0,+e.target.value));
@@ -586,6 +695,8 @@ function init(){
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>schedule());
   let rw=0;addEventListener('resize',()=>{if(innerWidth!==rw){rw=innerWidth;schedule();}});rw=innerWidth;
   if(innerWidth>=900)$('#detMet').open=true;
+  $('#lnkMet').addEventListener('click',()=>{$('#detMet').open=true;});
+  if(location.hash==='#metodo')$('#detMet').open=true;
   syncInputs();renderAll();
 }
 init();
