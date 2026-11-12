@@ -1,0 +1,61 @@
+{
+  "accessed": "2026-11-12",
+  "requested": {
+    "latitude": -22.9068,
+    "longitude": -43.1729,
+    "start_date": "1995-01-01",
+    "end_date": "2026-11-11",
+    "timezone": "America/Sao_Paulo",
+    "daily": "precipitation_sum"
+  },
+  "units": "mm",
+  "models": {
+    "best_match": {
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-22.9068&longitude=-43.1729&start_date=1995-01-01&end_date=2026-11-11&daily=precipitation_sum&timezone=America%2FSao_Paulo&models=best_match",
+      "returned_latitude": -22.952549,
+      "returned_longitude": -43.215027,
+      "elevation_m": 12,
+      "days": 11638,
+      "first_date_with_value": "1995-01-01",
+      "last_date_with_value": "2026-11-11",
+      "null_days": 0
+    },
+    "era5": {
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-22.9068&longitude=-43.1729&start_date=1995-01-01&end_date=2026-11-11&daily=precipitation_sum&timezone=America%2FSao_Paulo&models=era5",
+      "returned_latitude": -22.75,
+      "returned_longitude": -43.25,
+      "elevation_m": 12,
+      "days": 11638,
+      "first_date_with_value": "1995-01-01",
+      "last_date_with_value": "2026-11-05",
+      "null_days": 6
+    },
+    "era5_land": {
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-22.9068&longitude=-43.1729&start_date=1995-01-01&end_date=2026-11-11&daily=precipitation_sum&timezone=America%2FSao_Paulo&models=era5_land",
+      "returned_latitude": -22.900002,
+      "returned_longitude": -43.09999,
+      "elevation_m": 12,
+      "days": 11638,
+      "first_date_with_value": null,
+      "last_date_with_value": null,
+      "null_days": 11638
+    },
+    "ecmwf_ifs": {
+      "url": "https://archive-api.open-meteo.com/v1/archive?latitude=-22.9068&longitude=-43.1729&start_date=1995-01-01&end_date=2026-11-11&daily=precipitation_sum&timezone=America%2FSao_Paulo&models=ecmwf_ifs",
+      "returned_latitude": -22.952549,
+      "returned_longitude": -43.215027,
+      "elevation_m": 12,
+      "days": 11638,
+      "first_date_with_value": "2017-01-01",
+      "last_date_with_value": "2026-11-11",
+      "null_days": 8036
+    }
+  },
+  "notes": {
+    "transcription": "best_match and era5 (2017+) were transcribed from the browser in chunks with per-chunk sum/count checksums, all matched; best_match annual sums 1995-2025 identical to rain_rio.json annual.by_year.",
+    "derived": "era5 1995-2016 and ecmwf_ifs 2017+ were not transcribed separately: in the browser they were identical to best_match on every day of those periods (0 differing days; total sums matched).",
+    "era5_land": "API returned 200 with all-null precipitation_sum for this point, cell_selection=land, and (-22.9,-43.25); CSV has empty values only.",
+    "era5_nulls": "era5 last 6 days (2026-11-06..2026-11-11) are null.",
+    "2026": "partial year (through 2026-11-11)"
+  }
+}

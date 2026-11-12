@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chuva no Rio de Janeiro: versão completa (exploratória)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#f6f6f3;--surface:#fcfcfb;--ink:#0b0b0b;--ink2:#52514e;--muted:#6b6a66;
+  --grid:#e4e3dc;--axis:#b9b8ae;--border:rgba(11,11,11,.14);--wash:rgba(11,11,11,.05);
+  --c1:#2a78d6;--c2:#eb6834;--c3:#1baf7a;--c4:#eda100;--c5:#e87ba4;
+  --warn:#8a5200;--warnbg:#fff3dc;--warnbd:#e2b45c;--accent:#1c5fb0;--dim:#8d8c85;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#a3a29b;
+  --grid:#2c2c2a;--axis:#4c4c47;--border:rgba(255,255,255,.16);--wash:rgba(255,255,255,.07);
+  --c1:#3987e5;--c2:#d95926;--c3:#199e70;--c4:#c98500;--c5:#d55181;
+  --warn:#f0c46a;--warnbg:#2b2310;--warnbd:#6b5420;--accent:#6da7ec;--dim:#7d7c76;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#0d0d0d;--surface:#1a1a19;--ink:#f0efec;--ink2:#c3c2b7;--muted:#a3a29b;
+    --grid:#2c2c2a;--axis:#4c4c47;--border:rgba(255,255,255,.16);--wash:rgba(255,255,255,.07);
+    --c1:#3987e5;--c2:#d95926;--c3:#199e70;--c4:#c98500;--c5:#d55181;
+    --warn:#f0c46a;--warnbg:#2b2310;--warnbd:#6b5420;--accent:#6da7ec;--dim:#7d7c76;
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Source Sans 3",Inter,system-ui,-apple-system,"Segoe UI",sans-serif;font-size:16px;line-height:1.45}
+a{color:var(--accent)}
+[hidden]{display:none!important}
+.wrap{max-width:1120px;margin:0 auto;padding:0 16px}
+header.top{padding:18px 0 6px}
+h1{font-size:clamp(1.35rem,3.6vw,1.9rem);line-height:1.15;margin:0 0 6px;font-weight:700;letter-spacing:-.01em}
+.explo{margin:0;padding:8px 12px;border-left:4px solid var(--c2);background:var(--wash);border-radius:0 6px 6px 0;font-size:.97rem}
+.sub{margin:8px 0 0;color:var(--ink2);font-size:.93rem}
+.theme{float:right;margin-left:12px}
+button,select,input{font:inherit;color:var(--ink)}
+.btn{background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:.88rem}
+.btn:hover{background:var(--wash)}
+.btn:focus-visible,select:focus-visible,input:focus-visible,[role=tab]:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.controls{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:2px;font-size:.82rem;color:var(--ink2)}
+.ctl label,.ctl .lab{font-weight:600}
+select,input[type=text]{background:var(--surface);border:1px solid var(--axis);border-radius:6px;padding:5px 8px;min-height:34px;font-size:.95rem}
+input[type=text]{width:13em}
+.chk{display:flex;align-items:center;gap:6px;font-size:.9rem;color:var(--ink);min-height:34px}
+.chk input{width:16px;height:16px}
+.pre{display:flex;gap:6px;flex-wrap:wrap}
+.alerts{margin:0 0 8px}
+.alert{margin:6px 0;padding:8px 12px;border:1px solid var(--warnbd);background:var(--warnbg);color:var(--warn);border-radius:8px;font-size:.92rem}
+.alert strong{font-weight:700}
+.alert.info{border-color:var(--border);background:var(--wash);color:var(--ink2)}
+.stick{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--border);padding-top:6px}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin}
+[role=tab]{background:none;border:0;border-bottom:3px solid transparent;padding:8px 12px;cursor:pointer;font-weight:600;color:var(--ink2);white-space:nowrap;font-size:.95rem}
+[role=tab][aria-selected=true]{color:var(--ink);border-bottom-color:var(--c1)}
+.status{font-size:.82rem;color:var(--muted);padding:3px 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+section.panel{padding:14px 0 6px}
+section.panel>h2{font-size:1.2rem;margin:0 0 2px}
+.lede{color:var(--ink2);margin:0 0 10px;font-size:.95rem;max-width:80ch}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 12px 8px;margin:0 0 14px}
+.card h3{font-size:1.02rem;margin:0 0 2px;line-height:1.25}
+.card .cap{color:var(--muted);font-size:.82rem;margin:4px 0 4px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.83rem;color:var(--ink2);margin:4px 0}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend svg{flex:none}
+.chart{width:100%;overflow:hidden}
+.chart svg{display:block;max-width:100%}
+svg text{font-family:inherit;fill:var(--ink2);font-size:12px}
+svg .tick{font-size:11.5px;fill:var(--muted)}
+svg .yt{font-size:12px;fill:var(--ink2);font-weight:600}
+svg .lab{font-size:12px;fill:var(--ink)}
+svg .grid{stroke:var(--grid);stroke-width:1}
+svg .axl{stroke:var(--axis);stroke-width:1}
+svg .hit{fill:transparent}
+svg .hit:hover{fill:var(--wash)}
+svg .cell:hover{stroke:var(--ink);stroke-width:1.5}
+.local{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;margin:0 0 10px;padding:8px 10px;border:1px dashed var(--axis);border-radius:8px}
+table.t{border-collapse:collapse;width:100%;font-size:.85rem;font-variant-numeric:tabular-nums}
+table.t th,table.t td{padding:4px 8px;border-bottom:1px solid var(--grid);text-align:right;white-space:nowrap}
+table.t th:first-child,table.t td:first-child{text-align:left}
+table.t thead th{color:var(--ink2);font-weight:600;border-bottom:1px solid var(--axis)}
+.tw{overflow-x:auto}
+details.tbl{margin:6px 0 4px;font-size:.88rem}
+details.tbl summary{cursor:pointer;color:var(--accent)}
+.method{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:14px 0}
+.method summary{cursor:pointer;font-weight:700}
+.mbody{font-size:.92rem;max-width:90ch}
+.mbody h3{font-size:1rem;margin:14px 0 4px}
+.mt{border-collapse:collapse;width:100%;font-size:.85rem;display:block;overflow-x:auto}
+.mt th,.mt td{border-bottom:1px solid var(--grid);padding:4px 8px;text-align:left;vertical-align:top}
+code{font-size:.85em;background:var(--wash);padding:0 4px;border-radius:4px;word-break:break-all}
+footer{padding:12px 0 36px;color:var(--ink2);font-size:.88rem}
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--surface);color:var(--ink);border:1px solid var(--axis);border-radius:6px;padding:6px 9px;font-size:.84rem;box-shadow:0 4px 14px rgba(0,0,0,.18);max-width:300px}
+#tip .th{font-weight:700;margin-bottom:2px}
+.sr{position:absolute;left:-9999px}
+.grid2{display:grid;grid-template-columns:1fr;gap:0}
+@media(min-width:900px){.grid2{grid-template-columns:1fr 1fr;gap:14px}}
+.warnnote{color:var(--warn);font-weight:600}
+@media(max-width:560px){.ctl{flex:1 1 42%}.ctl select,.ctl input[type=text]{width:100%}.row{gap:8px 12px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <button class="btn theme" id="themeBtn" type="button" aria-label="Alternar tema">Tema: automático</button>
+  <h1>Chuva no Rio de Janeiro: versão completa</h1>
+  <p class="explo"><strong>Versão exploratória:</strong> muitos controles, logo mais chance de achar padrão no ruído. A leitura de referência está na <a href="index.html">versão principal</a>.</p>
+  <p class="sub" id="subline"></p>
+</header>
+
+<div class="controls" aria-label="Controles globais">
+  <div class="row">
+    <div class="ctl"><label for="src">Fonte</label>
+      <select id="src"><option value="era5">ERA5 (padrão, homogênea)</option><option value="ifs">ECMWF IFS (2017+)</option><option value="bm">best_match (emenda em 2017)</option></select></div>
+    <div class="ctl"><label for="y0">Anos, de</label><select id="y0"></select></div>
+    <div class="ctl"><label for="y1">até</label><select id="y1"></select></div>
+    <div class="ctl"><span class="lab">Atalhos</span><div class="pre" id="presets"></div></div>
+    <div class="ctl"><label for="thr">Dia chuvoso (mm/dia, mínimo)</label>
+      <select id="thr"><option value="0.1">0,1</option><option value="1" selected>1</option><option value="5">5</option><option value="10">10</option><option value="25">25</option></select></div>
+    <div class="ctl"><label for="met">Métrica</label>
+      <select id="met"><option value="vol">Volume (mm)</option><option value="freq">Frequência (dias chuvosos)</option><option value="int">Intensidade (mm por dia chuvoso)</option></select></div>
+    <div class="ctl"><label for="grp">Agrupamento</label>
+      <select id="grp"><option value="m">Mês</option><option value="s">Estação chuvosa (out–mar) × seca</option></select></div>
+  </div>
+</div>
+<div class="alerts" id="alerts" aria-live="polite"></div>
+
+<div class="stick">
+  <div class="tabs" role="tablist" aria-label="Visões" id="tabs">
+    <button role="tab" id="t-sazon" aria-controls="p-sazon" aria-selected="true">1 Sazonalidade</button>
+    <button role="tab" id="t-cal" aria-controls="p-cal" aria-selected="false" tabindex="-1">2 Calendário</button>
+    <button role="tab" id="t-anos" aria-controls="p-anos" aria-selected="false" tabindex="-1">3 Anos</button>
+    <button role="tab" id="t-ab" aria-controls="p-ab" aria-selected="false" tabindex="-1">4 Períodos A×B</button>
+    <button role="tab" id="t-ext" aria-controls="p-ext" aria-selected="false" tabindex="-1">5 Extremos</button>
+    <button role="tab" id="t-fontes" aria-controls="p-fontes" aria-selected="false" tabindex="-1">6 Fontes</button>
+  </div>
+  <div class="status" id="status"></div>
+</div>
+
+<main>
+<!-- 1 -->
+<section class="panel" id="p-sazon" role="tabpanel" aria-labelledby="t-sazon">
+  <h2>Sazonalidade</h2>
+  <p class="lede">Quanto do total anual cai em cada mês e em quantos dias, com a variação entre anos. Pontos: mediana; faixa: p10 a p90 entre os anos selecionados.</p>
+  <div class="local">
+    <label class="chk"><input type="checkbox" id="abs"> Valores absolutos (3 painéis)</label>
+    <label class="chk"><input type="checkbox" id="refs" checked> Referências observadas</label>
+  </div>
+  <div class="card"><h3 id="s1t"></h3><div class="legend" id="s1l"></div><div class="chart" id="s1"></div><div class="cap" id="s1c"></div></div>
+  <div class="card" id="s2card"><h3 id="s2t"></h3><div class="legend" id="s2l"></div><div class="chart" id="s2"></div><div class="cap" id="s2c"></div></div>
+  <div id="s3wrap" hidden></div>
+  <details class="tbl"><summary>Ver tabela</summary><div class="tw" id="s-table"></div></details>
+</section>
+<!-- 2 -->
+<section class="panel" id="p-cal" role="tabpanel" aria-labelledby="t-cal" hidden>
+  <h2>Calendário mês × dia</h2>
+  <p class="lede">Cada célula agrupa o mesmo dia do ano em todos os anos selecionados. Sem suavização, cada célula tem poucas observações e a textura é em grande parte ruído amostral.</p>
+  <div class="local">
+    <div class="ctl"><label for="mf">Mês inicial</label><select id="mf"></select></div>
+    <div class="ctl"><label for="mt">Mês final</label><select id="mt"></select></div>
+    <div class="ctl"><label for="sm">Suavização</label><select id="sm"><option value="0">Desligada</option><option value="3" selected>7 dias (±3)</option><option value="7">15 dias (±7)</option></select></div>
+    <div class="ctl"><span class="lab">Atalhos</span><div class="pre"><button class="btn" type="button" data-m="0,11">ano todo</button><button class="btn" type="button" data-m="10,2">nov–mar</button><button class="btn" type="button" data-m="3,8">abr–set</button></div></div>
+  </div>
+  <div class="card"><h3 id="hmt"></h3><div class="chart" id="hm"></div><div class="cap" id="hmc"></div><div id="hmn" class="cap"></div></div>
+</section>
+<!-- 3 -->
+<section class="panel" id="p-anos" role="tabpanel" aria-labelledby="t-anos" hidden>
+  <h2>Anos lado a lado</h2>
+  <p class="lede">Série anual, totais por mês em cada ano e acumulado ao longo do ano. O ano parcial aparece vazado e nunca entra nas médias.</p>
+  <div class="local">
+    <div class="ctl"><label for="hl">Anos destacados (até 5; ex.: 2009, 2014-2016)</label><input type="text" id="hl" autocomplete="off"></div>
+    <div id="hlmsg" class="cap" style="align-self:center"></div>
+  </div>
+  <div class="card"><h3 id="a1t"></h3><div class="legend" id="a1l"></div><div class="chart" id="a1"></div><div class="cap" id="a1c"></div></div>
+  <div class="card"><h3 id="a2t"></h3><div class="legend" id="a2l"></div><div class="chart" id="a2"></div><div class="cap" id="a2c"></div></div>
+  <div class="card"><h3 id="a3t"></h3><div class="legend" id="a3l"></div><div class="chart" id="a3"></div><div class="cap" id="a3c"></div></div>
+</section>
+<!-- 4 -->
+<section class="panel" id="p-ab" role="tabpanel" aria-labelledby="t-ab" hidden>
+  <h2>Comparação de períodos A × B</h2>
+  <p class="lede">Diferença B − A da média por mês, com intervalo de 95% por bootstrap em blocos de ano. Intervalo que cruza o zero: sem evidência de diferença.</p>
+  <div class="local">
+    <div class="ctl"><label for="a0">A, de</label><select id="a0"></select></div>
+    <div class="ctl"><label for="a1y">A, até</label><select id="a1y"></select></div>
+    <div class="ctl"><label for="b0">B, de</label><select id="b0"></select></div>
+    <div class="ctl"><label for="b1">B, até</label><select id="b1"></select></div>
+    <label class="chk"><input type="checkbox" id="rel"> Diferença relativa (% de A)</label>
+  </div>
+  <div id="abw"></div>
+  <div class="card"><h3 id="abt"></h3><div class="legend" id="abl"></div><div class="chart" id="ab"></div><div class="cap" id="abc"></div>
+  <details class="tbl"><summary>Ver tabela</summary><div class="tw" id="ab-table"></div></details></div>
+</section>
+<!-- 5 -->
+<section class="panel" id="p-ext" role="tabpanel" aria-labelledby="t-ext" hidden>
+  <h2>Extremos</h2>
+  <p class="lede">Distribuição dos volumes diários dos dias chuvosos e os maiores dias da série. Valores em grade subestimam picos pontuais.</p>
+  <div class="local">
+    <div class="ctl"><label for="ecm">Escala</label><select id="ecm"><option value="ecdf">ECDF (proporção ≤ x)</option><option value="exc">Excedência (proporção &gt; x, log)</option></select></div>
+    <div class="ctl"><label for="topn">Maiores dias</label><select id="topn"><option>10</option><option selected>20</option><option>50</option></select></div>
+    <label class="chk"><input type="checkbox" id="eab" checked> Sobrepor períodos A e B</label>
+  </div>
+  <div class="card"><h3 id="e1t"></h3><div class="legend" id="e1l"></div><div class="chart" id="e1"></div><div class="cap" id="e1c"></div>
+  <div class="tw" id="e1tab"></div></div>
+  <div class="card"><h3 id="e2t"></h3><div class="tw" id="e2"></div><div class="cap" id="e2c"></div></div>
+</section>
+<!-- 6 -->
+<section class="panel" id="p-fontes" role="tabpanel" aria-labelledby="t-fontes" hidden>
+  <h2>Fontes e viés</h2>
+  <p class="lede">ERA5, IFS e best_match lado a lado, com observações pontuais. O best_match muda de produto na emenda e por isso não serve para comparar períodos que a atravessam.</p>
+  <div class="card"><h3 id="f1t"></h3><div class="legend" id="f1l"></div><div class="chart" id="f1"></div><div class="cap" id="f1c"></div></div>
+  <div class="local"><div class="ctl"><label for="fe">Erro relativo mensal</label><select id="fe">
+    <option value="va">Volume vs Alerta Rio</option><option value="vi">Volume vs INMET</option><option value="fi">Dias ≥ 1 mm vs INMET</option></select></div></div>
+  <div class="card"><h3 id="f2t"></h3><div class="legend" id="f2l"></div><div class="chart" id="f2"></div><div class="cap" id="f2c"></div></div>
+  <div class="card"><h3>Resumo do viés</h3><div class="tw" id="f3"></div><div class="cap" id="f3c"></div>
+  <details class="tbl"><summary>Razão IFS/ERA5 por ano</summary><div class="tw" id="f4"></div></details></div>
+</section>
+</main>
+
+<!--__METHOD__-->
+
+<footer>
+  <p>Dados: <a href="https://open-meteo.com/">Open-Meteo.com</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>), reanálise ERA5 e ECMWF IFS — Copernicus/ECMWF. Referências: Alerta Rio, INMET, NOAA GHCN. Consulta em __ACCESSED__.</p>
+  <p><a href="index.html">Versão principal</a> · <a href="__REPO__">Código e dados no GitHub</a></p>
+</footer>
+</div>
+<div id="tip" role="tooltip" hidden></div>
+
+<script>
+(function(){
+"use strict";
+/* ============ dados ============ */
+const DATA=/*__DATA__*/;
+const REF=/*__REF__*/;
+const RAMP=/*__RAMP__*/;
+const Y0=+DATA.t0.slice(0,4), YLAST=DATA.ylast, YPART=DATA.ypart, YMAX=YPART||YLAST, NY=YMAX-Y0+1;
+const N=DATA.n;
+const MES=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MESL=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const ML=[31,29,31,30,31,30,31,31,30,31,30,31];
+const MS=[];{let a=0;for(const l of ML){MS.push(a);a+=l;}}
+const SRC={era5:Int16Array.from(DATA.era5),ifs:Int16Array.from(DATA.ifs),bm:Int16Array.from(DATA.bm)};
+const SRCN={era5:'ERA5',ifs:'ECMWF IFS',bm:'best_match'};
+const SPLY=DATA.splice?+DATA.splice.slice(0,4):null;
+const yr=new Int16Array(N),mo=new Int8Array(N),dm=new Int8Array(N),slot=new Int16Array(N),doy=new Int16Array(N);
+{const t0=Date.UTC(Y0,0,1);for(let i=0;i<N;i++){const d=new Date(t0+i*864e5);yr[i]=d.getUTCFullYear();mo[i]=d.getUTCMonth();dm[i]=d.getUTCDate();slot[i]=MS[mo[i]]+dm[i]-1;
+  const leap=(yr[i]%4===0&&yr[i]%100!==0)||yr[i]%400===0;doy[i]=slot[i]-((!leap&&mo[i]>=2)?1:0);}}
+const isLeap=y=>(y%4===0&&y%100!==0)||y%400===0;
+const dateStr=i=>String(dm[i]).padStart(2,'0')+'/'+String(mo[i]+1).padStart(2,'0')+'/'+yr[i];
+/* última data com valor de cada fonte (ERA5 termina antes do best_match/IFS) */
+const lastDS=src=>{const a=SRC[src||'era5'];let i=N-1;while(i>0&&a[i]<0)i--;return dateStr(i).slice(0,5);};
+
+/* ============ utilidades ============ */
+const $=id=>document.getElementById(id);
+const NF={};
+function fmt(x,d){d=d||0;if(x==null||!isFinite(x))return '–';const f=NF[d]||(NF[d]=new Intl.NumberFormat('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}));return f.format(x).replace('-','−');}
+function sfmt(x,d){if(x==null||!isFinite(x))return '–';return (x>0?'+':'')+fmt(x,d);}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function quant(sorted,q){const n=sorted.length;if(!n)return NaN;const p=(n-1)*q,lo=Math.floor(p),hi=Math.ceil(p);return sorted[lo]+(sorted[hi]-sorted[lo])*(p-lo);}
+function statOf(arr){const a=arr.filter(isFinite).sort((x,y)=>x-y);return{n:a.length,p10:quant(a,.1),p50:quant(a,.5),p90:quant(a,.9)};}
+function niceStep(r){const e=Math.pow(10,Math.floor(Math.log10(r))),f=r/e;return(f<1.5?1:f<3?2:f<7?5:10)*e;}
+function ticks(a,b,c){c=c||5;if(b<=a)b=a+1;const s=niceStep((b-a)/c);const o=[];for(let t=Math.ceil(a/s-1e-9)*s;t<=b+1e-9;t+=s)o.push(+t.toFixed(10));return o;}
+function lin(d0,d1,r0,r1){const k=(r1-r0)/(d1-d0||1);return v=>r0+(v-d0)*k;}
+function pad(n){return String(n).padStart(2,'0');}
+function rng(seed){let a=seed>>>0;return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const dark=()=>{const a=document.documentElement.getAttribute('data-theme');return a?a==='dark':matchMedia('(prefers-color-scheme: dark)').matches;};
+function ramp(t){const R=dark()?RAMP.dark:RAMP.light;t=Math.max(0,Math.min(1,t));const p=t*(R.length-1),i=Math.min(R.length-2,Math.floor(p)),f=p-i;const a=R[i],b=R[i+1];return 'rgb('+Math.round(a[0]+(b[0]-a[0])*f)+','+Math.round(a[1]+(b[1]-a[1])*f)+','+Math.round(a[2]+(b[2]-a[2])*f)+')';}
+const HLV=['--c1','--c2','--c3','--c4','--c5'];
+const hv=i=>'var('+HLV[i]+')';
+
+/* ============ estado ============ */
+const st={src:'era5',y0:Y0,y1:YLAST,thr:1,met:'vol',grp:'m',tab:'sazon',abs:false,refs:true,
+  mf:0,mt:11,sm:3,hl:[],A:[Y0,Y0],B:[YLAST,YLAST],rel:false,ecm:'ecdf',topn:20,eab:true,fe:'va'};
+const MN={vol:{name:'Volume',unit:'mm',uy:'mm'},freq:{name:'Frequência',unit:'dias',uy:'dias chuvosos'},int:{name:'Intensidade',unit:'mm/dia chuvoso',uy:'mm por dia chuvoso'}};
+
+/* ============ agregação ============ */
+const cache={};
+function agg(key,T){const ck=key+'|'+T;if(cache[ck])return cache[ck];
+  const vol=new Float64Array(NY*12),wet=new Float64Array(NY*12),wv=new Float64Array(NY*12),n=new Float64Array(NY*12);const s=SRC[key];
+  for(let i=0;i<N;i++){const v=s[i];if(v<0)continue;const k=(yr[i]-Y0)*12+mo[i];n[k]++;vol[k]+=v/10;if(v>=T){wet[k]++;wv[k]+=v/10;}}
+  return cache[ck]={vol,wet,wv,n};}
+const Tt=()=>Math.round(st.thr*10);
+const vcache={};
+function validYears(key){if(vcache[key])return vcache[key];const a=agg(key,1),o=[];
+  for(let y=Y0;y<=YLAST;y++){let s=0;for(let m=0;m<12;m++)s+=a.n[(y-Y0)*12+m];if(s>=0.98*(isLeap(y)?366:365))o.push(y);}return vcache[key]=o;}
+function years(){return validYears(st.src).filter(y=>y>=st.y0&&y<=st.y1);}
+function yearsIn(a,b){return validYears(st.src).filter(y=>y>=a&&y<=b);}
+function groups(){return st.grp==='m'?{G:12,names:MES,long:MESL,map:m=>m}:{G:2,names:['chuvosa (out–mar)','seca (abr–set)'],long:['estação chuvosa (out–mar)','estação seca (abr–set)'],map:m=>(m>=9||m<=2)?0:1};}
+function gagg(a,G,map){const P=G+1,o={vol:new Float64Array(NY*P),wet:new Float64Array(NY*P),wv:new Float64Array(NY*P),n:new Float64Array(NY*P)};
+  for(let yi=0;yi<NY;yi++)for(let m=0;m<12;m++){const g=map(m),k=yi*12+m;for(const f of ['vol','wet','wv','n']){o[f][yi*P+g]+=a[f][k];o[f][yi*P+G]+=a[f][k];}}return o;}
+function gval(g,G,yi,gi,met){const k=yi*(G+1)+gi;if(met==='vol')return g.vol[k];if(met==='freq')return g.wet[k];return g.wet[k]>0?g.wv[k]/g.wet[k]:NaN;}
+function ctx(){const a=agg(st.src,Tt()),gr=groups();return{a,gr,G:gr.G,g:gagg(a,gr.G,gr.map),ys:years()};}
+function refGroup(vals,gr){if(gr.G===12)return vals.slice();const o=[0,0];for(let m=0;m<12;m++)o[gr.map(m)]+=vals[m];return o;}
+
+/* ============ SVG ============ */
+function svgOpen(w,h,label){return '<svg viewBox="0 0 '+w+' '+h+'" width="'+w+'" height="'+h+'" role="img" aria-label="'+esc(label)+'">';}
+function swatch(kind,col){const c='var('+col+')';
+  const k={line:'<line x1="1" y1="6" x2="17" y2="6" stroke="'+c+'" stroke-width="2.2"/>',
+  dash:'<line x1="1" y1="6" x2="17" y2="6" stroke="'+c+'" stroke-width="2" stroke-dasharray="4 3"/>',
+  dot:'<circle cx="9" cy="6" r="4" fill="'+c+'"/>',hollow:'<circle cx="9" cy="6" r="3.6" fill="none" stroke="'+c+'" stroke-width="1.8"/>',
+  sq:'<rect x="5" y="2" width="8" height="8" fill="none" stroke="'+c+'" stroke-width="1.8"/>',
+  dia:'<path d="M9 1.5 L14 6 L9 10.5 L4 6Z" fill="none" stroke="'+c+'" stroke-width="1.8"/>',
+  tri:'<path d="M9 1.5 L14 10 L4 10Z" fill="none" stroke="'+c+'" stroke-width="1.8"/>',
+  band:'<rect x="4" y="0" width="10" height="12" rx="5" fill="'+c+'" opacity=".3"/>',
+  halo:'<line x1="1" y1="6" x2="17" y2="6" stroke="'+c+'" stroke-width="6" opacity=".25"/>',
+  grayline:'<line x1="1" y1="6" x2="17" y2="6" stroke="'+c+'" stroke-width="1.2" opacity=".6"/>'}[kind];
+  return '<svg width="18" height="12" viewBox="0 0 18 12" aria-hidden="true">'+k+'</svg>';}
+function legend(id,items){$(id).innerHTML=items.map(i=>'<span>'+swatch(i[0],i[1])+esc(i[2])+'</span>').join('');}
+function yAxis(c,sc,tk,f,title){let s='';for(const t of tk){const y=sc(t);s+='<line class="grid" x1="'+c.l+'" x2="'+(c.w-c.r)+'" y1="'+y+'" y2="'+y+'"/><text class="tick" x="'+(c.l-6)+'" y="'+(y+4)+'" text-anchor="end">'+f(t)+'</text>';}
+  if(title)s+='<text class="yt" x="2" y="12">'+esc(title)+'</text>';return s;}
+function diamond(x,y,r,col,fill){return '<path d="M'+x+' '+(y-r)+' L'+(x+r)+' '+y+' L'+x+' '+(y+r)+' L'+(x-r)+' '+y+'Z" style="fill:'+(fill||'none')+';stroke:'+col+';stroke-width:1.8"/>';}
+function tri(x,y,r,col){return '<path d="M'+x+' '+(y-r)+' L'+(x+r)+' '+(y+r*.8)+' L'+(x-r)+' '+(y+r*.8)+'Z" style="fill:none;stroke:'+col+';stroke-width:1.8"/>';}
+function sqr(x,y,r,col){return '<rect x="'+(x-r)+'" y="'+(y-r)+'" width="'+2*r+'" height="'+2*r+'" style="fill:none;stroke:'+col+';stroke-width:1.8"/>';}
+function dodgeLabels(ys,minGap,lo,hi){const idx=ys.map((y,i)=>i).sort((a,b)=>ys[a]-ys[b]);const out=ys.slice();let prev=lo-minGap;for(const i of idx){out[i]=Math.max(ys[i],prev+minGap);prev=out[i];}
+  let nxt=hi+minGap;for(let k=idx.length-1;k>=0;k--){const i=idx[k];if(out[i]>nxt-minGap)out[i]=nxt-minGap;nxt=out[i];}return out;}
+const wOf=id=>Math.max(300,Math.floor($(id).getBoundingClientRect().width||$(id).clientWidth||320));
+const mobile=w=>w<560;
+
+/* ============ tooltip ============ */
+const tip=$('tip');
+function showTip(t,e){tip.textContent='';t.split('\n').forEach((ln,i)=>{const d=document.createElement('div');if(i===0)d.className='th';d.textContent=ln;tip.appendChild(d);});tip.hidden=false;
+  const r=tip.getBoundingClientRect();let x=e.clientX+14,y=e.clientY+14;if(x+r.width>innerWidth-6)x=e.clientX-r.width-14;if(x<6)x=6;if(y+r.height>innerHeight-6)y=e.clientY-r.height-14;if(y<6)y=6;tip.style.left=x+'px';tip.style.top=y+'px';}
+document.addEventListener('pointermove',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t.getAttribute('data-tip'),e);else tip.hidden=true;});
+document.addEventListener('pointerdown',e=>{const t=e.target.closest&&e.target.closest('[data-tip]');if(t)showTip(t.getAttribute('data-tip'),e);else tip.hidden=true;});
+document.addEventListener('scroll',()=>{tip.hidden=true;},{passive:true});
+
+/* ============ tabelas ============ */
+function table(head,rows){return '<table class="t"><thead><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+esc(c)+'</td>').join('')+'</tr>').join('')+'</tbody></table>';}
+
+/* ============ avisos e status ============ */
+function periodNote(){const ys=years();return ys.length?(ys[0]===ys[ys.length-1]?ys[0]:ys[0]+'–'+ys[ys.length-1]):'sem anos';}
+function ifsNote(){let a=0,b=0;for(const y of validYears('ifs')){const e=agg('era5',1),i=agg('ifs',1);for(let m=0;m<12;m++){a+=e.vol[(y-Y0)*12+m];b+=i.vol[(y-Y0)*12+m];}}return a>0?'no ponto, o IFS soma '+fmt(b/a*100,0)+'% do volume do ERA5 nos anos em comum':'';}
+function warnings(){const w=[];const vy=validYears(st.src);
+  if(st.src==='bm'&&SPLY&&st.y0<SPLY&&st.y1>=SPLY)w.push(['crit','<strong>best_match atravessa a emenda de '+SPLY+'.</strong> Antes disso ele é o ERA5; depois, o IFS ('+ifsNote()+'). Qualquer diferença entre períodos, tendência ou queda aparente nesse intervalo mistura clima com troca de produto. Use ERA5 para comparar períodos.']);
+  else if(st.src==='bm')w.push(['info','best_match combina ERA5 até a emenda e IFS depois; o intervalo escolhido não a atravessa.']);
+  if(st.src==='ifs')w.push(['info','IFS só tem dados completos desde '+vy[0]+' ('+vy.length+' anos): anos anteriores ficam de fora.']);
+  const n=years().length;
+  if(n===0)w.push(['crit','Nenhum ano completo da fonte no intervalo escolhido.']);
+  else if(n<10)w.push(['crit','<strong>Apenas '+n+' ano'+(n>1?'s':'')+' selecionado'+(n>1?'s':'')+'.</strong> Médias, medianas e faixas p10–p90 com menos de 10 anos são instáveis.']);
+  return w;}
+function renderAlerts(){$('alerts').innerHTML=warnings().map(x=>'<div class="alert '+(x[0]==='info'?'info':'')+'"'+(x[0]==='crit'?' role="alert"':'')+'>'+x[1]+'</div>').join('');}
+function renderStatus(){const m=MN[st.met];$('status').textContent=SRCN[st.src]+' · '+periodNote()+' · dia chuvoso ≥ '+fmt(st.thr,st.thr<1?1:0)+' mm · '+m.name.toLowerCase()+' · '+(st.grp==='m'?'meses':'estações')+(YPART?' · '+YPART+' parcial (até '+lastDS(st.src)+') fora das médias':'');}
+
+/* ============ 1 Sazonalidade ============ */
+function bandPanel(w,o){ // o:{G,names,series:[{name,col,stats,off,dash,shape}],refs:[{name,vals,shape,col,off}],yfmt,ytitle,uniform,h,ymax}
+  const mo_=mobile(w),m={l:mo_?40:48,r:10,t:22,b:24},h=o.h||(mo_?250:300),pw=w-m.l-m.r,ph=h-m.t-m.b;
+  let ymax=0;for(const s of o.series)for(const t of s.stats)if(t.n)ymax=Math.max(ymax,t.p90);for(const r of(o.refs||[]))for(const v of r.vals)if(isFinite(v))ymax=Math.max(ymax,v);
+  if(!(ymax>0))ymax=1;ymax*=1.08;const tk=ticks(0,ymax,4);ymax=Math.max(ymax,tk[tk.length-1]);
+  const y=lin(0,ymax,m.t+ph,m.t),G=o.G,cx=i=>m.l+(i+.5)*pw/G,dd=G===12?(mo_?4:5):12;
+  let s=svgOpen(w,h,o.title)+yAxis({l:m.l,r:m.r,w},y,tk,o.yfmt,o.ytitle);
+  s+='<line class="axl" x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+y(0)+'" y2="'+y(0)+'"/>';
+  if(o.uniform!=null)s+='<line x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+y(o.uniform)+'" y2="'+y(o.uniform)+'" stroke="var(--muted)" stroke-dasharray="2 4"/><text class="tick" x="'+(m.l+pw*(G===12?.5:.5))+'" y="'+(y(o.uniform)-5)+'" text-anchor="middle">'+esc(o.unifLabel)+'</text>';
+  for(let i=0;i<G;i++)s+='<text class="tick" x="'+cx(i)+'" y="'+(h-6)+'" text-anchor="middle">'+esc(o.names[i])+'</text>';
+  for(const se of o.series){const col='var('+se.col+')';let path='';
+    se.stats.forEach((t,i)=>{if(!t.n)return;const x=cx(i)+se.off*dd;
+      s+='<rect x="'+(x-3.5)+'" y="'+y(t.p90)+'" width="7" height="'+Math.max(1,y(t.p10)-y(t.p90))+'" rx="3.5" style="fill:'+col+';opacity:.3"/>';
+      path+=(path?'L':'M')+x+' '+y(t.p50);});
+    if(G===12&&path)s+='<path d="'+path+'" style="fill:none;stroke:'+col+';stroke-width:1.6;'+(se.dash?'stroke-dasharray:5 3':'')+'"/>';
+    se.stats.forEach((t,i)=>{if(!t.n)return;const x=cx(i)+se.off*dd;s+=se.shape==='sq'?'<rect x="'+(x-3.6)+'" y="'+(y(t.p50)-3.6)+'" width="7.2" height="7.2" style="fill:'+col+'"/>':'<circle cx="'+x+'" cy="'+y(t.p50)+'" r="3.8" style="fill:'+col+'"/>';});}
+  for(const r of(o.refs||[]))r.vals.forEach((v,i)=>{if(!isFinite(v))return;const x=cx(i)+r.off*dd,c='var('+r.col+')';s+=r.shape==='dia'?diamond(x,y(v),4.6,c):tri(x,y(v),4.6,c);});
+  for(let i=0;i<G;i++){const lines=[o.names[i]+(o.longNames?'':'')];
+    for(const se of o.series){const t=se.stats[i];lines.push(se.name+': '+(t.n?'mediana '+o.tfmt(t.p50)+' (p10 '+o.tfmt(t.p10)+' a p90 '+o.tfmt(t.p90)+'), '+t.n+' anos':'sem dados'));}
+    for(const r of(o.refs||[]))if(isFinite(r.vals[i]))lines.push(r.name+': '+o.tfmt(r.vals[i]));
+    s+='<rect class="hit" data-tip="'+esc(lines.join('\n'))+'" x="'+(cx(i)-pw/G/2)+'" y="'+m.t+'" width="'+pw/G+'" height="'+ph+'"/>';}
+  return s+'</svg>';}
+function viewSazon(){
+  const{gr,g,ys}=ctx(),G=gr.G,P=G+1,w=wOf('s1'),absm=st.abs;
+  const mk=(f)=>{const o=[];for(let gi=0;gi<G;gi++){const a=[];for(const y of ys)a.push(f(y-Y0,gi));o.push(statOf(a));}return o;};
+  const sv=mk((yi,gi)=>g.vol[yi*P+G]>0?g.vol[yi*P+gi]/g.vol[yi*P+G]*100:NaN);
+  const sf=mk((yi,gi)=>g.wet[yi*P+G]>0?g.wet[yi*P+gi]/g.wet[yi*P+G]*100:NaN);
+  const av=mk((yi,gi)=>g.vol[yi*P+gi]),af=mk((yi,gi)=>g.wet[yi*P+gi]),ai=mk((yi,gi)=>gval(g,G,yi,gi,'int'));
+  const showRef=st.refs,al=REF.alertario,im=REF.inmet,thr1=Tt()===10;
+  const rg=v=>refGroup(v,gr);
+  const alV=rg(al.monthly_mm),imV=rg(im.monthly_mm),imW=rg(im.wet_days);
+  const shr=v=>{const s=v.reduce((a,b)=>a+b,0);return v.map(x=>x/s*100);};
+  const arg=(st,f)=>{let b=-1,bi=-1;st.forEach((t,i)=>{if(t.n&&(b<0||f(t.p50,b))){b=t.p50;bi=i;}});return bi;};
+  const lo=(a,b)=>a<b,hi=(a,b)=>a>b;
+  const pf=v=>fmt(v,1)+'%';
+  const title=(s,what)=>{if(!s.some(t=>t.n))return what+': sem dados';const a=arg(s,hi),b=arg(s,lo);return what+': maior fatia em '+gr.long[a]+' (mediana '+pf(s[a].p50)+'), menor em '+gr.long[b]+' ('+pf(s[b].p50)+')';};
+  const names=gr.names;
+  if(!absm){
+    $('s2card').hidden=false;$('s3wrap').hidden=true;$('s3wrap').innerHTML='';
+    $('s1t').textContent=title(sv,'Volume')+(sf.some(t=>t.n)?'. Dias chuvosos: maior fatia em '+gr.long[arg(sf,hi)]+' ('+pf(sf[arg(sf,hi)].p50)+').':'.');
+    const refs=[];if(showRef){refs.push({name:'Volume, Alerta Rio',vals:shr(alV),shape:'dia',col:'--c1',off:-1},{name:'Volume, INMET',vals:shr(imV),shape:'tri',col:'--c1',off:-1.9});
+      if(thr1)refs.push({name:'Dias chuvosos ≥ 1 mm, INMET',vals:shr(imW),shape:'tri',col:'--c2',off:1.9});}
+    $('s1').innerHTML=bandPanel(w,{title:'Participação mensal',G,names,series:[{name:'Volume',col:'--c1',stats:sv,off:-1},{name:'Dias chuvosos',col:'--c2',stats:sf,off:1,dash:true,shape:'sq'}],refs,yfmt:v=>fmt(v,0)+'%',tfmt:v=>fmt(v,1)+'%',ytitle:'% do total anual',uniform:100/G,unifLabel:'distribuição uniforme ('+fmt(100/G,1)+'%)'});
+    legend('s1l',[['dot','--c1','Volume (mediana)'],['sq','--c2','Dias chuvosos (mediana)'],['band','--c1','faixa p10–p90 entre anos']].concat(showRef?[['dia','--c1','Alerta Rio (volume)'],['tri','--c1','INMET (volume)']].concat(thr1?[['tri','--c2','INMET (dias ≥ 1 mm)']]:[]):[]));
+    $('s1c').textContent='Participação = fração do total do próprio ano, mediana e p10–p90 entre '+ys.length+' anos ('+periodNote()+'), fonte '+SRCN[st.src]+'. Em % do total anual o viés do modelo pesa menos que em mm.'+(showRef&&!thr1?' Referência de dias chuvosos só existe para limiar de 1 mm.':'');
+    $('s2t').textContent=(()=>{const s=ai;if(!s.some(t=>t.n))return 'Intensidade: sem dados';const a=arg(s,hi),b=arg(s,lo);return 'Intensidade: maior em '+gr.long[a]+' (mediana '+fmt(s[a].p50,1)+' mm por dia chuvoso), menor em '+gr.long[b]+' ('+fmt(s[b].p50,1)+')';})();
+    const r2=[];if(showRef&&thr1)r2.push({name:'INMET (mm ÷ dias)',vals:(gr.G===12?im.monthly_mm.map((v,i)=>v/im.wet_days[i]):[0,1].map(k=>{let a=0,b=0;for(let m=0;m<12;m++)if(gr.map(m)===k){a+=im.monthly_mm[m];b+=im.wet_days[m];}return a/b;})),shape:'tri',col:'--c3',off:0});
+    $('s2').innerHTML=bandPanel(w,{title:'Intensidade',G,names,series:[{name:'Intensidade',col:'--c3',stats:ai,off:0}],refs:r2,yfmt:v=>fmt(v,0),tfmt:v=>fmt(v,1)+' mm',ytitle:'mm por dia chuvoso'});
+    legend('s2l',[['dot','--c3','Mediana'],['band','--c3','faixa p10–p90 entre anos']].concat(r2.length?[['tri','--c3','INMET (mm ÷ dias ≥ 1 mm)']]:[]));
+    $('s2c').textContent='Dias chuvosos = dias com ≥ '+fmt(st.thr,st.thr<1?1:0)+' mm. Intensidade indefinida onde não há dia chuvoso no ano.';
+  }else{
+    $('s2card').hidden=true;$('s3wrap').hidden=false;
+    $('s1t').textContent='Valores absolutos por '+(G===12?'mês':'estação')+' (mediana e p10–p90 entre anos)';
+    const ths=(Tt()===10);
+    const defs=[['Volume (mm)',av,'--c1',x=>fmt(x,0),x=>fmt(x,0)+' mm',showRef?[{name:'Alerta Rio',vals:alV,shape:'dia',col:'--c1',off:-1},{name:'INMET',vals:imV,shape:'tri',col:'--c1',off:1}]:[]],
+      ['Dias chuvosos (n por '+(G===12?'mês':'estação')+')',af,'--c2',x=>fmt(x,0),x=>fmt(x,1)+' dias',showRef&&ths?[{name:'INMET',vals:imW,shape:'tri',col:'--c2',off:1}]:[]],
+      ['Intensidade (mm por dia chuvoso)',ai,'--c3',x=>fmt(x,0),x=>fmt(x,1)+' mm',[]]];
+    $('s1').innerHTML=bandPanel(w,{title:defs[0][0],G,names,series:[{name:'Volume',col:defs[0][2],stats:av,off:0}],refs:defs[0][5],yfmt:defs[0][3],tfmt:defs[0][4],ytitle:defs[0][0]});
+    legend('s1l',[['dot','--c1','Mediana'],['band','--c1','p10–p90 entre anos']].concat(showRef?[['dia','--c1','Alerta Rio'],['tri','--c1','INMET']]:[]));
+    let h='';for(let k=1;k<3;k++){const d=defs[k];h+='<div class="card"><h3>'+esc(d[0])+'</h3><div class="chart" id="sx'+k+'"></div></div>';}
+    $('s3wrap').innerHTML=h;
+    for(let k=1;k<3;k++){const d=defs[k];$('sx'+k).innerHTML=bandPanel(wOf('sx'+k),{title:d[0],G,names,series:[{name:d[0],col:d[2],stats:d[1],off:0}],refs:d[5],yfmt:d[3],tfmt:d[4],ytitle:d[0],h:230});}
+    $('s1c').textContent='Absolutos herdam o viés do modelo (ERA5: volume e frequência acima das referências). Prefira as participações para comparar com observações.';
+  }
+  // tabela
+  const rows=[];for(let i=0;i<G;i++)rows.push([names[i],fmt(sv[i].p50,1)+' ('+fmt(sv[i].p10,1)+'–'+fmt(sv[i].p90,1)+')',fmt(sf[i].p50,1)+' ('+fmt(sf[i].p10,1)+'–'+fmt(sf[i].p90,1)+')',fmt(av[i].p50,0),fmt(af[i].p50,1),fmt(ai[i].p50,1)]);
+  $('s-table').innerHTML=table([G===12?'Mês':'Estação','Volume, % do ano (mediana, p10–p90)','Dias, % do ano (mediana, p10–p90)','Volume mediano (mm)','Dias chuvosos medianos','Intensidade mediana (mm)'],rows);
+}
+
+/* ============ 2 Calendário ============ */
+function viewCal(){
+  const a=agg(st.src,Tt()),ys=years(),w=wOf('hm'),met=st.met;
+  const S={vol:new Float64Array(366),wet:new Float64Array(366),wv:new Float64Array(366),n:new Float64Array(366)};
+  const ysSet=new Set(ys),T=Tt(),s=SRC[st.src];
+  for(let i=0;i<N;i++){if(!ysSet.has(yr[i]))continue;const v=s[i];if(v<0)continue;const k=slot[i];S.n[k]++;S.vol[k]+=v/10;if(v>=T){S.wet[k]++;S.wv[k]+=v/10;}}
+  const kk=st.sm;const sm=f=>{const o=new Float64Array(366);for(let i=0;i<366;i++){let t=0;for(let d=-kk;d<=kk;d++)t+=S[f][(i+d+366)%366];o[i]=t;}return o;};
+  const V=kk?sm('vol'):S.vol,W=kk?sm('wet'):S.wet,WV=kk?sm('wv'):S.wv,NN=kk?sm('n'):S.n;
+  const val=k=>{if(!NN[k])return NaN;if(met==='vol')return V[k]/NN[k];if(met==='freq')return W[k]/NN[k]*100;return W[k]>=5?WV[k]/W[k]:NaN;};
+  const R=((st.mt-st.mf+12)%12)+1,rows=[];for(let r=0;r<R;r++)rows.push((st.mf+r)%12);
+  let mx=0;const grid=rows.map(m=>{const row=[];for(let d=0;d<ML[m];d++){const v=val(MS[m]+d);row.push(v);if(isFinite(v))mx=Math.max(mx,v);}return row;});
+  if(!(mx>0))mx=1;
+  const mo_=mobile(w),m={l:mo_?32:40,r:mo_?44:60,t:34,b:10},rh=mo_?24:28,pw=w-m.l-m.r,cw=pw/31,h=m.t+R*rh+m.b+54;
+  const unit=met==='vol'?'mm/dia':met==='freq'?'% dos anos':'mm por dia chuvoso';
+  let sv=svgOpen(w,h,'Calendário mês por dia, '+MN[met].name);
+  for(const d of [1,5,10,15,20,25,30])sv+='<text class="tick" x="'+(m.l+(d-.5)*cw)+'" y="'+(m.t-8)+'" text-anchor="middle">'+d+'</text>';
+  sv+='<text class="tick" x="'+(w-m.r+6)+'" y="'+(m.t-8)+'">'+(met==='vol'?'mm/dia':met==='freq'?'% dias':'mm')+'</text>';
+  rows.forEach((mm,r)=>{const y=m.t+r*rh;sv+='<text class="lab" x="'+(m.l-6)+'" y="'+(y+rh/2+4)+'" text-anchor="end">'+MES[mm]+'</text>';
+    for(let d=0;d<ML[mm];d++){const v=grid[r][d],k=MS[mm]+d;const x=m.l+d*cw;
+      const tipTxt=(d+1)+' de '+MESL[mm]+'\n'+(isFinite(v)?fmt(v,met==='freq'?0:1)+' '+unit:'poucos dias chuvosos (< 5) para estimar')+'\n'+(kk?'janela de '+(2*kk+1)+' dias; ':'')+fmt(NN[k])+' observações-dia';
+      sv+='<rect class="cell" data-tip="'+esc(tipTxt)+'" x="'+(x+.5)+'" y="'+(y+.5)+'" width="'+Math.max(1,cw-1)+'" height="'+(rh-1)+'" rx="2" style="fill:'+(isFinite(v)?ramp(v/mx):'transparent')+';'+(isFinite(v)?'':'stroke:var(--axis);stroke-dasharray:2 2')+'"/>';}
+    // média do mês
+    let nn=0,vv=0,ww=0,wvv=0;for(let d=0;d<ML[mm];d++){const k=MS[mm]+d;nn+=S.n[k];vv+=S.vol[k];ww+=S.wet[k];wvv+=S.wv[k];}
+    const mv=met==='vol'?vv/nn:met==='freq'?ww/nn*100:(ww>0?wvv/ww:NaN);
+    sv+='<text class="lab" x="'+(w-m.r+6)+'" y="'+(y+rh/2+4)+'">'+fmt(mv,met==='freq'?0:1)+'</text>';});
+  // legenda de cor
+  const ly=m.t+R*rh+22,lw=Math.min(260,pw);
+  sv+='<defs><linearGradient id="hmg" x1="0" x2="1">'+Array.from({length:12},(_,i)=>'<stop offset="'+i/11+'" stop-color="'+ramp(i/11)+'"/>').join('')+'</linearGradient></defs>';
+  sv+='<rect x="'+m.l+'" y="'+ly+'" width="'+lw+'" height="10" rx="2" fill="url(#hmg)"/>';
+  const tk=ticks(0,mx,4).filter(t=>t<=mx+1e-9);for(const t of tk)sv+='<text class="tick" x="'+(m.l+t/mx*lw)+'" y="'+(ly+24)+'" text-anchor="middle">'+fmt(t,mx<5?1:0)+'</text>';
+  sv+='<text class="tick" x="'+(m.l+lw+10)+'" y="'+(ly+9)+'">'+unit+'</text></svg>';
+  $('hm').innerHTML=sv;
+  $('hmt').textContent=MN[met].name+' por dia do ano, '+MESL[st.mf]+(R>1?' a '+MESL[st.mt]:'')+(R>1&&st.mf>st.mt?' (atravessa a virada do ano)':'');
+  $('hmc').textContent=(met==='vol'?'Média de mm por dia':met==='freq'?'Porcentagem dos anos em que o dia foi chuvoso (≥ '+fmt(st.thr,st.thr<1?1:0)+' mm)':'mm médios nos dias chuvosos (células com menos de 5 dias chuvosos ficam vazias)')+', '+ys.length+' anos ('+periodNote()+'), '+SRCN[st.src]+(kk?', suavizado em janela de '+(2*kk+1)+' dias':', sem suavização')+'. Coluna à direita: média do mês, sem suavização. Escala de 0 ao máximo exibido.';
+  // diagnóstico de ruído
+  let so=0,se=0;for(const mm of rows){let nw=0,nt=0;for(let d=0;d<ML[mm];d++){nw+=S.wet[MS[mm]+d];nt+=S.n[MS[mm]+d];}const pm=nt?nw/nt:0;
+    for(let d=0;d<ML[mm];d++){const k=MS[mm]+d;if(!S.n[k])continue;const p=S.wet[k]/S.n[k];so+=(p-pm)*(p-pm);se+=pm*(1-pm)/S.n[k];}}
+  const ratio=se>0?so/se:NaN;
+  $('hmn').innerHTML='<strong>Diagnóstico de ruído</strong> (frequência de dias ≥ '+fmt(st.thr,st.thr<1?1:0)+' mm, dados brutos, meses exibidos): variância observada entre dias do mesmo mês ÷ variância binomial esperada = <strong>'+fmt(ratio,2)+'</strong>. '+(isFinite(ratio)?(ratio<1.5?'Valor perto de 1: a textura dia a dia é compatível com ruído amostral; só o gradiente sazonal é confiável.':'Acima de 1,5: há estrutura além do ruído binomial (inclui o gradiente sazonal dentro do mês), mas confirme com outro limiar ou período.'):'');
+}
+
+/* ============ 3 Anos ============ */
+function parseHL(){const txt=$('hl').value,out=[];let over=false;
+  for(const tok of txt.split(/[\s,;]+/).filter(Boolean)){const r=tok.match(/^(\d{4})-(\d{4})$/);let ys;if(r){ys=[];for(let y=+r[1];y<=+r[2];y++)ys.push(y);}else if(/^\d{4}$/.test(tok))ys=[+tok];else continue;
+    for(const y of ys)if(y>=Y0&&y<=YLAST&&!out.includes(y)){if(out.length<5)out.push(y);else over=true;}}
+  st.hl=out;$('hlmsg').textContent=over?'Mostrando só os 5 primeiros.':(out.length?'':'Nenhum ano destacado.');}
+function cumul(key,met,y){const s=SRC[key],T=Tt(),n=isLeap(y)?366:365,o=new Float32Array(n);let c=0,last=-1;
+  let i0=(Date.UTC(y,0,1)-Date.UTC(Y0,0,1))/864e5;for(let d=0;d<n&&i0+d<N;d++){const v=s[i0+d];if(v>=0){last=d;c+=met==='freq'?(v>=T?1:0):v/10;}o[d]=c;}
+  return{o,last};}
+function viewAnos(){
+  const c=ctx(),{g,G,ys}=c,P=G+1,met=st.met,w=wOf('a1'),mo_=mobile(w);
+  const vy=validYears(st.src),selSet=new Set(ys),hl=st.hl,T=Tt();
+  const yv=y=>gval(g,G,y-Y0,G,met);
+  const all=vy.map(y=>[y,yv(y)]).filter(p=>isFinite(p[1]));
+  const part=YPART?{y:YPART,v:(()=>{const yi=YPART-Y0;return gval(g,G,yi,G,met);})()}:null;
+  const unit=MN[met].unit,vals=ys.map(yv).filter(isFinite);const mean=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:NaN;
+  // --- painel A
+  const m={l:mo_?42:52,r:mo_?8:90,t:26,b:26},h=mo_?270:310,pw=w-m.l-m.r,ph=h-m.t-m.b;
+  let ymax=0;for(const p of all)ymax=Math.max(ymax,p[1]);if(part&&isFinite(part.v))ymax=Math.max(ymax,part.v);
+  const refs=[];const thr1=T===10;
+  if(met==='vol'){refs.push({n:'Alerta Rio, média '+(REF.alertario.label.match(/\d{4}–\d{4}/)||[''])[0],v:REF.alertario.annual_mm,c:'--c1'},{n:'INMET, normal',v:REF.inmet.annual_mm,c:'--c4'});}
+  else if(met==='freq'&&thr1)refs.push({n:'INMET, normal (dias ≥ 1 mm)',v:REF.inmet.annual_wet_days,c:'--c4'});
+  else if(met==='int'&&thr1)refs.push({n:'INMET, normal',v:REF.inmet.annual_mm/REF.inmet.annual_wet_days,c:'--c4'});
+  for(const r of refs)ymax=Math.max(ymax,r.v);
+  ymax*=1.08;const tk=ticks(0,ymax,5);ymax=Math.max(ymax,tk[tk.length-1]);
+  const X=lin(Y0-.5,YMAX+.5+(YPART?.6:0),m.l,w-m.r),Y=lin(0,ymax,m.t+ph,m.t);
+  let s=svgOpen(w,h,'Série anual de '+MN[met].name)+yAxis({l:m.l,r:m.r,w},Y,tk,v=>fmt(v,met==='int'?1:0),MN[met].uy);
+  s+='<line class="axl" x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+Y(0)+'" y2="'+Y(0)+'"/>';
+  for(let y=Y0;y<=YMAX;y+=5)s+='<text class="tick" x="'+X(y)+'" y="'+(h-6)+'" text-anchor="middle">'+y+'</text>';
+  if(st.src==='bm'&&SPLY)s+='<line x1="'+X(SPLY-.5)+'" x2="'+X(SPLY-.5)+'" y1="'+m.t+'" y2="'+Y(0)+'" stroke="var(--c2)" stroke-dasharray="4 3"/><text class="tick" x="'+(X(SPLY-.5)+4)+'" y="'+(m.t+10)+'" style="fill:var(--warn)">emenda ERA5→IFS</text>';
+  if(YPART)s+='<line x1="'+X(YLAST+.5)+'" x2="'+X(YLAST+.5)+'" y1="'+m.t+'" y2="'+Y(0)+'" stroke="var(--axis)" stroke-dasharray="2 3"/>';
+  if(isFinite(mean)){s+='<line x1="'+X(ys[0]-.5)+'" x2="'+X(ys[ys.length-1]+.5)+'" y1="'+Y(mean)+'" y2="'+Y(mean)+'" stroke="var(--ink2)" stroke-dasharray="6 4" stroke-width="1.3"/>';
+    s+='<text class="tick" x="'+(X(ys[0]-.5)+2)+'" y="'+(Y(mean)+14)+'" text-anchor="start" style="fill:var(--ink2)">média '+fmt(mean,met==='int'?1:0)+'</text>';}
+  const rl=refs.map(r=>Y(r.v));const rl2=dodgeLabels(rl,14,m.t,m.t+ph);
+  refs.forEach((r,i)=>{s+='<line x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+Y(r.v)+'" y2="'+Y(r.v)+'" stroke="var('+r.c+')" stroke-dasharray="1 4" stroke-width="1.8"/>';
+    if(!mo_)s+='<text class="tick" x="'+(w-m.r+4)+'" y="'+(rl2[i]+4)+'" style="fill:var(--ink2)">'+esc(r.n.split(',')[0])+' '+fmt(r.v,met==='int'?1:0)+'</text>';});
+  // linha e pontos
+  let p='';all.forEach((q,i)=>{p+=(i&&all[i-1][0]===q[0]-1?'L':'M')+X(q[0])+' '+Y(q[1]);});
+  s+='<path d="'+p+'" style="fill:none;stroke:var(--dim);stroke-width:1.2"/>';
+  const hlIdx=y=>hl.indexOf(y);
+  for(const q of all){const hi=hlIdx(q[0]),sel=selSet.has(q[0]);let tp=q[0]+'\n'+fmt(q[1],met==='int'?1:0)+' '+unit+(sel?'':'\nfora do intervalo selecionado');
+    if(hi<0)s+='<circle cx="'+X(q[0])+'" cy="'+Y(q[1])+'" r="'+(sel?3.4:3)+'" style="'+(sel?'fill:var(--ink2)':'fill:var(--surface);stroke:var(--dim);stroke-width:1.5')+'"/>';
+    s+='<rect class="hit" data-tip="'+esc(tp)+'" x="'+(X(q[0])-pw/NY/2)+'" y="'+m.t+'" width="'+pw/NY+'" height="'+ph+'"/>';}
+  // destaques
+  const hlpts=hl.map((y,i)=>[y,yv(y),i]).filter(q=>isFinite(q[1]));
+  const lblY=dodgeLabels(hlpts.map(q=>Y(q[1])-10),13,m.t+8,m.t+ph);
+  hlpts.forEach((q,k)=>{s+='<circle cx="'+X(q[0])+'" cy="'+Y(q[1])+'" r="5.5" style="fill:'+hv(q[2])+';stroke:var(--surface);stroke-width:1.5" pointer-events="none"/>';});
+  hlpts.forEach((q,k)=>{const lx=Math.min(w-m.r-14,Math.max(m.l+14,X(q[0])));s+='<text class="lab" x="'+lx+'" y="'+Y(q[1])+'" dy="-9" text-anchor="middle" style="font-weight:700" pointer-events="none">'+q[0]+'</text>';});
+  if(part&&isFinite(part.v)){s+='<path d="M'+X(part.y)+' '+(Y(part.v)-6)+' L'+(X(part.y)+6)+' '+Y(part.v)+' L'+X(part.y)+' '+(Y(part.v)+6)+' L'+(X(part.y)-6)+' '+Y(part.v)+'Z" style="fill:var(--surface);stroke:var(--ink);stroke-width:1.8;stroke-dasharray:3 2"/>';
+    s+='<text class="tick" x="'+(X(part.y)-8)+'" y="'+(Y(part.v)-10)+'" text-anchor="end" style="fill:var(--ink)">'+part.y+' parcial</text>';
+    s+='<rect class="hit" data-tip="'+esc(part.y+' (parcial, até '+lastDS(st.src)+')\n'+fmt(part.v,met==='int'?1:0)+' '+unit+' até agora\nnão comparável com anos completos; fora das médias')+'" x="'+(X(part.y)-12)+'" y="'+m.t+'" width="24" height="'+ph+'"/>';}
+  s+='</svg>';$('a1').innerHTML=s;
+  const dw=(all.length>2)?(()=>{const mx=all.reduce((a,b)=>b[1]>a[1]?b:a),mn=all.reduce((a,b)=>b[1]<a[1]?b:a);return MN[met].name+' anual: de '+fmt(mn[1],met==='int'?1:0)+' ('+mn[0]+') a '+fmt(mx[1],met==='int'?1:0)+' '+unit+' ('+mx[0]+')';})():MN[met].name+' anual';
+  $('a1t').textContent=dw;
+  legend('a1l',[['dot','--ink2','Ano no intervalo'],['hollow','--dim','Ano fora do intervalo'],['dash','--ink2','Média do intervalo']].concat(hl.map((y,i)=>['dot',HLV[i],String(y)])).concat(YPART?[['dia','--ink',''+YPART+' (parcial, fora das médias)']]:[]).concat(refs.map(r=>['dash',r.c,r.n])));
+  $('a1c').textContent='Fonte '+SRCN[st.src]+'. Limiar de dia chuvoso: '+fmt(st.thr,st.thr<1?1:0)+' mm.'+(met==='int'?'':'')+(YPART?' '+YPART+' cobre só até '+lastDS(st.src)+'.':'');
+  // --- painel B: strip
+  const w2=wOf('a2'),h2=mo_?290:330,m2={l:mo_?42:52,r:10,t:26,b:26},pw2=w2-m2.l-m2.r,ph2=h2-m2.t-m2.b,gr=c.gr;
+  let mx2=0;for(const y of ys)for(let gi=0;gi<G;gi++){const v=gval(g,G,y-Y0,gi,met);if(isFinite(v))mx2=Math.max(mx2,v);}
+  const partV=gi=>{if(!YPART)return NaN;const yi=YPART-Y0;let full=true;const n=g.n[yi*P+gi];let exp=0;for(let m_=0;m_<12;m_++)if(gr.map(m_)===gi)exp+=(m_===1&&isLeap(YPART))?29:ML[m_]-(m_===1&&!isLeap(YPART)?1:0);return n>=exp?gval(g,G,yi,gi,met):NaN;};
+  for(let gi=0;gi<G;gi++){const v=partV(gi);if(isFinite(v))mx2=Math.max(mx2,v);}
+  mx2=(mx2||1)*1.06;const tk2=ticks(0,mx2,5);mx2=Math.max(mx2,tk2[tk2.length-1]);const Y2=lin(0,mx2,m2.t+ph2,m2.t),cx2=i=>m2.l+(i+.5)*pw2/G;
+  let s2=svgOpen(w2,h2,'Valores por '+(G===12?'mês':'estação')+' em cada ano')+yAxis({l:m2.l,r:m2.r,w:w2},Y2,tk2,v=>fmt(v,met==='int'?1:0),MN[met].uy);
+  s2+='<line class="axl" x1="'+m2.l+'" x2="'+(w2-m2.r)+'" y1="'+Y2(0)+'" y2="'+Y2(0)+'"/>';
+  const spread=G===12?(mo_?9:14):40;
+  for(let gi=0;gi<G;gi++){s2+='<text class="tick" x="'+cx2(gi)+'" y="'+(h2-6)+'" text-anchor="middle">'+esc(gr.names[gi])+'</text>';
+    const arr=[];ys.forEach((y,k)=>{const v=gval(g,G,y-Y0,gi,met);if(!isFinite(v))return;arr.push(v);if(hl.includes(y))return;const jx=((k*7)%11/10-.5)*spread*2;
+      s2+='<circle cx="'+(cx2(gi)+jx)+'" cy="'+Y2(v)+'" r="'+(mo_?2.2:2.8)+'" style="fill:var(--dim);opacity:.65" pointer-events="none"/>';});
+    const med=quant(arr.slice().sort((a,b)=>a-b),.5);
+    if(isFinite(med))s2+='<line x1="'+(cx2(gi)-spread-4)+'" x2="'+(cx2(gi)+spread+4)+'" y1="'+Y2(med)+'" y2="'+Y2(med)+'" stroke="var(--ink)" stroke-width="2"/>';
+    hl.forEach((y,i)=>{const v=gval(g,G,y-Y0,gi,met);if(!isFinite(v)||!selSet.has(y)&&!validYears(st.src).includes(y))return;s2+='<circle cx="'+(cx2(gi)+(i-(hl.length-1)/2)*(mo_?3:4))+'" cy="'+Y2(v)+'" r="'+(mo_?3.6:4.8)+'" style="fill:'+hv(i)+';stroke:var(--surface);stroke-width:1.2" pointer-events="none"/>';});
+    const pv=partV(gi);if(isFinite(pv))s2+=diamond(cx2(gi),Y2(pv),5,'var(--ink)');
+    const tl=[gr.long[gi]+' (mediana '+fmt(med,met==='int'?1:0)+', n='+arr.length+')'];hl.forEach(y=>{const v=gval(g,G,y-Y0,gi,met);if(isFinite(v))tl.push(y+': '+fmt(v,met==='int'?1:0));});if(isFinite(pv))tl.push(YPART+' (parcial): '+fmt(pv,met==='int'?1:0));
+    s2+='<rect class="hit" data-tip="'+esc(tl.join('\n'))+'" x="'+(cx2(gi)-pw2/G/2)+'" y="'+m2.t+'" width="'+pw2/G+'" height="'+ph2+'"/>';}
+  s2+='</svg>';$('a2').innerHTML=s2;
+  $('a2t').textContent=MN[met].name+' por '+(G===12?'mês':'estação')+': cada ponto é um ano';
+  legend('a2l',[['dot','--dim','Ano selecionado'],['line','--ink','Mediana']].concat(hl.map((y,i)=>['dot',HLV[i],String(y)])).concat(YPART?[['dia','--ink',YPART+' (meses completos)']]:[]));
+  $('a2c').textContent=ys.length+' anos ('+periodNote()+'). Pontos espalhados na horizontal só para não se sobreporem; a posição horizontal não tem significado.';
+  // --- painel C: acumulado
+  const w3=wOf('a3'),h3=mo_?290:330,m3={l:mo_?42:52,r:mo_?40:60,t:26,b:26},pw3=w3-m3.l-m3.r,ph3=h3-m3.t-m3.b;
+  const cm=met==='freq'?'freq':'vol';
+  const curves=ys.map(y=>({y,c:cumul(st.src,cm,y).o}));
+  const pc=YPART?cumul(st.src,cm,YPART):null;
+  const hlc=hl.filter(y=>validYears(st.src).includes(y)).map(y=>({y,i:hl.indexOf(y),c:cumul(st.src,cm,y).o}));
+  const med=new Float32Array(365);for(let d=0;d<365;d++){const a=curves.map(q=>q.c[d]).sort((x,y)=>x-y);med[d]=quant(a,.5);}
+  let mx3=0;for(const q of curves)mx3=Math.max(mx3,q.c[q.c.length-1]);for(const q of hlc)mx3=Math.max(mx3,q.c[q.c.length-1]);if(pc)mx3=Math.max(mx3,pc.o[Math.max(0,pc.last)]);
+  mx3=(mx3||1)*1.05;const tk3=ticks(0,mx3,5);mx3=Math.max(mx3,tk3[tk3.length-1]);
+  const X3=lin(0,364,m3.l,m3.l+pw3),Y3=lin(0,mx3,m3.t+ph3,m3.t);
+  const pth=(arr,n)=>{let d='';for(let i=0;i<Math.min(n,365);i++)d+=(i?'L':'M')+X3(i).toFixed(1)+' '+Y3(arr[i]).toFixed(1);return d;};
+  let s3=svgOpen(w3,h3,'Acumulado ao longo do ano')+yAxis({l:m3.l,r:m3.r,w:w3},Y3,tk3,v=>fmt(v,0),cm==='freq'?'dias chuvosos acumulados':'mm acumulados');
+  s3+='<line class="axl" x1="'+m3.l+'" x2="'+(w3-m3.r)+'" y1="'+Y3(0)+'" y2="'+Y3(0)+'"/>';
+  for(let mm=0;mm<12;mm++){const d=MS[mm]-(mm>=2?1:0);s3+='<text class="tick" x="'+(X3(d)+(mo_?0:8))+'" y="'+(h3-6)+'" text-anchor="'+(mo_?'middle':'start')+'">'+(mo_?MES[mm][0]:MES[mm])+'</text>';}
+  s3+='<g style="fill:none;stroke:var(--dim);stroke-width:1;opacity:.55">'+curves.filter(q=>!hl.includes(q.y)).map(q=>'<path d="'+pth(q.c,q.c.length)+'"/>').join('')+'</g>';
+  s3+='<path d="'+pth(med,365)+'" style="fill:none;stroke:var(--ink);stroke-width:2.6"/>';
+  hlc.forEach(q=>{s3+='<path d="'+pth(q.c,q.c.length)+'" style="fill:none;stroke:'+hv(q.i)+';stroke-width:2.2"/>';});
+  if(pc&&pc.last>=0)s3+='<path d="'+pth(pc.o,pc.last+1)+'" style="fill:none;stroke:var(--ink);stroke-width:2;stroke-dasharray:3 3"/>';
+  const ends=hlc.map(q=>({y:q.y,i:q.i,v:q.c[364]}));if(pc&&pc.last>=0)ends.push({y:YPART+' (parcial)',i:-1,v:pc.o[Math.min(364,pc.last)],x:Math.min(364,pc.last)});
+  const ly=dodgeLabels(ends.map(e=>Y3(e.v)),13,m3.t,m3.t+ph3);
+  ends.forEach((e,k)=>{const x=e.x!=null?X3(e.x):X3(364);s3+='<text class="lab" x="'+(x+5)+'" y="'+(ly[k]+4)+'" style="font-weight:600">'+(mo_?String(e.y).slice(0,4):e.y)+'</text>';});
+  // hover em colunas semanais
+  for(let d=0;d<365;d+=7){const lines=[(d+1)+'º dia do ano','mediana: '+fmt(med[d],0)];hlc.forEach(q=>lines.push(q.y+': '+fmt(q.c[Math.min(d,q.c.length-1)],0)));const q0=curves.map(q=>q.c[d]).sort((a,b)=>a-b);lines.push('p10–p90: '+fmt(quant(q0,.1),0)+'–'+fmt(quant(q0,.9),0));
+    s3+='<rect class="hit" data-tip="'+esc(lines.join('\n'))+'" x="'+(X3(d)-pw3/365*3.5)+'" y="'+m3.t+'" width="'+pw3/365*7+'" height="'+ph3+'"/>';}
+  s3+='</svg>';$('a3').innerHTML=s3;
+  const fin=curves.map(q=>q.c[q.c.length-1]).sort((a,b)=>a-b);
+  $('a3t').textContent=(cm==='freq'?'Dias chuvosos':'Volume')+' acumulado até 31/dez: mediana '+fmt(quant(fin,.5),0)+' '+(cm==='freq'?'dias':'mm')+', p10–p90 de '+fmt(quant(fin,.1),0)+' a '+fmt(quant(fin,.9),0);
+  legend('a3l',[['grayline','--dim','Anos selecionados'],['line','--ink','Mediana']].concat(hl.map((y,i)=>['line',HLV[i],String(y)])).concat(YPART?[['dash','--ink',YPART+' (parcial)']]:[]));
+  $('a3c').textContent=(met==='int'?'Para intensidade mostra-se o volume acumulado. ':'')+'Dia do ano contado a partir de 1º de jan.';
+}
+
+/* ============ 4 A × B ============ */
+function boot(Ays,Bys,g,G,met,rel){
+  const P=G+1,R=1000,rnd=rng(20260101),nA=Ays.length,nB=Bys.length;
+  const field=(yi,k)=>({v:g.vol[yi*P+k],w:g.wet[yi*P+k],x:g.wv[yi*P+k]});
+  const stat=(ys,k)=>{let v=0,w=0,x=0;for(const y of ys){const yi=y-Y0;v+=g.vol[yi*P+k];w+=g.wet[yi*P+k];x+=g.wv[yi*P+k];}const n=ys.length;return met==='vol'?v/n:met==='freq'?w/n:(w>0?x/w:NaN);};
+  const out=[];const draws=new Float64Array(R);
+  for(let k=0;k<=G;k++){const a=stat(Ays,k),b=stat(Bys,k);out.push({a,b,d:rel?(b-a)/a*100:b-a,lo:NaN,hi:NaN});}
+  const dr=Array.from({length:G+1},()=>[]);
+  const sa=new Array(nA),sb=new Array(nB);
+  for(let r=0;r<R;r++){for(let i=0;i<nA;i++)sa[i]=Ays[Math.floor(rnd()*nA)];for(let i=0;i<nB;i++)sb[i]=Bys[Math.floor(rnd()*nB)];
+    for(let k=0;k<=G;k++){const a=stat(sa,k),b=stat(sb,k);const d=rel?(b-a)/a*100:b-a;if(isFinite(d))dr[k].push(d);}}
+  for(let k=0;k<=G;k++){const s=dr[k].sort((x,y)=>x-y);if(s.length>R*.9){out[k].lo=quant(s,.025);out[k].hi=quant(s,.975);}}
+  return out;}
+function viewAB(){
+  const t0=performance.now();const c=ctx(),{g,G,gr}=c,met=st.met;
+  const Ay=yearsIn(st.A[0],st.A[1]),By=yearsIn(st.B[0],st.B[1]);
+  const wn=[];
+  const chk=(nm,ys,r)=>{if(!ys.length)wn.push('<div class="alert" role="alert"><strong>Período '+nm+' sem anos completos nesta fonte.</strong></div>');else if(ys.length<10)wn.push('<div class="alert"><strong>Período '+nm+' com apenas '+ys.length+' ano'+(ys.length>1?'s':'')+' (< 10):</strong> o intervalo de bootstrap é pouco confiável.</div>');};
+  chk('A',Ay);chk('B',By);
+  const ov=Ay.filter(y=>By.includes(y));if(ov.length)wn.push('<div class="alert"><strong>A e B se sobrepõem em '+ov.length+' ano'+(ov.length>1?'s':'')+'.</strong> A diferença deixa de comparar períodos independentes.</div>');
+  if(st.src==='bm'&&SPLY){const aB=Ay.some(y=>y<SPLY),aA=Ay.some(y=>y>=SPLY),bB=By.some(y=>y<SPLY),bA=By.some(y=>y>=SPLY);if((aB&&aA)||(bB&&bA)||(aB&&!aA&&bA&&!bB)||(aA&&!aB&&bB&&!bA))wn.push('<div class="alert" role="alert"><strong>best_match e a emenda de '+SPLY+':</strong> o contraste mistura ERA5 e IFS. A diferença reflete troca de produto, não clima. Use ERA5.</div>');}
+  $('abw').innerHTML=wn.join('');
+  if(!Ay.length||!By.length){$('ab').innerHTML='';$('abt').textContent='Escolha períodos com anos disponíveis';$('ab-table').innerHTML='';$('abc').textContent='';$('abl').innerHTML='';return;}
+  const res=boot(Ay,By,g,G,met,st.rel),w=wOf('ab'),mo_=mobile(w);
+  const rows=G+1,rh=mo_?26:28,m={l:mo_?96:130,r:12,t:34,b:30},h=m.t+rows*rh+m.b+6,pw=w-m.l-m.r;
+  let lo=0,hi=0;for(const r of res){lo=Math.min(lo,isFinite(r.lo)?r.lo:r.d);hi=Math.max(hi,isFinite(r.hi)?r.hi:r.d);}
+  const ext=Math.max(Math.abs(lo),Math.abs(hi))*1.08||1,tk=ticks(-ext,ext,mo_?4:6),X=lin(-ext,ext,m.l,m.l+pw);
+  const u=st.rel?'%':MN[met].unit;
+  let s=svgOpen(w,h,'Diferença B menos A por '+(G===12?'mês':'estação'));
+  for(const t of tk)s+='<line class="grid" x1="'+X(t)+'" x2="'+X(t)+'" y1="'+m.t+'" y2="'+(m.t+rows*rh)+'"/><text class="tick" x="'+X(t)+'" y="'+(m.t+rows*rh+16)+'" text-anchor="middle">'+fmt(t,Math.abs(tk[1]-tk[0])<1?1:0)+'</text>';
+  s+='<line x1="'+X(0)+'" x2="'+X(0)+'" y1="'+(m.t-4)+'" y2="'+(m.t+rows*rh)+'" stroke="var(--ink)" stroke-width="1.4"/>';
+  s+='<text class="yt" x="2" y="12">Diferença B − A ('+(st.rel?'% de A':MN[met].unit)+')</text>';
+  s+='<text class="tick" x="'+X(0)+'" y="'+(m.t-10)+'" text-anchor="middle">0</text>';
+  const sig=[];
+  res.forEach((r,i)=>{const yc=m.t+i*rh+rh/2+(i===G?6:0),name=i===G?'Ano':gr.names[i];if(i===G)s+='<line x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+(m.t+i*rh+3)+'" y2="'+(m.t+i*rh+3)+'" stroke="var(--axis)"/>';
+    const ex=isFinite(r.lo)&&(r.lo>0||r.hi<0);if(ex)sig.push(name);
+    s+='<text class="lab" x="'+(m.l-8)+'" y="'+(yc+4)+'" text-anchor="end"'+(i===G?' style="font-weight:700"':'')+'>'+esc(name)+'</text>';
+    if(isFinite(r.lo))s+='<line x1="'+X(r.lo)+'" x2="'+X(r.hi)+'" y1="'+yc+'" y2="'+yc+'" style="stroke:'+(ex?'var(--c1)':'var(--dim)')+';stroke-width:2.4"/>';
+    s+='<circle cx="'+X(r.d)+'" cy="'+yc+'" r="4.6" style="'+(ex?'fill:var(--c1)':'fill:var(--surface);stroke:var(--dim);stroke-width:2')+'"/>';
+    const f=v=>(st.rel?sfmt(v,1)+'%':sfmt(v,met==='int'?2:1)+' '+MN[met].unit);
+    s+='<rect class="hit" data-tip="'+esc((i===G?'Ano (soma)':gr.long[i])+'\nA: '+fmt(r.a,met==='int'?2:1)+'  B: '+fmt(r.b,met==='int'?2:1)+' '+MN[met].unit+'\nB − A: '+f(r.d)+'\nIC 95%: '+(isFinite(r.lo)?f(r.lo)+' a '+f(r.hi):'indefinido')+'\n'+(ex?'intervalo exclui o zero':'intervalo inclui o zero'))+'" x="'+m.l+'" y="'+(yc-rh/2)+'" width="'+pw+'" height="'+rh+'"/>';});
+  s+='</svg>';$('ab').innerHTML=s;
+  const ya=Ay[0]+(Ay.length>1?'–'+Ay[Ay.length-1]:''),yb=By[0]+(By.length>1?'–'+By[By.length-1]:'');
+  const an=res[G];
+  $('abt').textContent=MN[met].name+' anual, B ('+yb+') − A ('+ya+'): '+(st.rel?sfmt(an.d,1)+'%':sfmt(an.d,met==='int'?2:0)+' '+MN[met].unit)+(isFinite(an.lo)?' (IC 95% '+(st.rel?sfmt(an.lo,1)+' a '+sfmt(an.hi,1)+'%':sfmt(an.lo,met==='int'?2:0)+' a '+sfmt(an.hi,met==='int'?2:0))+')':'');
+  legend('abl',[['dot','--c1','IC 95% exclui o zero'],['hollow','--dim','IC inclui o zero (sem evidência de diferença)']]);
+  const ntests=G+1,exp=ntests*.05;
+  $('abc').innerHTML='A: '+Ay.length+' anos, B: '+By.length+' anos. Bootstrap em blocos de ano, 1.000 reamostragens (semente fixa), IC percentil de 95%; '+(sig.length?sig.length+' de '+ntests+' intervalos excluem o zero ('+esc(sig.join(', '))+')':'nenhum dos '+ntests+' intervalos exclui o zero')+'. Sem correção para comparações múltiplas: por acaso, cerca de '+fmt(exp,1)+' dos '+ntests+' intervalos excluiriam o zero. Tempo de cálculo: '+Math.round(performance.now()-t0)+' ms.';
+  $('ab-table').innerHTML=table([G===12?'Mês':'Grupo','A ('+MN[met].unit+')','B ('+MN[met].unit+')','B − A'+(st.rel?' (%)':''),'IC 95% inferior','IC 95% superior'],res.map((r,i)=>[i===G?'Ano':gr.names[i],fmt(r.a,met==='int'?2:1),fmt(r.b,met==='int'?2:1),sfmt(r.d,st.rel?1:2),sfmt(r.lo,st.rel?1:2),sfmt(r.hi,st.rel?1:2)]));
+  window.__abMs=performance.now()-t0;
+}
+
+/* ============ 5 Extremos ============ */
+function dayValues(ys){const set=new Set(ys),s=SRC[st.src],T=Tt(),o=[];for(let i=0;i<N;i++){if(!set.has(yr[i]))continue;const v=s[i];if(v>=T)o.push(v/10);}return o.sort((a,b)=>a-b);}
+function viewExt(){
+  const ys=years(),w=wOf('e1'),mo_=mobile(w),T=Tt()/10;
+  const sets=[{name:'Anos selecionados',vals:dayValues(ys),col:'--ink',w:2.2,ny:ys.length}];
+  if(st.eab){const Ay=yearsIn(st.A[0],st.A[1]),By=yearsIn(st.B[0],st.B[1]);if(Ay.length)sets.push({name:'A ('+Ay[0]+'–'+Ay[Ay.length-1]+')',vals:dayValues(Ay),col:'--c1',w:2,ny:Ay.length});if(By.length)sets.push({name:'B ('+By[0]+'–'+By[By.length-1]+')',vals:dayValues(By),col:'--c2',w:2,ny:By.length});}
+  const m={l:mo_?46:56,r:12,t:26,b:34},h=mo_?300:340,pw=w-m.l-m.r,ph=h-m.t-m.b;
+  const main=sets[0].vals;if(!main.length){$('e1').innerHTML='';$('e1t').textContent='Sem dias chuvosos no intervalo';$('e1tab').innerHTML='';$('e2').innerHTML='';return;}
+  let xmax=0;for(const q of sets)if(q.vals.length)xmax=Math.max(xmax,q.vals[q.vals.length-1]);
+  const lx0=Math.log10(T),lx1=Math.log10(xmax*1.15),X=lin(lx0,lx1,m.l,m.l+pw);
+  const exc=st.ecm==='exc';
+  const nmin=Math.min(...sets.filter(q=>q.vals.length).map(q=>q.vals.length));
+  const ymin=Math.log10(Math.max(.2/Math.max(...sets.map(q=>q.vals.length)),1e-4));
+  const Y=exc?lin(ymin,0,m.t+ph,m.t):lin(0,1,m.t+ph,m.t);
+  let s=svgOpen(w,h,exc?'Excedência dos volumes diários':'ECDF dos volumes diários');
+  const xt=[.1,.2,.5,1,2,5,10,20,50,100,200].filter(v=>v>=T*.999&&v<=xmax*1.15);
+  const yt=exc?[1,.5,.2,.1,.05,.02,.01,.005,.002,.001,.0005,.0002,.0001].filter(v=>Math.log10(v)>=ymin):[0,.25,.5,.75,1];
+  for(const t of yt){const yy=Y(exc?Math.log10(t):t);s+='<line class="grid" x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+yy+'" y2="'+yy+'"/><text class="tick" x="'+(m.l-6)+'" y="'+(yy+4)+'" text-anchor="end">'+fmt(t*100,t<.01&&exc?2:t<.1&&exc?1:0)+'%</text>';}
+  for(const t of xt)s+='<line class="grid" x1="'+X(Math.log10(t))+'" x2="'+X(Math.log10(t))+'" y1="'+m.t+'" y2="'+(m.t+ph)+'" style="opacity:.5"/><text class="tick" x="'+X(Math.log10(t))+'" y="'+(h-16)+'" text-anchor="middle">'+fmt(t,t<1?1:0)+'</text>';
+  s+='<text class="tick" x="'+(m.l+pw)+'" y="'+(h-2)+'" text-anchor="end">mm por dia (escala logarítmica)</text><text class="yt" x="2" y="12">'+(exc?'% dos dias chuvosos com volume > x':'% dos dias chuvosos com volume ≤ x')+'</text>';
+  for(const q of sets){const v=q.vals,n=v.length;if(!n)continue;let d='';const step=Math.max(1,Math.floor(n/500));
+    for(let i=0;i<n;i+=step){const x=v[i];const F=exc?Math.max((n-1-i)/n,.5/n):(i+1)/n;if(exc&&F<=0)continue;d+=(d?'L':'M')+X(Math.log10(x)).toFixed(1)+' '+Y(exc?Math.log10(F):F).toFixed(1);}
+    const xl=v[n-1],Fl=exc?.5/n:1;d+='L'+X(Math.log10(xl)).toFixed(1)+' '+Y(exc?Math.log10(Fl):Fl).toFixed(1);
+    s+='<path d="'+d+'" style="fill:none;stroke:var('+q.col+');stroke-width:'+q.w+';stroke-linejoin:round"/>';}
+  // sondagem por hover
+  const steps=40;for(let k=0;k<steps;k++){const lx=lx0+(lx1-lx0)*(k+.5)/steps,x=Math.pow(10,lx);const lines=['≈ '+fmt(x,x<10?1:0)+' mm/dia'];
+    for(const q of sets){if(!q.vals.length)continue;let lo=0,hi=q.vals.length;while(lo<hi){const mid=(lo+hi)>>1;if(q.vals[mid]<=x)lo=mid+1;else hi=mid;}const Fle=lo/q.vals.length;lines.push(q.name+': '+fmt((exc?1-Fle:Fle)*100,exc&&Fle>.99?2:1)+'% '+(exc?'acima':'abaixo')+' ('+(q.vals.length-lo)+' dias acima)');}
+    s+='<rect class="hit" data-tip="'+esc(lines.join('\n'))+'" x="'+(m.l+pw*k/steps)+'" y="'+m.t+'" width="'+pw/steps+'" height="'+ph+'"/>';}
+  s+='</svg>';$('e1').innerHTML=s;
+  const q99=quant(main,.99),mxv=main[main.length-1];
+  $('e1t').textContent='Entre os dias chuvosos, 1% passa de '+fmt(q99,0)+' mm; o maior dia tem '+fmt(mxv,1)+' mm ('+SRCN[st.src]+')';
+  legend('e1l',sets.map(q=>['line',q.col,q.name+' ('+q.vals.length+' dias)']));
+  $('e1c').textContent='Apenas dias com ≥ '+fmt(T,1)+' mm. Distribuições de períodos com números diferentes de anos são comparáveis porque usam proporções, não contagens.';
+  $('e1tab').innerHTML=table(['Conjunto','Anos','Dias chuvosos','Dias por ano','Mediana (mm)','p90','p99','Máximo','Dias ≥ 50 mm por ano'],sets.map(q=>[q.name,q.ny,fmt(q.vals.length),fmt(q.vals.length/q.ny,1),fmt(quant(q.vals,.5),1),fmt(quant(q.vals,.9),1),fmt(quant(q.vals,.99),1),fmt(q.vals[q.vals.length-1],1),fmt(q.vals.filter(v=>v>=50).length/q.ny,2)]));
+  // maiores dias
+  const set=new Set(ys),s0=SRC[st.src],list=[];for(let i=0;i<N;i++){if(set.has(yr[i])&&s0[i]>=0)list.push(i);}
+  list.sort((a,b)=>s0[b]-s0[a]||a-b);const top=list.slice(0,st.topn);
+  const cell=(k,i)=>SRC[k][i]>=0?fmt(SRC[k][i]/10,1):'–';
+  $('e2t').textContent='Os '+st.topn+' maiores dias ('+SRCN[st.src]+', '+periodNote()+')';
+  $('e2').innerHTML=table(['#','Data','mm ('+SRCN[st.src]+')','ERA5','IFS'],top.map((i,k)=>[k+1,dateStr(i),fmt(s0[i]/10,1),cell('era5',i),cell('ifs',i)]));
+  $('e2c').textContent='Os modelos frequentemente discordam sobre o dia e o tamanho do evento; as colunas ERA5 e IFS mostram o mesmo dia nas duas fontes. Empates de valor são ordenados por data.';
+}
+
+/* ============ 6 Fontes ============ */
+function annualSeries(key,met,T){const a=agg(key,T),o={};for(let y=Y0;y<=YMAX;y++){let v=0,wv=0,w=0,n=0;for(let m=0;m<12;m++){const k=(y-Y0)*12+m;v+=a.vol[k];w+=a.wet[k];wv+=a.wv[k];n+=a.n[k];}
+  const full=y<=YLAST?(n>=0.98*(isLeap(y)?366:365)):n>0;if(full)o[y]=met==='vol'?v:met==='freq'?w:(w>0?wv/w:NaN);}return o;}
+function viewFontes(){
+  const met=st.met,T=Tt(),w=wOf('f1'),mo_=mobile(w);
+  const keys=['era5','ifs','bm'],cols={era5:'--c1',ifs:'--c2',bm:'--ink'},ser={};for(const k of keys)ser[k]=annualSeries(k,met,T);
+  const m={l:mo_?42:52,r:mo_?8:12,t:26,b:26},h=mo_?290:340,pw=w-m.l-m.r,ph=h-m.t-m.b;
+  const thr1=T===10,pts=[];
+  const dec=met==='int'?1:0;
+  if(met==='vol'){for(const y of Object.keys(REF.galeao))pts.push({y:+y,v:REF.galeao[y].total_mm,n:'Galeão (GHCN) '+y,sh:'sq'});for(const y of Object.keys(REF.alertario_anos))pts.push({y:+y,v:REF.alertario_anos[y],n:'Alerta Rio '+y+' (aprox.)',sh:'dia'});}
+  else if(thr1){for(const y of Object.keys(REF.galeao))pts.push({y:+y,v:met==='freq'?REF.galeao[y].wet_days_ge1:REF.galeao[y].total_mm/REF.galeao[y].wet_days_ge1,n:'Galeão (GHCN) '+y,sh:'sq'});}
+  const hl=[];if(met==='vol'){hl.push({v:REF.alertario.annual_mm,n:'Alerta Rio, média 1997–2024',x0:1997,x1:2024,c:'--c3'},{v:REF.inmet.annual_mm,n:'INMET, normal',x0:Y0,x1:YMAX,c:'--c4'});}
+  else if(thr1){hl.push({v:met==='freq'?REF.inmet.annual_wet_days:REF.inmet.annual_mm/REF.inmet.annual_wet_days,n:'INMET, normal',x0:Y0,x1:YMAX,c:'--c4'});}
+  let ymax=0;for(const k of keys)for(const y in ser[k])if(isFinite(ser[k][y]))ymax=Math.max(ymax,ser[k][y]);for(const p of pts)ymax=Math.max(ymax,p.v);for(const q of hl)ymax=Math.max(ymax,q.v);
+  ymax=(ymax||1)*1.08;const tk=ticks(0,ymax,5);ymax=Math.max(ymax,tk[tk.length-1]);
+  const X=lin(Y0-.5,YMAX+.5,m.l,m.l+pw),Y=lin(0,ymax,m.t+ph,m.t);
+  let s=svgOpen(w,h,'Série anual por fonte')+yAxis({l:m.l,r:m.r,w},Y,tk,v=>fmt(v,dec),MN[met].uy);
+  s+='<line class="axl" x1="'+m.l+'" x2="'+(w-m.r)+'" y1="'+Y(0)+'" y2="'+Y(0)+'"/>';
+  for(let y=Y0;y<=YMAX;y+=5)s+='<text class="tick" x="'+X(y)+'" y="'+(h-6)+'" text-anchor="middle">'+y+'</text>';
+  if(SPLY)s+='<line x1="'+X(SPLY-.5)+'" x2="'+X(SPLY-.5)+'" y1="'+m.t+'" y2="'+Y(0)+'" stroke="var(--c2)" stroke-dasharray="4 3"/><text class="tick" x="'+(X(SPLY-.5)-4)+'" y="'+(m.t+10)+'" text-anchor="end" style="fill:var(--warn)">'+(mo_?'':'emenda do best_match ')+SPLY+'</text>';
+  hl.forEach(q=>{s+='<line x1="'+X(q.x0-.4)+'" x2="'+X(q.x1+.4)+'" y1="'+Y(q.v)+'" y2="'+Y(q.v)+'" stroke="var('+q.c+')" stroke-width="2" stroke-dasharray="1 4"/>';});
+  for(const k of ['bm','era5','ifs']){let d='';const ysx=Object.keys(ser[k]).map(Number).filter(y=>y<=YLAST).sort((a,b)=>a-b);ysx.forEach((y,i)=>{if(!isFinite(ser[k][y]))return;d+=(i&&ysx[i-1]===y-1&&d?'L':'M')+X(y)+' '+Y(ser[k][y]);});
+    s+='<path d="'+d+'" style="fill:none;stroke:var('+cols[k]+');stroke-width:'+(k==='bm'?7:2.2)+';'+(k==='bm'?'opacity:.22;stroke-linejoin:round':'')+'"/>';
+    if(YPART&&isFinite(ser[k][YPART]))s+=(k==='bm'?sqr(X(YPART),Y(ser[k][YPART]),4.2,'var(--ink)'):diamond(X(YPART),Y(ser[k][YPART]),5,'var('+cols[k]+')'));}
+  for(const p of pts)s+=(p.sh==='sq'?sqr(X(p.y),Y(p.v),5,'var(--ink)'):diamond(X(p.y),Y(p.v),6,'var(--ink)'))+'';
+  for(let y=Y0;y<=YMAX;y++){const lines=[String(y)+(y===YPART?' (parcial, até '+lastDS('era5')+')':'')];for(const k of keys)if(isFinite(ser[k][y]))lines.push(SRCN[k]+': '+fmt(ser[k][y],dec)+' '+MN[met].unit);
+    if(y>=SPLY&&ser.era5[y]>0&&ser.ifs[y]>0&&met==='vol')lines.push('IFS/ERA5: '+fmt(ser.ifs[y]/ser.era5[y],2));for(const p of pts)if(p.y===y)lines.push(p.n+': '+fmt(p.v,dec));
+    s+='<rect class="hit" data-tip="'+esc(lines.join('\n'))+'" x="'+(X(y)-pw/NY/2)+'" y="'+m.t+'" width="'+pw/NY+'" height="'+ph+'"/>';}
+  s+='</svg>';$('f1').innerHTML=s;
+  const post=(k,a,b)=>{const v=[];for(let y=a;y<=b;y++)if(isFinite(ser[k][y]))v.push(ser[k][y]);return v.length?v.reduce((x,y)=>x+y,0)/v.length:NaN;};
+  const bmA=SPLY?post('bm',Y0,SPLY-1):NaN,bmB=SPLY?post('bm',SPLY,YLAST):NaN;
+  $('f1t').textContent=SPLY?'Na emenda de '+SPLY+', o best_match troca de produto: média anual de '+fmt(bmA,dec)+' antes e '+fmt(bmB,dec)+' '+MN[met].unit+' depois ('+sfmt((bmB/bmA-1)*100,0)+'%), enquanto o ERA5 muda '+sfmt((post('era5',SPLY,YLAST)/post('era5',Y0,SPLY-1)-1)*100,0)+'%':MN[met].name+' anual por fonte';
+  legend('f1l',[['line','--c1','ERA5'],['line','--c2','IFS'],['halo','--ink','best_match (halo: ERA5 antes da emenda, IFS depois)']].concat(hl.map(q=>['dash',q.c,q.n])).concat(pts.length?[['sq','--ink','Galeão (GHCN)']].concat(met==='vol'?[['dia','--ink','Alerta Rio (aprox.)']]:[]):[]).concat(YPART?[['dia','--ink',YPART+' parcial (vazado)']]:[]));
+  $('f1c').textContent='Limiar '+fmt(st.thr,st.thr<1?1:0)+' mm; '+MN[met].name.toLowerCase()+'.'+((met!=='vol'&&!thr1)?' Referências de dias chuvosos só existem para limiar de 1 mm.':'')+' Referências são pontos ou redes de pluviômetros, não a célula do modelo: comparação indicativa.';
+  // erro relativo mensal
+  const fe=st.fe,al=REF.alertario.monthly_mm,im=REF.inmet.monthly_mm,iw=REF.inmet.wet_days;
+  const mm=(k,a,b,f)=>{const A=agg(k,fe==='fi'?10:1),o=[];const yy=[];for(let y=a;y<=b;y++)if(validYears(k).includes(y))yy.push(y);for(let m_=0;m_<12;m_++){let t=0;for(const y of yy)t+=A[f][(y-Y0)*12+m_];o.push(yy.length?t/yy.length:NaN);}return{v:o,n:yy.length,a:yy[0],b:yy[yy.length-1]};};
+  const refv=fe==='va'?al:fe==='vi'?im:iw,fld=fe==='fi'?'wet':'vol';
+  const w2=wOf('f2'),m2={l:mo_?44:56,r:10,t:26,b:26},h2=mo_?260:300,pw2=w2-m2.l-m2.r,ph2=h2-m2.t-m2.b;
+  const errs=keys.map(k=>{const r=mm(k,1997,Math.min(2024,YLAST),fld);return{k,n:r.n,a:r.a,b:r.b,e:r.v.map((v,i)=>isFinite(v)?(v/refv[i]-1)*100:NaN)};});
+  let e0=0,e1=0;for(const q of errs)for(const v of q.e)if(isFinite(v)){e0=Math.min(e0,v);e1=Math.max(e1,v);}
+  const pad_=(e1-e0)*.08||10;e0-=pad_;e1+=pad_;const tk2=ticks(e0,e1,5),Y2=lin(e0,e1,m2.t+ph2,m2.t),cx=i=>m2.l+(i+.5)*pw2/12;
+  let s2=svgOpen(w2,h2,'Erro relativo mensal')+yAxis({l:m2.l,r:m2.r,w:w2},Y2,tk2,v=>sfmt(v,0)+'%','Erro relativo (modelo ÷ referência − 1)');
+  s2+='<line x1="'+m2.l+'" x2="'+(w2-m2.r)+'" y1="'+Y2(0)+'" y2="'+Y2(0)+'" stroke="var(--ink)" stroke-width="1.4"/>';
+  for(let i=0;i<12;i++)s2+='<text class="tick" x="'+cx(i)+'" y="'+(h2-6)+'" text-anchor="middle">'+MES[i]+'</text>';
+  errs.forEach((q,qi)=>{if(!q.n)return;let d='';q.e.forEach((v,i)=>{if(isFinite(v))d+=(d?'L':'M')+(cx(i)+(qi-1)*3)+' '+Y2(v);});s2+='<path d="'+d+'" style="fill:none;stroke:var('+cols[q.k]+');stroke-width:'+(q.k==='bm'?1.6:2.2)+';'+(q.k==='bm'?'stroke-dasharray:5 3':'')+'"/>';q.e.forEach((v,i)=>{if(isFinite(v))s2+='<circle cx="'+(cx(i)+(qi-1)*3)+'" cy="'+Y2(v)+'" r="3" style="fill:var('+cols[q.k]+')"/>';});});
+  for(let i=0;i<12;i++){const lines=[MESL[i]+' (referência: '+fmt(refv[i],fe==='fi'?0:1)+(fe==='fi'?' dias':' mm')+')'];errs.forEach(q=>{if(q.n)lines.push(SRCN[q.k]+': '+sfmt(q.e[i],0)+'% ('+fmt(mm(q.k,1997,Math.min(2024,YLAST),fld).v[i],fe==='fi'?0:1)+')');});
+    s2+='<rect class="hit" data-tip="'+esc(lines.join('\n'))+'" x="'+(cx(i)-pw2/24)+'" y="'+m2.t+'" width="'+pw2/12+'" height="'+ph2+'"/>';}
+  s2+='</svg>';$('f2').innerHTML=s2;
+  const era=errs[0].e.filter(isFinite),avg=era.reduce((a,b)=>a+b,0)/era.length;
+  const refn=fe==='va'?'Alerta Rio':'INMET';
+  $('f2t').textContent='Erro do ERA5 frente ao '+refn+': de '+sfmt(Math.min(...era),0)+'% a '+sfmt(Math.max(...era),0)+'% conforme o mês (média simples dos meses: '+sfmt(avg,0)+'%)';
+  legend('f2l',[['line','--c1','ERA5 ('+errs[0].a+'–'+errs[0].b+')'],['line','--c2','IFS'+(errs[1].n?' ('+errs[1].a+'–'+errs[1].b+')':' (sem anos)')],['dash','--ink','best_match']]);
+  $('f2c').textContent=(fe==='fi'?'Dias ≥ 1 mm, independentemente do limiar global. ':'')+'Referência: '+(fe==='va'?REF.alertario.label:REF.inmet.label)+'. Períodos dos modelos: ERA5 e best_match de 1997 ao último ano completo até 2024; IFS só os anos que tem. As referências têm períodos próprios: erros mensais são indicativos.';
+  // resumo do viés
+  const aR=REF.alertario.annual_mm,iR=REF.inmet.annual_wet_days,rows=[];
+  for(const k of keys){const sv=annualSeries(k,'vol',1),sw=annualSeries(k,'freq',10);const yy=[];for(let y=1997;y<=Math.min(2024,YLAST);y++)if(isFinite(sv[y]))yy.push(y);const yw=[];for(let y=Y0;y<=YLAST;y++)if(isFinite(sw[y]))yw.push(y);
+    if(!yy.length){rows.push([SRCN[k],'sem anos','','','','']);continue;}
+    const mv=yy.reduce((a,y)=>a+sv[y],0)/yy.length,mw=yw.reduce((a,y)=>a+sw[y],0)/yw.length;
+    const gv=Object.keys(REF.galeao).filter(y=>isFinite(sv[y])).map(y=>sfmt((sv[y]/REF.galeao[y].total_mm-1)*100,0)+'% ('+y+')').join(', ');
+    rows.push([SRCN[k],fmt(mv,0)+' mm ('+yy[0]+'–'+yy[yy.length-1]+')',sfmt((mv/aR-1)*100,0)+'%',fmt(mw,0)+' ('+yw[0]+'–'+yw[yw.length-1]+')',sfmt((mw/iR-1)*100,0)+'%',gv]);}
+  $('f3').innerHTML=table(['Fonte','Volume anual médio','vs Alerta Rio (média '+fmt(aR,0)+' mm)','Dias ≥ 1 mm por ano','vs INMET ('+iR+' dias)','Volume vs Galeão (ano)'],rows);
+  $('f3c').textContent='Períodos diferentes entre fonte e referência (o IFS só cobre os anos recentes): leia o sinal e a ordem de grandeza, não o decimal.';
+  const rr=[];for(let y=Y0;y<=YLAST;y++){const e=ser.era5[y],i=ser.ifs[y];const a=agg('era5',10),b=agg('ifs',10);if(!(y>=SPLY))continue;const ev=annualSeries('era5','vol',1)[y],iv=annualSeries('ifs','vol',1)[y],ew=annualSeries('era5','freq',10)[y],iw2=annualSeries('ifs','freq',10)[y];if(isFinite(ev)&&isFinite(iv))rr.push([y,fmt(ev,0),fmt(iv,0),fmt(iv/ev,2),fmt(ew,0),fmt(iw2,0)]);}
+  $('f4').innerHTML=table(['Ano','ERA5 (mm)','IFS (mm)','IFS/ERA5','ERA5 dias ≥ 1 mm','IFS dias ≥ 1 mm'],rr);
+}
+
+/* ============ orquestração ============ */
+const VIEWS={sazon:viewSazon,cal:viewCal,anos:viewAnos,ab:viewAB,ext:viewExt,fontes:viewFontes};
+let raf=0;
+function render(){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>{renderAlerts();renderStatus();try{VIEWS[st.tab]();}catch(e){console.error(e);throw e;}});}
+function renderNow(){renderAlerts();renderStatus();VIEWS[st.tab]();}
+window.__render=renderNow;
+function setTab(t,focus){st.tab=t;for(const id of Object.keys(VIEWS)){const on=id===t;$('t-'+id).setAttribute('aria-selected',on);$('t-'+id).tabIndex=on?0:-1;$('p-'+id).hidden=!on;}if(focus)$('t-'+t).focus();render();}
+function fillYears(sel,v){const el=$(sel);el.innerHTML='';for(let y=Y0;y<=YLAST;y++){const o=document.createElement('option');o.value=y;o.textContent=y;el.appendChild(o);}el.value=v;}
+function syncYears(){fillYears('y0',st.y0);fillYears('y1',st.y1);fillYears('a0',st.A[0]);fillYears('a1y',st.A[1]);fillYears('b0',st.B[0]);fillYears('b1',st.B[1]);}
+function init(){
+  const n=YLAST-Y0+1,mid=Y0+Math.floor(n/2)-1;st.A=[Y0,mid];st.B=[mid+1,YLAST];
+  // anos destacados padrão: mais úmido, mais seco e último ano completo (ERA5)
+  {const tot=annualSeries('era5','vol',1);const ys=validYears('era5');let wet=ys[0],dry=ys[0];for(const y of ys){if(tot[y]>tot[wet])wet=y;if(tot[y]<tot[dry])dry=y;}const set=[];for(const y of[wet,dry,YLAST])if(!set.includes(y))set.push(y);st.hl=set;$('hl').value=set.join(', ');}
+  syncYears();
+  const mf=$('mf'),mt=$('mt');MESL.forEach((x,i)=>{for(const el of[mf,mt]){const o=document.createElement('option');o.value=i;o.textContent=x;el.appendChild(o);}});mf.value=0;mt.value=11;
+  const pre=$('presets');const mkp=(t,a,b)=>{const bt=document.createElement('button');bt.type='button';bt.className='btn';bt.textContent=t;bt.onclick=()=>{st.y0=a;st.y1=b;syncYears();render();};pre.appendChild(bt);};
+  mkp('todo o período',Y0,YLAST);mkp('1ª metade',Y0,mid);mkp('2ª metade',mid+1,YLAST);mkp('últimos 10',YLAST-9,YLAST);
+  $('subline').textContent='Precipitação diária em grade para a cidade do Rio de Janeiro, '+Y0+'–'+(YPART||YLAST)+(YPART?' ('+YPART+' parcial, até '+lastDS('era5')+', sempre marcado e fora das médias)':'')+'. Reanálise e modelo, não pluviômetro: use a nota metodológica para o viés.';
+  const bind=(id,key,conv,after)=>{$(id).addEventListener('change',e=>{const v=e.target.type==='checkbox'?e.target.checked:e.target.value;st[key]=conv?conv(v):v;if(after)after();render();});};
+  bind('src','src');bind('thr','thr',parseFloat);bind('met','met');bind('grp','grp');
+  $('y0').addEventListener('change',e=>{st.y0=+e.target.value;if(st.y0>st.y1){st.y1=st.y0;syncYears();}render();});
+  $('y1').addEventListener('change',e=>{st.y1=+e.target.value;if(st.y1<st.y0){st.y0=st.y1;syncYears();}render();});
+  bind('abs','abs');bind('refs','refs');bind('sm','sm',Number);
+  $('mf').addEventListener('change',e=>{st.mf=+e.target.value;render();});$('mt').addEventListener('change',e=>{st.mt=+e.target.value;render();});
+  document.querySelectorAll('[data-m]').forEach(b=>b.addEventListener('click',()=>{const[a,z]=b.dataset.m.split(',').map(Number);st.mf=a;st.mt=z;$('mf').value=a;$('mt').value=z;render();}));
+  $('hl').addEventListener('input',()=>{parseHL();render();});
+  const per=(id,i,k)=>$(id).addEventListener('change',e=>{st[k][i]=+e.target.value;if(st[k][0]>st[k][1]){st[k][1-i]=st[k][i];syncYears();}render();});
+  per('a0',0,'A');per('a1y',1,'A');per('b0',0,'B');per('b1',1,'B');
+  bind('rel','rel');bind('ecm','ecm');bind('topn','topn',Number);bind('eab','eab');bind('fe','fe');
+  for(const id of Object.keys(VIEWS))$('t-'+id).addEventListener('click',()=>setTab(id));
+  $('tabs').addEventListener('keydown',e=>{const ids=Object.keys(VIEWS),i=ids.indexOf(st.tab);if(e.key==='ArrowRight')setTab(ids[(i+1)%ids.length],true);else if(e.key==='ArrowLeft')setTab(ids[(i+ids.length-1)%ids.length],true);});
+  const tb=$('themeBtn'),modes=['auto','light','dark'],lab={auto:'automático',light:'claro',dark:'escuro'};let mi=0;
+  tb.addEventListener('click',()=>{mi=(mi+1)%3;const mdl=modes[mi];if(mdl==='auto')document.documentElement.removeAttribute('data-theme');else document.documentElement.setAttribute('data-theme',mdl);tb.textContent='Tema: '+lab[mdl];render();});
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',render);
+  let lw=0;if(window.ResizeObserver)new ResizeObserver(en=>{const w=Math.round(en[0].contentRect.width);if(w!==lw){lw=w;render();}}).observe(document.querySelector('.wrap'));
+  window.__st=st;
+  renderNow();
+}
+init();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# Fonte: RELATORIO_ANUAL_CHUVA_2025.pdf, Tabela 6 e Tabela 8 (p.153) - "Média Mensal da Rede Pluviométrica (mm)", periodo 1997-2024; lido via WebFetch (resumo, nao leitura direta do PDF)
+# Fonte secundaria: Relat_Clima_Anual_Novo_Corrigido.pdf - Jan 169,2 e Ago 56,3 (1997-2024), apenas dois valores no texto
+# Fonte: RELATORIO_ANUAL_CHUVA_2024.pdf p.164 e Tabela 7 - "Média Mensal dos pluviômetros ... entre 1997-2023", WebFetch
+month,mean_mm_1997_2024_rel2025,mean_mm_1997_2023_rel2024
+JAN,169.2,161.1
+FEV,123.3,124.7
+MAR,139.4,138.3
+ABR,112.8,117.5
+MAI,78.4,79.7
+JUN,59.6,60.6
+JUL,57.0,57.4
+AGO,56.3,55.5
+SET,72.6,75.5
+OUT,95.6,94.6
+NOV,129.0,129.4
+DEZ,145.2,145.6
+ANUAL_TOTAL,1238.4,1240.0
+ANUAL_MEDIA,103.2,103.3

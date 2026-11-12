@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chuva no Rio de Janeiro, 1995 em diante: volume, frequência e dia a dia (ERA5)</title>
+<meta name="description" content="Série diária de chuva do ERA5 para o Rio de Janeiro, com painel interativo, viés frente a pluviômetros e mapa de calor mês × dia.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+:root{
+  color-scheme: light dark;
+  --bg:#f9f9f7; --surface:#fcfcfb; --ink:#0b0b0b; --ink2:#52514e; --muted:#6b6a65;
+  --grid:#e1e0d9; --axis:#b4b3a8; --wash:rgba(11,11,11,.06); --wash2:rgba(0,114,178,.10);
+  --border:rgba(11,11,11,.12);
+  --c-mm:#0072B2; --c-wet:#D55E00; --focus:#0072B2;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d0d0d; --surface:#1a1a19; --ink:#f0efec; --ink2:#c3c2b7; --muted:#a09f97;
+    --grid:#2c2c2a; --axis:#4a4a46; --wash:rgba(255,255,255,.07); --wash2:rgba(61,154,214,.16);
+    --border:rgba(255,255,255,.12);
+    --c-mm:#3D9AD6; --c-wet:#E8692C; --focus:#6fb6e8;
+  }
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Source Sans 3",Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:16px;line-height:1.45;font-variant-numeric:tabular-nums}
+main{max-width:1120px;margin:0 auto;padding:20px 14px 40px}
+h1{font-size:clamp(22px,4.2vw,31px);line-height:1.15;margin:0 0 10px;font-weight:700;letter-spacing:-.01em;max-width:30em}
+h2{font-size:20px;margin:0 0 4px;font-weight:700}
+h3{font-size:16.5px;line-height:1.3;margin:0 0 6px;font-weight:700;max-width:60em}
+.lead{font-size:clamp(16px,2.3vw,18.5px);margin:0 0 6px;max-width:72ch}
+.meta{color:var(--ink2);font-size:14px;margin:8px 0 18px;max-width:84ch}
+a{color:var(--c-mm)}
+section{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:16px;margin:0 0 16px}
+.sub{color:var(--ink2);font-size:14.5px;margin:0 0 12px;max-width:84ch}
+.ctlbar{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-end;padding:10px 12px;margin:0 0 14px;
+  background:var(--bg);border:1px solid var(--border);border-radius:8px}
+@media (min-width:900px){.ctlbar{position:sticky;top:0;z-index:5}}
+.ctl{display:flex;flex-direction:column;gap:4px}
+.ctl>span.lb,.lb{font-size:12.5px;color:var(--ink2);font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=number],select{font:inherit;font-size:14.5px;padding:5px 7px;border:1px solid var(--axis);border-radius:6px;
+  background:var(--surface);color:var(--ink)}
+input[type=number]{width:72px}
+button{font:inherit;font-size:13.5px;padding:5px 10px;border:1px solid var(--axis);border-radius:6px;background:var(--surface);
+  color:var(--ink2);cursor:pointer}
+button[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:600}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--axis);border-radius:6px;overflow:hidden}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.seg span{display:block;padding:6px 11px;font-size:14px;color:var(--ink2);border-right:1px solid var(--axis)}
+.seg label:last-child span{border-right:0}
+.seg input:checked + span{background:var(--ink);color:var(--surface);font-weight:600}
+.seg input:focus-visible + span{outline:2px solid var(--focus);outline-offset:-2px}
+.chk{display:inline-flex;gap:7px;align-items:center;font-size:14px;color:var(--ink2);cursor:pointer}
+.chk input{width:16px;height:16px;accent-color:var(--c-mm)}
+.warn{margin:0 0 10px;padding:7px 10px;border-left:3px solid var(--c-wet);background:var(--wash);font-size:14px;max-width:84ch}
+figure{margin:0 0 22px}
+figcaption.cap,.cap{font-size:13.5px;color:var(--ink2);margin:6px 0 0;max-width:88ch}
+.note{font-size:14px;color:var(--ink2);margin:8px 0 0;max-width:88ch;padding-left:10px;border-left:3px solid var(--axis)}
+.keyl{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13px;color:var(--ink2);margin:4px 0 0}
+.keyl span{display:inline-flex;align-items:center;gap:6px}
+svg{display:block;max-width:100%;overflow:visible}
+svg text{font-family:inherit;font-variant-numeric:tabular-nums}
+svg:focus{outline:none}
+svg:focus-visible{outline:2px solid var(--focus);outline-offset:4px;border-radius:2px}
+.gl{stroke:var(--grid);stroke-width:1}
+.ax{stroke:var(--axis);stroke-width:1}
+.tx{fill:var(--ink2);font-size:12px}
+.tx1{fill:var(--ink);font-size:12px;font-weight:600}
+.ttl{fill:var(--ink2);font-size:12px;font-weight:600}
+.lbl-mm{fill:var(--c-mm);font-size:12.5px;font-weight:700}
+.lbl-wet{fill:var(--c-wet);font-size:12.5px;font-weight:700}
+#tip{position:fixed;left:0;top:0;z-index:20;pointer-events:none;background:var(--surface);color:var(--ink);
+  border:1px solid var(--axis);border-radius:6px;padding:8px 10px;font-size:13px;line-height:1.4;max-width:280px;
+  box-shadow:0 2px 8px rgba(0,0,0,.2)}
+#tip .h{display:block;font-weight:700;margin-bottom:3px}
+#tip .k{color:var(--ink2)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:right;padding:4px 7px;border-bottom:1px solid var(--grid);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--ink2);font-weight:600}
+caption{text-align:left;font-size:13.5px;color:var(--ink2);padding:0 0 6px}
+.seal{display:inline-block;font-size:12px;font-weight:600;padding:1px 7px;border:1px solid var(--c-wet);color:var(--ink);border-radius:10px;margin-left:6px}
+details{font-size:14.5px}
+summary{cursor:pointer;color:var(--ink2);font-weight:600}
+details.tbl{margin-top:8px}
+.method p,.method li{max-width:88ch;font-size:15px}
+.method ul{padding-left:20px;margin:6px 0}
+.method a{word-break:break-word}
+.tag{font-size:12px;border:1px solid var(--axis);border-radius:10px;padding:0 7px;color:var(--ink2);white-space:nowrap}
+.mstrip{display:grid;grid-template-columns:repeat(12,1fr);gap:2px;max-width:520px;touch-action:none;user-select:none;cursor:pointer}
+.mstrip div{text-align:center;padding:5px 0;font-size:13px;border:1px solid var(--axis);border-radius:4px;color:var(--ink2);background:var(--surface)}
+.mstrip div.on{background:var(--c-mm);border-color:var(--c-mm);color:#fff;font-weight:600}
+@media (prefers-color-scheme: dark){.mstrip div.on{color:#0d0d0d}}
+.ramp{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 2px;font-size:13px;color:var(--ink2)}
+.ramp .bar{width:min(300px,100%);height:12px;border-radius:3px;border:1px solid var(--axis)}
+.hatch{display:inline-block;width:14px;height:14px;vertical-align:-3px;border:1px solid var(--axis);
+  background:repeating-linear-gradient(45deg,var(--axis) 0 2px,transparent 2px 5px)}
+footer{font-size:14px;color:var(--ink2);padding:6px 2px 0}
+footer p{margin:6px 0;max-width:88ch}
+</style>
+</head>
+<body>
+<main>
+<header>
+  <h1>%%TITLE%%</h1>
+  <p class="lead">%%LEAD1%%</p>
+  <p class="lead">%%LEAD2%%</p>
+  <p class="lead">%%LEAD3%%</p>
+  <p class="meta">%%SOURCELINE%%</p>
+</header>
+
+<section id="dash" aria-labelledby="h-dash">
+  <h2 id="h-dash">Painel interativo</h2>
+  <p class="sub">Os três controles valem para todo o painel e para o mapa de calor mais abaixo. O período é definido arrastando sobre o gráfico de totais anuais ou nos campos numéricos.</p>
+
+  <div class="ctlbar" role="group" aria-label="Controles do painel">
+    <div class="ctl">
+      <span class="lb" id="lb-anos">Intervalo de anos</span>
+      <div class="row" role="group" aria-labelledby="lb-anos">
+        <input type="number" id="y0" inputmode="numeric" aria-label="Ano inicial">
+        <span aria-hidden="true">a</span>
+        <input type="number" id="y1" inputmode="numeric" aria-label="Ano final">
+        <button type="button" id="pre-all">Todos</button>
+        <button type="button" id="pre-a">1995–2009</button>
+        <button type="button" id="pre-b"></button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="lb" id="lb-thr">Dia chuvoso</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lb-thr">
+        <label><input type="radio" name="thr" value="1" checked><span>≥ 1 mm</span></label>
+        <label><input type="radio" name="thr" value="10"><span>≥ 10 mm</span></label>
+        <label><input type="radio" name="thr" value="25"><span>≥ 25 mm</span></label>
+      </div>
+    </div>
+    <div class="ctl">
+      <label class="lb" for="hl">Ano destacado</label>
+      <select id="hl"></select>
+    </div>
+  </div>
+  <p class="warn" id="warnN" hidden></p>
+  <p class="warn" id="warnThr" hidden></p>
+
+  <figure id="figA">
+    <h3 id="tA"></h3>
+    <div id="chA"></div>
+    <p class="cap" id="capA"></p>
+    <p class="note">%%NOTE_DROP%%</p>
+    <details class="tbl"><summary>Ver totais anuais em tabela</summary><div class="tw" id="tblA"></div></details>
+  </figure>
+
+  <figure id="figB">
+    <h3 id="tB"></h3>
+    <div id="chB"></div>
+    <div class="keyl" id="keyB"></div>
+    <div class="tw" style="margin-top:10px" id="tblB"></div>
+  </figure>
+
+  <figure id="figC">
+    <h3 id="tC"></h3>
+    <div class="row" style="margin:0 0 6px">
+      <div class="seg" role="radiogroup" aria-label="Medida acumulada">
+        <label><input type="radio" name="cum" value="mm" checked><span>Chuva acumulada (mm)</span></label>
+        <label><input type="radio" name="cum" value="wet"><span>Dias chuvosos acumulados</span></label>
+      </div>
+    </div>
+    <div id="chC"></div>
+    <p class="cap" id="capC"></p>
+  </figure>
+</section>
+
+<section id="intra" aria-labelledby="h-intra">
+  <h2 id="h-intra">Dentro do mês: dia a dia</h2>
+  <p class="sub" id="subI"></p>
+  <div class="ctlbar" style="position:static" role="group" aria-label="Controles do mapa de calor">
+    <div class="ctl">
+      <span class="lb" id="lb-met">Métrica</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lb-met">
+        <label><input type="radio" name="met" value="p" checked><span>Probabilidade</span></label>
+        <label><input type="radio" name="met" value="mean"><span>Média mm/dia</span></label>
+        <label><input type="radio" name="met" value="p90"><span>p90 dias chuvosos</span></label>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="lb" id="lb-mes">Meses (sequência)</span>
+      <div class="row" role="group" aria-labelledby="lb-mes">
+        <select id="m0" aria-label="Mês inicial"></select>
+        <span aria-hidden="true">até</span>
+        <select id="m1" aria-label="Mês final"></select>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="lb">Atalhos</span>
+      <div class="row">
+        <button type="button" data-m="0,11">Ano todo</button>
+        <button type="button" data-m="10,2">Estação chuvosa (nov–mar)</button>
+        <button type="button" data-m="5,7">Seca (jun–ago)</button>
+      </div>
+    </div>
+    <label class="chk"><input type="checkbox" id="smooth" checked> Suavizar (média móvel de 7 dias, circular no ano)</label>
+  </div>
+  <div class="ctl" style="margin:0 0 10px">
+    <span class="lb">Ou arraste sobre os meses (toque ou clique no primeiro e arraste até o último)</span>
+    <div class="mstrip" id="mstrip" aria-hidden="true"></div>
+  </div>
+  <h3 id="tI"></h3>
+  <div id="chI"></div>
+  <div class="ramp" id="rampI"></div>
+  <p class="cap" id="capI"></p>
+  <p class="note" id="noiseI"></p>
+  <div class="sr" id="live" aria-live="polite"></div>
+  <details class="tbl"><summary>Ver valores por mês em tabela</summary><div class="tw" id="tblI"></div></details>
+</section>
+
+<section id="metodo" class="method" aria-labelledby="h-met">
+  <details id="detMet">
+    <summary><h2 id="h-met" style="display:inline">Nota metodológica</h2></summary>
+    <ul>
+      <li><b>Fonte.</b> Open-Meteo Historical Weather API, modelo <code>era5</code>, variável <code>precipitation_sum</code>, fuso America/Sao_Paulo. Consulta: <a href="%%ERA5_URL%%">%%ERA5_URL%%</a> (acesso em %%ACCESSED%%). %%ATTR%%</li>
+      <li><b>Célula retornada.</b> O ponto pedido foi −22,9068; −43,1729, mas a API devolve a célula de grade do ERA5 centrada em %%ERA5_LAT%%; %%ERA5_LON%% (~25 km, elevação %%ELEV%% m). É média de área, não um pluviômetro.</li>
+      <li><b>Por que ERA5 e não o modelo padrão.</b> O <code>best_match</code> do Open-Meteo usa ERA5 até 2016-12-31 e passa para o ECMWF IFS em 2017-01-01 (idêntico ao respectivo modelo em todos os dias de cada trecho). O IFS dá, neste ponto, cerca de %%IFS_PCT%% do total anual do ERA5, o que cria uma queda artificial em 2017. O ERA5 é o único produto homogêneo na série inteira. Análise completa: <a href="%%REPO%%/blob/main/docs/analise_modelos.md">docs/analise_modelos.md</a>.</li>
+      <li><b>Período e anos parciais.</b> %%Y0%%–%%Y1%% são os anos completos (%%NY%% anos); dados até %%LAST%%. O ano parcial aparece marcado nos gráficos e nunca entra em médias, faixas, participações ou no mapa. Dia chuvoso: precipitação diária ≥ limiar (1, 10 ou 25 mm). Percentis por interpolação linear.</li>
+      <li><b>29 de fevereiro.</b> Tem dados em apenas %%N29%% dos %%NY%% anos completos; no mapa sem suavização a célula é tracejada e fica fora da escala e dos extremos. No acumulado do ano, em anos não bissextos o 29/fev repete o valor de 28/fev. A suavização de 7 dias é circular sobre 366 posições do calendário e ponderada por n (soma das contagens, não média de médias).</li>
+      <li><b>Ruído.</b> A razão exibida no mapa compara a variância observada de p(dia chuvoso) entre dias do mesmo mês com a variância binomial esperada com o n de anos do período, supondo anos independentes; dias vizinhos são autocorrelacionados, então é uma aproximação.</li>
+      <li><b>Checagem com o Galeão (GHCN-Daily, NOAA).</b> Só 2020 e 2021 têm cobertura acima de 95%. %%GALLINE%%. Ponto único, a ~15 km da célula; indicativo.</li>
+      <li><b>Referências observadas <span class="tag">não conferidas no original</span>.</b> Alerta Rio: média de 33 pluviômetros, 1997–2024, %%AR_ANNUAL%% mm/ano (<a href="%%AR_URL%%">Relatório Anual de Chuva 2025</a>; valores lidos por resumo automático). INMET, estação Saúde: %%INM_ANNUAL%% mm/ano e %%INM_WET%% dias, normal citada na <a href="%%INM_URL%%">Wikipédia</a>; período inconsistente na fonte (%%INM_PERIOD%%). Frente a elas, o ERA5 superestima volume em cerca de %%BIAS_MM%% (Alerta Rio, mesmo período) e frequência em cerca de %%BIAS_WET%% (INMET).</li>
+      <li><b>Versão completa.</b> Exploração adicional em <a href="completo.html">completo.html</a>. Código e dados: <a href="%%REPO%%">repositório</a>.</li>
+    </ul>
+  </details>
+</section>
+
+<footer>
+  <p><a href="completo.html">Versão completa (exploratória) →</a> &nbsp;·&nbsp; <a href="%%REPO%%">Repositório no GitHub</a></p>
+  <p>%%ATTR%%</p>
+</footer>
+</main>
+<div id="tip" hidden></div>
+
+<script>
+(()=>{
+'use strict';
+const S=%%STATIC%%;
+const T=[%%TENTHS%%];
+const $=s=>document.querySelector(s);
+const nf=(x,d=0)=>Number.isFinite(x)?x.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}):'–';
+const MN=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const MNF=['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+const MD=[31,29,31,30,31,30,31,31,30,31,30,31];
+const SL0=[];{let a=0;for(let m=0;m<12;m++){SL0.push(a);a+=MD[m];}}
+const N=T.length,YR=new Int16Array(N),MO=new Uint8Array(N),DY=new Uint8Array(N),SL=new Uint16Array(N);
+const SLM=new Uint8Array(366),SLD=new Uint8Array(366);
+for(let m=0;m<12;m++)for(let d=1;d<=MD[m];d++){SLM[SL0[m]+d-1]=m;SLD[SL0[m]+d-1]=d;}
+const YMIN=S.ymin;
+{let y=YMIN,m=0,d=1;for(let i=0;i<N;i++){YR[i]=y;MO[i]=m;DY[i]=d;SL[i]=SL0[m]+d-1;d++;
+  const dim=(m===1)?((y%4===0&&(y%100!==0||y%400===0))?29:28):MD[m];if(d>dim){d=1;m++;if(m===12){m=0;y++;}}}}
+const YLAST=YR[N-1];
+const yIdx={};for(let i=0;i<N;i++){const y=YR[i];if(!yIdx[y])yIdx[y]=[i,i];yIdx[y][1]=i+1;}
+const complete={};for(let y=YMIN;y<=YLAST;y++){let ok=true;for(let i=yIdx[y][0];i<yIdx[y][1];i++)if(T[i]<0){ok=false;break;}complete[y]=ok;}
+let YMAX=YMIN;for(let y=YMIN;y<=YLAST;y++)if(complete[y])YMAX=y;
+const PART=(YLAST>YMAX)?YLAST:null;          // ano parcial, se existir
+const LASTI=S.lastIdx;
+const isLeap=y=>y%4===0&&(y%100!==0||y%400===0);
+const dstr=i=>`${DY[i]}/${MN[MO[i]]}`;
+
+const st={y0:YMIN,y1:YMAX,thr:1,hl:PART||YMAX,cum:'mm',met:'p',smooth:true,m0:0,m1:11};
+const dark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+
+function quant(xs,q){const s=xs.slice().sort((a,b)=>a-b);if(!s.length)return NaN;const h=(s.length-1)*q,lo=Math.floor(h),hi=Math.min(lo+1,s.length-1);return s[lo]+(s[hi]-s[lo])*(h-lo);}
+const years=()=>{const r=[];for(let y=st.y0;y<=st.y1;y++)if(complete[y])r.push(y);return r;};
+function placeLabels(items,gap=13){items.sort((a,b)=>a.y-b.y);for(let i=1;i<items.length;i++)if(items[i].y<items[i-1].y+gap)items[i].y=items[i-1].y+gap;return items;}
+function nice(max,n=5){const raw=max/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p;const s=f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10;const step=s*p;return {max:Math.ceil(max/step)*step,step};}
+function listMonths(ms){const n=ms.map(m=>MN[m]);if(ms.length===2&&(ms[1]-ms[0]===1))return n[0]+'–'+n[1];return n.join(' e ');}
+
+/* ---------- tooltip ---------- */
+const tip=$('#tip');
+function showTip(html,e){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetWidth,h=tip.offsetHeight;let x=e.clientX+14,y=e.clientY+14;
+  if(x+w>innerWidth-6)x=e.clientX-w-14;if(y+h>innerHeight-6)y=e.clientY-h-14;tip.style.left=Math.max(4,x)+'px';tip.style.top=Math.max(4,y)+'px';}
+function showTipAt(html,rect){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetWidth;let x=rect.left+rect.width/2-w/2;x=Math.max(4,Math.min(innerWidth-w-4,x));tip.style.left=x+'px';tip.style.top=Math.max(4,rect.top-tip.offsetHeight-8)+'px';}
+const hideTip=()=>{tip.hidden=true;};
+
+/* ---------- estatísticas anuais ---------- */
+function yearStats(){const r={};for(let y=YMIN;y<=YLAST;y++)r[y]={mm:0,wet:0,n:0,ev10:0,ev25:0};
+  for(let i=0;i<N;i++){const v=T[i];if(v<0)continue;const o=r[YR[i]];o.mm+=v/10;o.n++;if(v>=st.thr*10)o.wet++;}return r;}
+
+/* ---------- A: série anual ---------- */
+let geoA=null;
+function renderA(){
+  const ys=yearStats(),box=$('#chA'),W=Math.max(300,box.clientWidth),mob=W<560;
+  const H=mob?250:290,ml=mob?42:48,mr=mob?98:128,mt=30,mb=26,pw=W-ml-mr,ph=H-mt-mb;
+  const nB=YLAST-YMIN+1,bx=pw/nB,X=y=>ml+(y-YMIN+.5)*bx,ymax=2500,Yp=v=>mt+ph*(1-v/ymax);
+  geoA={ml,bx,X,W,H,mt,ph,pw};
+  let s=`<svg id="svgA" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Total anual de chuva (mm) no ERA5, por ano, com o período selecionado em destaque e as referências Alerta Rio e INMET como linhas horizontais. A tabela abaixo traz os valores.">`;
+  s+=`<text class="ttl" x="${ml}" y="12">mm por ano</text>`;
+  for(let v=0;v<=ymax;v+=500){s+=`<line class="gl" x1="${ml}" x2="${W-mr}" y1="${Yp(v)}" y2="${Yp(v)}"/><text class="tx" x="${ml-6}" y="${Yp(v)+4}" text-anchor="end">${nf(v)}</text>`;}
+  s+=`<rect id="selA" x="${X(st.y0)-bx/2}" y="${mt}" width="${(st.y1-st.y0+1)*bx}" height="${ph}" fill="var(--wash2)"/>`;
+  const labs=[];
+  [['Alerta Rio',S.ar_annual],['INMET',S.inm_annual]].forEach(([n,v])=>{
+    s+=`<line x1="${ml}" x2="${W-mr+4}" y1="${Yp(v)}" y2="${Yp(v)}" stroke="var(--ink2)" stroke-width="1.2" stroke-dasharray="5 3"/>`;
+    labs.push({y:Yp(v)+4,t:`${n} ${nf(v)}`});});
+  const pts=[];for(let y=YMIN;y<=YMAX;y++)if(complete[y])pts.push([y,ys[y].mm]);
+  s+=`<polyline fill="none" stroke="var(--c-mm)" stroke-opacity=".55" stroke-width="1.5" points="${pts.map(p=>X(p[0])+','+Yp(p[1])).join(' ')}"/>`;
+  pts.forEach(([y,v])=>{const inn=y>=st.y0&&y<=st.y1;s+=`<circle data-y="${y}" cx="${X(y)}" cy="${Yp(v)}" r="${inn?4:3}" fill="${inn?'var(--c-mm)':'var(--muted)'}" fill-opacity="${inn?1:.7}"/>`;});
+  if(PART){const v=ys[PART].mm;s+=`<circle data-y="${PART}" cx="${X(PART)}" cy="${Yp(v)}" r="4.5" fill="var(--surface)" stroke="var(--c-mm)" stroke-width="2"/>`;
+    labs.push({y:Yp(v)+4,t:mob?`${PART}* ${nf(v)}`:`${PART} parcial ${nf(v)}`,cls:'tx1'});}
+  if(st.hl>=YMIN&&st.hl<=YLAST){s+=`<circle cx="${X(st.hl)}" cy="${Yp(ys[st.hl].mm)}" r="8" fill="none" stroke="var(--ink)" stroke-width="1.5"/>`;}
+  placeLabels(labs).forEach(l=>{s+=`<text class="${l.cls||'tx'}" x="${W-mr+8}" y="${l.y}">${l.t}</text>`;});
+  for(let y=YMIN;y<=YLAST;y++)if((y-YMIN)%(mob?10:5)===0&&y<=YMAX)s+=`<text class="tx" x="${X(y)}" y="${H-8}" text-anchor="middle">${y}</text>`;
+  s+=`<line id="hovA" y1="${mt}" y2="${mt+ph}" stroke="var(--ink2)" stroke-width="1" visibility="hidden"/>`;
+  s+=`<line id="eL" y1="${mt}" y2="${mt+ph}" stroke="var(--c-mm)" stroke-width="2"/><line id="eR" y1="${mt}" y2="${mt+ph}" stroke="var(--c-mm)" stroke-width="2"/>`;
+  s+=`<rect id="gL" y="${mt+ph/2-14}" width="7" height="28" rx="3" fill="var(--c-mm)"/><rect id="gR" y="${mt+ph/2-14}" width="7" height="28" rx="3" fill="var(--c-mm)"/>`;
+  s+=`<rect id="ovA" x="${ml}" y="${mt}" width="${pw}" height="${ph}" fill="transparent" style="cursor:crosshair;touch-action:pan-y"/></svg>`;
+  box.innerHTML=s;syncBrush();bindA(ys);
+  // texto e tabela
+  const yy=years(),vals=yy.map(y=>ys[y].mm),mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+  const iMin=vals.indexOf(Math.min(...vals)),iMax=vals.indexOf(Math.max(...vals));
+  $('#tA').textContent=`Totais anuais do ERA5 em ${st.y0}–${st.y1}: média de ${nf(mean)} mm, de ${nf(vals[iMin])} mm (${yy[iMin]}) a ${nf(vals[iMax])} mm (${yy[iMax]})`;
+  $('#capA').textContent=`Pontos cheios: período selecionado (${yy.length} anos); cinza: fora dele${PART?`; ${PART} (círculo vazado${mob?', *':''}) é parcial, até ${dstr(LASTI)}, e não entra em nenhuma média`:''}. Linhas tracejadas: Alerta Rio (1997–2024) e INMET, referências observadas, não conferidas no original. `+(()=>{const n=yy.length,a=yy.filter(y=>ys[y].mm>S.ar_annual).length,b=yy.filter(y=>ys[y].mm>S.inm_annual).length;return `Neste período, o total do ERA5 supera a linha do Alerta Rio em ${a} de ${n} anos e a do INMET em ${b} de ${n}.`;})();
+  let t=`<table><thead><tr><th>Ano</th><th>Total (mm)</th><th>Dias ≥ ${st.thr} mm</th><th>Dias com valor</th></tr></thead><tbody>`;
+  for(let y=YMIN;y<=YLAST;y++)t+=`<tr><td>${y}${complete[y]?'':' (parcial)'}</td><td>${nf(ys[y].mm,1)}</td><td>${ys[y].wet}</td><td>${ys[y].n}</td></tr>`;
+  $('#tblA').innerHTML=t+'</tbody></table>';
+}
+function syncBrush(){
+  if(!geoA)return;const {X,bx}=geoA;const xl=X(st.y0)-bx/2,xr=X(st.y1)+bx/2;
+  const set=(id,o)=>{const e=document.getElementById(id);if(e)for(const k in o)e.setAttribute(k,o[k]);};
+  set('selA',{x:xl,width:xr-xl});set('eL',{x1:xl,x2:xl});set('eR',{x1:xr,x2:xr});set('gL',{x:xl-3.5});set('gR',{x:xr-3.5});
+  document.querySelectorAll('#svgA circle[data-y]').forEach(c=>{const y=+c.dataset.y;if(y>YMAX)return;const inn=y>=st.y0&&y<=st.y1;
+    c.setAttribute('fill',inn?'var(--c-mm)':'var(--muted)');c.setAttribute('fill-opacity',inn?1:.7);c.setAttribute('r',inn?4:3);});
+}
+function bindA(ys){
+  const svg=$('#svgA'),ov=$('#ovA'),{ml,bx,X}=geoA;let drag=null;
+  const clampY=y=>Math.max(YMIN,Math.min(YMAX,y));
+  const xOf=e=>e.clientX-svg.getBoundingClientRect().left;
+  const yOf=x=>Math.round((x-ml)/bx-.5+YMIN);
+  const edges=x=>{const xl=X(st.y0)-bx/2,xr=X(st.y1)+bx/2;const dl=Math.abs(x-xl),dr=Math.abs(x-xr);
+    if(Math.min(dl,dr)<=9)return dl<=dr?'l':'r';return(x>xl&&x<xr)?'move':'new';};
+  ov.addEventListener('pointerdown',e=>{const x=xOf(e);drag={mode:edges(x),a:clampY(yOf(x)),y0:st.y0,y1:st.y1,x0:x};ov.setPointerCapture(e.pointerId);hideTip();e.preventDefault();});
+  ov.addEventListener('pointermove',e=>{const x=xOf(e);
+    if(drag){const c=clampY(yOf(x));let a=st.y0,b=st.y1;
+      if(drag.mode==='new'){a=Math.min(drag.a,c);b=Math.max(drag.a,c);}
+      else if(drag.mode==='l'){a=Math.min(c,drag.y1);b=drag.y1;}
+      else if(drag.mode==='r'){a=drag.y0;b=Math.max(c,drag.y0);}
+      else{let dl=Math.round((x-drag.x0)/bx);dl=Math.max(YMIN-drag.y0,Math.min(YMAX-drag.y1,dl));a=drag.y0+dl;b=drag.y1+dl;}
+      if(a!==st.y0||b!==st.y1){st.y0=a;st.y1=b;syncBrush();syncInputs();schedule(true);}return;}
+    const m=edges(x);ov.style.cursor=(m==='l'||m==='r')?'ew-resize':(m==='move'?'grab':'crosshair');
+    const y=Math.max(YMIN,Math.min(YLAST,yOf(x)));const hv=$('#hovA');hv.setAttribute('x1',X(y));hv.setAttribute('x2',X(y));hv.setAttribute('visibility','visible');
+    const o=ys[y];showTip(`<span class="h">${y}${complete[y]?'':' (parcial, até '+dstr(LASTI)+')'}</span><span class="k">Total:</span> ${nf(o.mm,1)} mm<br><span class="k">Dias ≥ ${st.thr} mm:</span> ${o.wet}${complete[y]?'':' (até a data)'}`,e);});
+  const end=e=>{drag=null;};ov.addEventListener('pointerup',end);ov.addEventListener('pointercancel',end);
+  ov.addEventListener('pointerleave',()=>{hideTip();const hv=$('#hovA');if(hv)hv.setAttribute('visibility','hidden');});
+}
+
+/* ---------- B: volume e frequência por mês ---------- */
+function monthAgg(yy){const set=new Set(yy),mm=new Array(12).fill(0),wet=new Array(12).fill(0);
+  for(let i=0;i<N;i++){const v=T[i];if(v<0||!set.has(YR[i]))continue;mm[MO[i]]+=v;if(v>=st.thr*10)wet[MO[i]]++;}
+  const n=yy.length,tm=mm.reduce((a,b)=>a+b,0),tw=wet.reduce((a,b)=>a+b,0);
+  return {n,mmMean:mm.map(v=>v/10/n),wetMean:wet.map(v=>v/n),mmSh:mm.map(v=>100*v/tm),wetSh:wet.map(v=>tw?100*v/tw:NaN),totMM:tm/10/n,totWet:tw/n};}
+const shr=a=>{const t=a.reduce((x,y)=>x+y,0);return a.map(v=>100*v/t);};
+function extremes(vals,tol){ // meses com valor máximo / mínimo (empates dentro de tol)
+  const idx=[...vals.keys()].sort((a,b)=>vals[a]-vals[b]);const lo=vals[idx[0]],hi=vals[idx[11]];
+  return {dry:idx.filter(m=>vals[m]-lo<tol).sort((a,b)=>a-b),wet:idx.filter(m=>hi-vals[m]<tol).sort((a,b)=>a-b)};}
+let geoB=null,dataB=null;
+function renderB(yy){
+  const A=monthAgg(yy);dataB=A;const showINW=st.thr===1;
+  const arS=shr(S.ar),inS=shr(S.inm),iwS=shr(S.inm_wet);
+  const box=$('#chB'),W=Math.max(300,box.clientWidth),mob=W<560;
+  const H=mob?270:310,ml=mob?34:44,mr=mob?70:112,mt=30,mb=26,pw=W-ml-mr,ph=H-mt-mb;
+  const all=[...A.mmSh,...A.wetSh,...arS,...inS];if(showINW)all.push(...iwS);
+  const ymax=Math.ceil(Math.max(...all.filter(Number.isFinite))/5)*5||5;
+  const X=m=>ml+(m+.5)*pw/12,Yp=v=>mt+ph*(1-v/ymax);geoB={X,ml,pw,W,ph,mt};
+  let s=`<svg id="svgB" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Participação de cada mês no volume anual de chuva (mm) e no total de dias chuvosos, em porcentagem, num eixo único, com marcadores das referências observadas. Valores na tabela abaixo.">`;
+  s+=`<text class="ttl" x="${ml}" y="12">% do total anual</text>`;
+  for(let v=0;v<=ymax;v+=5)s+=`<line class="gl" x1="${ml}" x2="${W-mr}" y1="${Yp(v)}" y2="${Yp(v)}"/><text class="tx" x="${ml-6}" y="${Yp(v)+4}" text-anchor="end">${v}</text>`;
+  for(let m=0;m<12;m++)s+=`<text class="tx" x="${X(m)}" y="${H-8}" text-anchor="middle">${mob?MN[m][0]:MN[m]}</text>`;
+  const line=(arr,col)=>`<polyline fill="none" stroke="${col}" stroke-width="2.2" points="${arr.map((v,m)=>X(m)+','+Yp(v)).join(' ')}"/>`;
+  s+=line(A.wetSh,'var(--c-wet)')+line(A.mmSh,'var(--c-mm)');
+  const dia=(x,y,c)=>`<path d="M${x} ${y-5.5}L${x+5.5} ${y}L${x} ${y+5.5}L${x-5.5} ${y}Z" fill="var(--surface)" stroke="${c}" stroke-width="1.8"/>`;
+  const sq=(x,y,c)=>`<rect x="${x-4.5}" y="${y-4.5}" width="9" height="9" fill="var(--surface)" stroke="${c}" stroke-width="1.8"/>`;
+  for(let m=0;m<12;m++){s+=dia(X(m),Yp(arS[m]),'var(--c-mm)')+sq(X(m),Yp(inS[m]),'var(--c-mm)');if(showINW)s+=sq(X(m),Yp(iwS[m]),'var(--c-wet)');}
+  for(let m=0;m<12;m++){s+=`<circle cx="${X(m)}" cy="${Yp(A.mmSh[m])}" r="3.6" fill="var(--c-mm)"/><circle cx="${X(m)}" cy="${Yp(A.wetSh[m])}" r="3.6" fill="var(--c-wet)"/>`;}
+  const labs=placeLabels([{y:Yp(A.mmSh[11])+4,t:mob?'volume':'volume (mm)',c:'lbl-mm'},{y:Yp(A.wetSh[11])+4,t:mob?'dias':'dias chuvosos',c:'lbl-wet'}]);
+  labs.forEach(l=>s+=`<text class="${l.c}" x="${W-mr+10}" y="${l.y}">${l.t}</text>`);
+  for(let m=0;m<12;m++)s+=`<rect data-m="${m}" x="${X(m)-pw/24}" y="${mt}" width="${pw/12}" height="${ph}" fill="transparent"/>`;
+  box.innerHTML=s+'</svg>';
+  box.onpointermove=e=>{const r=e.target.dataset&&e.target.dataset.m;if(r===undefined){hideTip();return;}const m=+r;
+    showTip(`<span class="h">${MNF[m]}</span><span class="k">Volume:</span> ${nf(A.mmSh[m],1)}% do ano (${nf(A.mmMean[m],1)} mm)<br><span class="k">Dias ≥ ${st.thr} mm:</span> ${nf(A.wetSh[m],1)}% (${nf(A.wetMean[m],1)} por ano)<br><span class="k">Alerta Rio:</span> ${nf(arS[m],1)}% do volume<br><span class="k">INMET:</span> ${nf(inS[m],1)}% do volume${showINW?`, ${nf(iwS[m],1)}% dos dias`:''}`,e);};
+  box.onpointerleave=hideTip;
+  $('#keyB').innerHTML=`<span><svg width="14" height="14"><path d="M7 1.5L12.5 7L7 12.5L1.5 7Z" fill="none" stroke="var(--ink2)" stroke-width="1.8"/></svg>Alerta Rio (só volume)</span><span><svg width="14" height="14"><rect x="2.5" y="2.5" width="9" height="9" fill="none" stroke="var(--ink2)" stroke-width="1.8"/></svg>INMET (volume em azul${showINW?', dias em laranja':''})</span><span>Marcadores vazados: referências observadas, não conferidas no original${showINW?'':'; a referência INMET de dias existe só para ≥ 1 mm'}.</span>`;
+  // título
+  const ex=extremes(A.mmMean,1),exw=extremes(A.wetMean,.3);
+  const wetM=ex.wet,dryM=ex.dry;
+  const ctrMM=Math.max(...A.mmSh)/Math.min(...A.mmSh),ctrW=Math.max(...A.wetSh)/Math.min(...A.wetSh);
+  $('#tB').textContent=`${st.y0}–${st.y1}: ${listMonths(wetM)} é o mês mais chuvoso (${nf(A.mmSh[wetM[0]],1)}% do volume) e ${listMonths(dryM)} o mais seco (${nf(A.mmSh[dryM[0]],1)}%); o contraste entre os extremos é de ${nf(ctrMM,1)}× no volume e ${nf(ctrW,1)}× nos dias chuvosos`;
+  // tabela de absolutos
+  const row=(n,arr,d,tot)=>`<tr><td>${n}</td>${arr.map(v=>`<td>${nf(v,d)}</td>`).join('')}<td><b>${tot}</b></td></tr>`;
+  let t=`<p class="cap" style="margin:0 0 6px"><b>Valores absolutos médios por mês</b> <span class="seal">ERA5 — superestima</span> Período ${st.y0}–${st.y1}: ERA5 ${nf(A.totMM)} mm/ano, ${nf(A.totMM/S.ar_annual*100-100)}% acima do Alerta Rio e ${nf(A.totMM/S.inm_annual*100-100)}% acima do INMET${showINW?`; ${nf(A.totWet)} dias ≥ 1 mm/ano contra ${S.inm_wet_annual} no INMET`:''}.</p><table><thead><tr><th></th>${MN.map(m=>`<th>${m}</th>`).join('')}<th>Ano</th></tr></thead><tbody>`;
+  t+=row('ERA5, mm/mês',A.mmMean,1,nf(A.totMM));
+  t+=row(`ERA5, dias ≥ ${st.thr} mm`,A.wetMean,1,nf(A.totWet,0));
+  t+=row('Alerta Rio, mm',S.ar,1,nf(S.ar_annual));
+  t+=row('INMET, mm',S.inm,1,nf(S.inm_annual));
+  if(showINW)t+=row('INMET, dias ≥ 1 mm',S.inm_wet,0,S.inm_wet_annual);
+  $('#tblB').innerHTML=t+'</tbody></table>';
+}
+
+/* ---------- C: acumulado do ano ---------- */
+function cumYear(y){const a=new Float64Array(366).fill(NaN);let c=0,last=-1;const mode=st.cum;
+  for(let i=yIdx[y][0];i<yIdx[y][1];i++){if(T[i]<0)break;c+=mode==='mm'?T[i]/10:(T[i]>=st.thr*10?1:0);a[SL[i]]=c;last=SL[i];}
+  if(!isLeap(y)&&last>=59)a[59]=a[58];return {a,last};}
+function renderC(yy){
+  const box=$('#chC'),W=Math.max(300,box.clientWidth),mob=W<560;
+  const H=mob?260:300,ml=mob?42:48,mr=mob?88:104,mt=30,mb=26,pw=W-ml-mr,ph=H-mt-mb;
+  const cy=yy.map(y=>cumYear(y).a);
+  const p10=[],p50=[],p90=[];for(let s=0;s<366;s++){const v=cy.map(a=>a[s]).filter(Number.isFinite);p10.push(quant(v,.1));p50.push(quant(v,.5));p90.push(quant(v,.9));}
+  const hy=st.hl,hc=cumYear(hy);
+  const mx=Math.max(...p90,...hc.a.filter(Number.isFinite));const ng=nice(mx*1.04,5),ymax=ng.max;
+  const X=s=>ml+pw*s/365,Yp=v=>mt+ph*(1-v/ymax);const col=st.cum==='mm'?'var(--c-mm)':'var(--c-wet)';
+  let s=`<svg id="svgC" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="img" aria-label="${st.cum==='mm'?'Chuva acumulada':'Dias chuvosos acumulados'} ao longo do ano de ${hy}, comparada à mediana e à faixa p10 a p90 dos anos do período selecionado.">`;
+  s+=`<text class="ttl" x="${ml}" y="12">${st.cum==='mm'?'mm acumulados no ano':`dias ≥ ${st.thr} mm acumulados no ano`}</text>`;
+  for(let v=0;v<=ymax+1e-9;v+=ng.step)s+=`<line class="gl" x1="${ml}" x2="${W-mr}" y1="${Yp(v)}" y2="${Yp(v)}"/><text class="tx" x="${ml-6}" y="${Yp(v)+4}" text-anchor="end">${nf(v)}</text>`;
+  for(let m=0;m<12;m++)if(!mob||m%2===0)s+=`<text class="tx" x="${X(SL0[m]+MD[m]/2)}" y="${H-8}" text-anchor="middle">${MN[m]}</text>`;
+  const up=p90.map((v,i)=>X(i)+','+Yp(v)),dn=p10.map((v,i)=>[X(i),Yp(v)]).reverse().map(p=>p.join(','));
+  s+=`<polygon points="${up.join(' ')} ${dn.join(' ')}" fill="var(--ink2)" fill-opacity=".16"/>`;
+  s+=`<polyline fill="none" stroke="var(--ink2)" stroke-width="1.6" stroke-dasharray="5 3" points="${p50.map((v,i)=>X(i)+','+Yp(v)).join(' ')}"/>`;
+  const hp=[];for(let i=0;i<=hc.last;i++)if(Number.isFinite(hc.a[i]))hp.push(X(i)+','+Yp(hc.a[i]));
+  s+=`<polyline fill="none" stroke="${col}" stroke-width="2.8" stroke-linejoin="round" points="${hp.join(' ')}"/>`;
+  const endV=hc.a[hc.last];s+=`<circle cx="${X(hc.last)}" cy="${Yp(endV)}" r="4" fill="${col}"/>`;
+  const labs=[{y:Yp(p90[365])+4,t:'p90',c:'tx'},{y:Yp(p10[365])+4,t:'p10',c:'tx'},{y:Yp(p50[365])+4,t:'mediana',c:'tx'}];
+  const endPartial=hc.last<365;
+  labs.push({y:Yp(endV)+4,t:`${hy}${endPartial?' ('+SLD[hc.last]+'/'+MN[SLM[hc.last]]+')':''}`,c:st.cum==='mm'?'lbl-mm':'lbl-wet',x:endPartial?X(hc.last)+8:null});
+  placeLabels(labs.filter(l=>!l.x)).forEach(l=>s+=`<text class="${l.c}" x="${W-mr+8}" y="${l.y}">${l.t}</text>`);
+  labs.filter(l=>l.x).forEach(l=>s+=`<text class="${l.c}" x="${l.x}" y="${l.y-8}">${l.t}</text>`);
+  s+=`<rect id="ovC" x="${ml}" y="${mt}" width="${pw}" height="${ph}" fill="transparent"/></svg>`;
+  box.innerHTML=s;
+  $('#ovC').addEventListener('pointermove',e=>{const r=$('#svgC').getBoundingClientRect();const sl=Math.max(0,Math.min(365,Math.round((e.clientX-r.left-ml)/pw*365)));
+    const u=st.cum==='mm'?'mm':'dias';showTip(`<span class="h">${SLD[sl]} de ${MNF[SLM[sl]]}</span><span class="k">${hy}:</span> ${Number.isFinite(hc.a[sl])?nf(hc.a[sl],st.cum==='mm'?1:0)+' '+u:'sem dados'}<br><span class="k">Mediana:</span> ${nf(p50[sl],st.cum==='mm'?1:0)} ${u}<br><span class="k">p10–p90:</span> ${nf(p10[sl],st.cum==='mm'?0:0)}–${nf(p90[sl],0)} ${u}`,e);});
+  $('#ovC').addEventListener('pointerleave',hideTip);
+  // título dinâmico
+  const l=hc.last,med=p50[l],lo=p10[l],hi=p90[l];
+  const pos=endV<lo?'abaixo da faixa p10–p90':endV>hi?'acima da faixa p10–p90':'dentro da faixa p10–p90';
+  const when=endPartial?`até ${SLD[l]}/${MN[SLM[l]]}`:'no ano todo';
+  const u=st.cum==='mm'?'mm':'dias chuvosos';
+  $('#tC').textContent=`${hy} acumulou ${nf(endV,st.cum==='mm'?0:0)} ${u} ${when}, ${med>0?nf(100*endV/med)+'% da mediana':'sem mediana comparável'} do período ${st.y0}–${st.y1} na mesma data (${pos})`;
+  $('#capC').textContent=`Mediana e faixa p10–p90 calculadas sobre os ${yy.length} anos do período${yy.includes(hy)?`, que incluem ${hy}`:''}${hy===PART?`; ${PART} é parcial e não entra na faixa`:''}. Em anos não bissextos o 29/fev repete o valor de 28/fev.`;
+}
+
+/* ---------- mapa de calor ---------- */
+const RAMP=S.ramps;
+function hex2rgb(h){return [1,3,5].map(i=>parseInt(h.substr(i,2),16));}
+function rampColor(t){const r=(dark()?RAMP.dark:RAMP.light);t=Math.max(0,Math.min(1,t));const x=t*(r.length-1),i=Math.min(r.length-2,Math.floor(x)),f=x-i;
+  const a=hex2rgb(r[i]),b=hex2rgb(r[i+1]);return `rgb(${a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',')})`;}
+function monthSeq(){const r=[];let m=st.m0;for(let k=0;k<12;k++){r.push(m);if(m===st.m1)break;m=(m+1)%12;}return r;}
+let heat=null,cursor={r:0,d:1};
+function heatCalc(yy){
+  const set=new Set(yy),n=new Int32Array(366),w=new Int32Array(366),sum=new Float64Array(366),vals=Array.from({length:366},()=>[]);
+  for(let i=0;i<N;i++){const v=T[i];if(v<0||!set.has(YR[i]))continue;const s=SL[i];n[s]++;sum[s]+=v;if(v>=st.thr*10){w[s]++;vals[s].push(v/10);}}
+  const K=st.smooth?3:0,cell=[];
+  for(let s=0;s<366;s++){let nn=0,ww=0,ss=0,vv=[];for(let k=-K;k<=K;k++){const j=(s+k+366)%366;nn+=n[j];ww+=w[j];ss+=sum[j];if(vals[j].length)vv=vv.concat(vals[j]);}
+    cell.push({n:nn,w:ww,p:nn?ww/nn:NaN,mean:nn?ss/nn/10:NaN,p90:vv.length>=5?quant(vv,.9):NaN,nev:vv.length});}
+  return {n,w,sum,vals,cell,K};
+}
+function noiseStat(H,months){ // razão var observada / var binomial esperada (p dia a dia)
+  let o1=0,e1=0,o2=0,e2=0,nn=0,cnt=0;
+  months.forEach(m=>{const sl=[];for(let d=1;d<=MD[m];d++){const s=SL0[m]+d-1;if(s!==59&&H.n[s]>0)sl.push(s);}
+    const D=sl.length;if(D<5)return;let W=0,Nn=0;sl.forEach(s=>{W+=H.w[s];Nn+=H.n[s];});const pb=W/Nn;if(pb<=0||pb>=1)return;
+    const ps=sl.map(s=>H.w[s]/H.n[s]);o1+=ps.reduce((a,p)=>a+(p-pb)**2,0);
+    let ev=0;sl.forEach(s=>{ev+=pb*(1-pb)/H.n[s];});e1+=ev*(D-1)/D;
+    // sem tendência linear
+    const xs=sl.map((s,i)=>i),xm=(D-1)/2,pm=ps.reduce((a,b)=>a+b,0)/D;let sxy=0,sxx=0;xs.forEach((x,i)=>{sxy+=(x-xm)*(ps[i]-pm);sxx+=(x-xm)**2;});const b=sxy/sxx;
+    o2+=ps.reduce((a,p,i)=>a+(p-(pm+b*(i-xm)))**2,0);e2+=ev*(D-2)/D;nn+=Nn/D;cnt++;});
+  return cnt?{R:o1/e1,R2:o2/e2,n:nn/cnt}:null;}
+const metLabel={p:'probabilidade de dia chuvoso',mean:'média',p90:'p90 dos dias chuvosos'};
+function fmtMetric(c){if(st.met==='p')return nf(100*c.p)+'%';if(st.met==='mean')return nf(c.mean,1)+' mm/dia';return Number.isFinite(c.p90)?nf(c.p90,1)+' mm':'poucos eventos';}
+function cellVal(c){return st.met==='p'?c.p:st.met==='mean'?c.mean:c.p90;}
+function renderHeat(yy){
+  const H=heat=heatCalc(yy),ms=monthSeq(),box=$('#chI'),W=Math.max(300,box.clientWidth),mob=W<560;
+  const left=mob?30:40,top=22,cw=(W-left-2)/31,ch=mob?21:24,Ht=top+ms.length*ch+2;
+  // domínio
+  let lo=Infinity,hi=-Infinity,iLo=-1,iHi=-1,noData=false,rows=[];
+  ms.forEach((m,r)=>{for(let d=1;d<=MD[m];d++){const s=SL0[m]+d-1,c=H.cell[s],v=cellVal(c);
+    if(!Number.isFinite(v)){noData=true;continue;}if(!st.smooth&&s===59)continue;
+    if(v<lo){lo=v;iLo=s;}if(v>hi){hi=v;iHi=s;}}});
+  if(!Number.isFinite(lo)){lo=0;hi=1;}if(hi-lo<1e-9)hi=lo+1e-9;
+  const unit=v=>st.met==='p'?nf(100*v)+'%':nf(v,1)+' mm';
+  let s=`<svg id="svgI" width="${W}" height="${Ht}" viewBox="0 0 ${W} ${Ht}" tabindex="0" role="img" aria-label="Mapa de calor: ${ms.length} meses (${MN[ms[0]]} a ${MN[ms[ms.length-1]]}) por dia do mês. Use as setas para percorrer as células; o valor de cada célula é anunciado e há tabela por mês abaixo." aria-describedby="capI">`;
+  s+=`<defs><pattern id="hat" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="var(--surface)"/><rect width="2" height="5" fill="var(--axis)"/></pattern></defs>`;
+  [1,5,10,15,20,25,30].forEach(d=>s+=`<text class="tx" x="${left+(d-.5)*cw}" y="12" text-anchor="middle">${d}</text>`);
+  ms.forEach((m,r)=>{s+=`<text class="tx1" x="${left-6}" y="${top+r*ch+ch/2+4}" text-anchor="end">${MN[m]}</text>`;
+    for(let d=1;d<=MD[m];d++){const sl=SL0[m]+d-1,c=H.cell[sl],v=cellVal(c),x=left+(d-1)*cw,y=top+r*ch;
+      const fill=Number.isFinite(v)?rampColor((v-lo)/(hi-lo)):'url(#hat)';
+      const dash=(!st.smooth&&sl===59)?' stroke="var(--ink)" stroke-width="1" stroke-dasharray="2 2"':'';
+      s+=`<rect data-r="${r}" data-d="${d}" x="${x}" y="${y}" width="${Math.max(1,cw-1)}" height="${ch-1}" fill="${fill}"${dash}/>`;}});
+  s+=`<rect id="cur" width="${cw-1}" height="${ch-1}" fill="none" stroke="var(--ink)" stroke-width="2" visibility="hidden" pointer-events="none"/></svg>`;
+  box.innerHTML=s;
+  const svg=$('#svgI');const geo={left,top,cw,ch};
+  const info=(r,d)=>{const m=ms[r],sl=SL0[m]+d-1,c=H.cell[sl];const lab=`${d} de ${MNF[m]}`;
+    const win=H.K?`<br><span class="k">Janela de 7 dias:</span> ${SLD[(sl-H.K+366)%366]}/${MN[SLM[(sl-H.K+366)%366]]} a ${SLD[(sl+H.K)%366]}/${MN[SLM[(sl+H.K)%366]]}`:'';
+    const nTxt=H.K?`${c.w} de ${c.n} dias-ano`:`${c.w} de ${c.n} dias`;
+    const html=`<span class="h">${lab}</span><span class="k">Dia chuvoso (≥ ${st.thr} mm):</span> ${nf(100*c.p)}% (${nTxt})<br><span class="k">Média:</span> ${nf(c.mean,1)} mm/dia<br><span class="k">p90 dos dias chuvosos:</span> ${Number.isFinite(c.p90)?nf(c.p90,1)+' mm':'poucos eventos (n = '+c.nev+')'} ${Number.isFinite(c.p90)?'(n = '+c.nev+')':''}${win}${(!st.smooth&&sl===59)?`<br><span class="k">29/fev: só ${c.n} anos.</span>`:''}`;
+    const plain=`${lab}: ${metLabel[st.met]} ${fmtMetric(c)}; ${nTxt} com chuva ≥ ${st.thr} mm; média ${nf(c.mean,1)} mm por dia.`;return {html,plain};};
+  const setCur=(r,d,fromKey)=>{cursor={r,d};const q=$('#cur');q.setAttribute('x',left+(d-1)*cw);q.setAttribute('y',top+r*ch);q.setAttribute('visibility','visible');
+    const o=info(r,d);$('#live').textContent=o.plain;if(fromKey){const b=svg.querySelector(`rect[data-r="${r}"][data-d="${d}"]`).getBoundingClientRect();showTipAt(o.html,b);}};
+  svg.addEventListener('pointermove',e=>{const t=e.target;if(t.dataset&&t.dataset.r!==undefined){const r=+t.dataset.r,d=+t.dataset.d;
+    const q=$('#cur');q.setAttribute('x',left+(d-1)*cw);q.setAttribute('y',top+r*ch);q.setAttribute('visibility','visible');showTip(info(r,d).html,e);}else hideTip();});
+  svg.addEventListener('pointerleave',()=>{hideTip();if(document.activeElement!==svg)$('#cur').setAttribute('visibility','hidden');});
+  svg.addEventListener('focus',()=>{const r=Math.min(cursor.r,ms.length-1);setCur(r,Math.min(cursor.d,MD[ms[r]]),true);});
+  svg.addEventListener('blur',()=>{hideTip();$('#cur').setAttribute('visibility','hidden');});
+  svg.addEventListener('keydown',e=>{let {r,d}=cursor;r=Math.min(r,ms.length-1);const k=e.key;
+    if(k==='ArrowRight')d++;else if(k==='ArrowLeft')d--;else if(k==='ArrowDown')r++;else if(k==='ArrowUp')r--;else if(k==='Home')d=1;else if(k==='End')d=MD[ms[r]];else if(k==='Escape'){hideTip();return;}else return;
+    e.preventDefault();r=Math.max(0,Math.min(ms.length-1,r));d=Math.max(1,Math.min(MD[ms[r]],d));setCur(r,d,true);});
+  // legenda
+  const stops=(dark()?RAMP.dark:RAMP.light).join(',');
+  const metName=st.met==='p'?'Probabilidade de dia chuvoso':st.met==='mean'?'Média (mm/dia)':'p90 dos dias chuvosos (mm)';
+  $('#rampI').innerHTML=`<span>${metName}${st.smooth?', suavizada':''}:</span><span>${unit(lo)}</span><span class="bar" style="background:linear-gradient(90deg,${stops})" aria-hidden="true"></span><span>${unit(hi)}</span>${noData?`<span><span class="hatch"></span> poucos eventos (&lt; 5 dias ≥ ${st.thr} mm)</span>`:''}${(!st.smooth&&ms.some(m=>m===1))?`<span><span class="hatch" style="background:none;border:1px dashed var(--ink)"></span> 29/fev (só ${yy.filter(isLeap).length} anos; fora da escala)</span>`:''}`;
+  $('#capI').textContent=`Escala calculada para os meses e o período selecionados (${yy.length} anos, dia chuvoso ≥ ${st.thr} mm). ${iHi>=0?`Mais alto: ${SLD[iHi]}/${MN[SLM[iHi]]} (${unit(hi)}); mais baixo: ${SLD[iLo]}/${MN[SLM[iLo]]} (${unit(lo)}).`:''} ${st.smooth?'Valores suavizados por média móvel de 7 dias; extremos de células suavizadas são menos ruidosos, mas ainda amostrais.':'Sem suavização, os extremos são em grande parte sorte amostral.'}`;
+  const rng=ms.length===1?MNF[ms[0]]:(ms.length===12?'Janeiro a dezembro':`${MNF[ms[0]]} a ${MNF[ms[ms.length-1]]}`);
+  $('#tI').textContent=`${rng.charAt(0).toUpperCase()+rng.slice(1)}${ms.length>1&&ms.length<12?` (${ms.length} meses em sequência)`:''}: ${metName.toLowerCase()} por dia do calendário, ${yy[0]}–${yy[yy.length-1]}`;
+  // ruído
+  const ns=noiseStat(H.n.length?{n:H.n,w:H.w}:null,ms);const nz=$('#noiseI');
+  if(ns){const share=Math.min(1,1/ns.R);
+    const t1=`Razão entre a variância observada de p(dia chuvoso) entre dias do mesmo mês e a esperada só por amostragem binomial (n ≈ ${nf(ns.n)} anos por dia): ${nf(ns.R,2)}. ${ns.R>1?`Cerca de ${nf(100*share)}% da variação dia a dia (sem suavização) é ruído amostral esperado.`:'A variação observada não excede o ruído esperado.'}`;
+    const t2=ns.R2<1.25?` Descontada uma tendência linear dentro de cada mês, a razão cai para ${nf(ns.R2,2)}: fora o gradiente sazonal, não há padrão intra-mês robusto na seleção.`
+      :` Mesmo descontada uma tendência linear dentro de cada mês, a razão é ${nf(ns.R2,2)}: há alguma estrutura além do ruído e do gradiente sazonal, que merece teste específico antes de ser lida como padrão.`;
+    nz.textContent=t1+t2;nz.hidden=false;}else nz.hidden=true;
+  // tabela por mês
+  let t=`<p class="cap" style="margin:0 0 6px">Valores brutos (sem suavização) por mês da seleção, ${yy.length} anos.</p><table><thead><tr><th>Mês</th><th>P(dia ≥ ${st.thr} mm)</th><th>Média (mm/dia)</th><th>p90 dos dias chuvosos (mm)</th><th>Eventos</th></tr></thead><tbody>`;
+  ms.forEach(m=>{let nn=0,ww=0,ss=0,vv=[];for(let d=1;d<=MD[m];d++){const s2=SL0[m]+d-1;nn+=H.n[s2];ww+=H.w[s2];ss+=H.sum[s2];vv=vv.concat(H.vals[s2]);}
+    t+=`<tr><td>${MNF[m]}</td><td>${nf(100*ww/nn,1)}%</td><td>${nf(ss/nn/10,2)}</td><td>${vv.length>=5?nf(quant(vv,.9),1):'–'}</td><td>${vv.length}</td></tr>`;});
+  $('#tblI').innerHTML=t+'</tbody></table>';
+  $('#subI').textContent=`Cada célula resume um dia do calendário nos ${yy.length} anos do período (${yy[0]}–${yy[yy.length-1]}), com o limiar de dia chuvoso definido no painel. Mostra só os meses escolhidos, na ordem da sequência.`;
+}
+
+/* ---------- avisos ---------- */
+function warnings(yy,ys){
+  const w=$('#warnN');if(yy.length<10){w.hidden=false;w.textContent=`Amostra pequena: o período tem ${yy.length} ${yy.length===1?'ano':'anos'} (menos de 10). Médias, faixas p10–p90 e o mapa de calor ficam instáveis.`;}else w.hidden=true;
+  const t=$('#warnThr');if(st.thr>=25){let ev=0;yy.forEach(y=>ev+=ys[y].wet);t.hidden=false;t.textContent=`Limiar de ${st.thr} mm: ${nf(ev)} dias no período (${nf(ev/yy.length,1)} por ano). Poucos eventos: percentis e o mapa de calor (sobretudo o p90) são muito ruidosos.`;}else t.hidden=true;
+}
+
+/* ---------- orquestração ---------- */
+let pending=false,skipA=false;
+function schedule(skip){skipA=skipA||!!skip;if(pending)return;pending=true;requestAnimationFrame(()=>{pending=false;const s=skipA;skipA=false;renderAll(s);});}
+function renderAll(skip){
+  const yy=years();if(!yy.length)return;
+  if(!skip)renderA();
+  warnings(yy,yearStats());renderB(yy);renderC(yy);renderHeat(yy);
+}
+function syncInputs(){$('#y0').value=st.y0;$('#y1').value=st.y1;
+  document.querySelectorAll('.mstrip div').forEach((e,i)=>e.classList.toggle('on',monthSeq().includes(i)));
+  $('#m0').value=st.m0;$('#m1').value=st.m1;
+  document.querySelectorAll('[data-m]').forEach(b=>{if(b.tagName==='BUTTON'){const [a,c]=b.dataset.m.split(',').map(Number);b.setAttribute('aria-pressed',String(a===st.m0&&c===st.m1));}});
+  $('#pre-all').setAttribute('aria-pressed',String(st.y0===YMIN&&st.y1===YMAX));
+  $('#pre-a').setAttribute('aria-pressed',String(st.y0===YMIN&&st.y1===2009));
+  $('#pre-b').setAttribute('aria-pressed',String(st.y0===2010&&st.y1===YMAX));}
+
+function init(){
+  $('#y0').min=$('#y1').min=YMIN;$('#y0').max=$('#y1').max=YMAX;
+  $('#pre-all').textContent=`Todos (${YMIN}–${YMAX})`;$('#pre-b').textContent=`2010–${YMAX}`;
+  let o='';for(let y=YMIN;y<=YLAST;y++)o+=`<option value="${y}"${y===st.hl?' selected':''}>${y}${complete[y]?'':' (parcial)'}</option>`;$('#hl').innerHTML=o;
+  const mo=MNF.map((m,i)=>`<option value="${i}">${m}</option>`).join('');$('#m0').innerHTML=mo;$('#m1').innerHTML=mo;
+  $('#mstrip').innerHTML=MN.map(m=>`<div>${m}</div>`).join('');
+  const setYears=(a,b)=>{a=Math.max(YMIN,Math.min(YMAX,a|0));b=Math.max(YMIN,Math.min(YMAX,b|0));if(a>b)[a,b]=[b,a];st.y0=a;st.y1=b;syncInputs();schedule();};
+  $('#y0').addEventListener('change',e=>{const v=+e.target.value;if(!Number.isFinite(v))return;if(v>st.y1)setYears(st.y1,v);else setYears(v,st.y1);});
+  $('#y1').addEventListener('change',e=>{const v=+e.target.value;if(!Number.isFinite(v))return;if(v<st.y0)setYears(v,st.y0);else setYears(st.y0,v);});
+  $('#pre-all').onclick=()=>setYears(YMIN,YMAX);$('#pre-a').onclick=()=>setYears(YMIN,2009);$('#pre-b').onclick=()=>setYears(2010,YMAX);
+  document.querySelectorAll('input[name=thr]').forEach(r=>r.addEventListener('change',()=>{st.thr=+r.value;schedule(true);}));
+  document.querySelectorAll('input[name=cum]').forEach(r=>r.addEventListener('change',()=>{st.cum=r.value;schedule(true);}));
+  document.querySelectorAll('input[name=met]').forEach(r=>r.addEventListener('change',()=>{st.met=r.value;schedule(true);}));
+  $('#hl').addEventListener('change',e=>{st.hl=+e.target.value;schedule();});
+  $('#smooth').addEventListener('change',e=>{st.smooth=e.target.checked;schedule(true);});
+  const setM=(a,b)=>{st.m0=a;st.m1=b;syncInputs();schedule(true);};
+  $('#m0').addEventListener('change',e=>setM(+e.target.value,st.m1));$('#m1').addEventListener('change',e=>setM(st.m0,+e.target.value));
+  document.querySelectorAll('button[data-m]').forEach(b=>b.addEventListener('click',()=>{const [a,c]=b.dataset.m.split(',').map(Number);setM(a,c);}));
+  // arrastar sobre os meses
+  const strip=$('#mstrip');let anchor=null;
+  const mAt=e=>{const r=strip.getBoundingClientRect();return Math.max(0,Math.min(11,Math.floor((e.clientX-r.left)/r.width*12)));};
+  strip.addEventListener('pointerdown',e=>{anchor=mAt(e);strip.setPointerCapture(e.pointerId);setM(anchor,anchor);});
+  strip.addEventListener('pointermove',e=>{if(anchor===null)return;const m=mAt(e);if(m!==st.m1||anchor!==st.m0)setM(anchor,m);});
+  const done=()=>{anchor=null;};strip.addEventListener('pointerup',done);strip.addEventListener('pointercancel',done);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>schedule());
+  let rw=0;addEventListener('resize',()=>{if(innerWidth!==rw){rw=innerWidth;schedule();}});rw=innerWidth;
+  if(innerWidth>=900)$('#detMet').open=true;
+  syncInputs();renderAll();
+}
+init();
+})();
+</script>
+</body>
+</html>

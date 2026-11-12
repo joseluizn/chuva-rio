@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Sistema / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Capturas e arquivos temporários de revisão (não versionados)
+review/
+*.tmp

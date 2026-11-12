@@ -1,0 +1,57 @@
+name: Update data
+
+on:
+  schedule:
+    # Dia 7 de cada mês, 09:17 UTC (depois do atraso de ~5-6 dias do ERA5).
+    - cron: "17 9 7 * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Testes do coletor (sem rede)
+        run: python -m unittest scripts/test_fetch_data.py
+
+      # Se a validação falhar (revisão histórica, resposta malformada), o job
+      # falha e nada é commitado; o GitHub avisa o dono do repositório.
+      - name: Baixar e validar dados (Open-Meteo)
+        run: python scripts/fetch_data.py
+
+      - name: Reconstruir páginas
+        run: |
+          for s in scripts/build_main.py scripts/build_full.py; do
+            if [ -f "$s" ]; then
+              echo "::group::python $s"
+              python "$s"
+              echo "::endgroup::"
+            else
+              echo "::warning::$s não existe; etapa pulada"
+            fi
+          done
+
+      - name: Commit e push (só se houver diferença)
+        run: |
+          git add -A data site
+          if git diff --cached --quiet; then
+            echo "Sem mudanças; nada a commitar."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "dados: atualização automática $(date -u +%F)"
+          git push
