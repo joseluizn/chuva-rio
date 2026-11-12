@@ -122,7 +122,7 @@ def make_ramps(n=33):
     for i in range(n):
         t = i / (n - 1)
         light.append(oklch_to_rgb(0.645 - 0.405 * t, 0.075 + 0.055 * math.sin(math.pi * t), 250))
-        dark.append(oklch_to_rgb(0.56 + 0.38 * t, 0.085 - 0.05 * t ** 2 + 0.03 * math.sin(math.pi * t), 245))
+        dark.append(oklch_to_rgb(0.92 - 0.50 * t, 0.05 + 0.11 * t, 250))  # azul mais escuro = mais chuva, nos dois temas
     s_light, s_dark = hex2rgb("#fcfcfb"), hex2rgb("#1a1a19")
     cl, cd = contrast(light[0], s_light), contrast(dark[0], s_dark)
     if cl < 3 or cd < 3:

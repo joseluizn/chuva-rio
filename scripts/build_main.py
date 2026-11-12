@@ -76,15 +76,9 @@ def make_ramps(n=9, hue=250.0, min_contrast=3.2):
     L0 = lo
     light = [_oklch_to_srgb(L0 + (0.30 - L0) * i / (n - 1), 0.10 + 0.04 * math.sin(math.pi * i / (n - 1)), hue)
              for i in range(n)]
-    lo, hi = 0.30, 0.80
-    for _ in range(40):
-        mid = (lo + hi) / 2
-        if _contrast(_oklch_to_srgb(mid, 0.10, hue), surf["dark"]) >= min_contrast:
-            hi = mid
-        else:
-            lo = mid
-    D0 = hi
-    dark = [_oklch_to_srgb(D0 + (0.94 - D0) * i / (n - 1), 0.10 - 0.05 * (i / (n - 1)) ** 2, hue)
+    # escuro: mesma direção do claro (pedido do usuário: azul mais escuro = mais chuva).
+    # Baixo = azul pálido; alto = azul profundo, ainda distinguível da superfície escura.
+    dark = [_oklch_to_srgb(0.92 + (0.42 - 0.92) * i / (n - 1), 0.05 + 0.11 * (i / (n - 1)), hue)
             for i in range(n)]
     for name, ramp in (("light", light), ("dark", dark)):
         assert _contrast(ramp[0], surf[name]) >= 3.0, (name, _contrast(ramp[0], surf[name]))
