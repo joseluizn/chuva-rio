@@ -4,7 +4,34 @@ Modelo por decêndio (dias 1–10, 11–20, 21–fim de cada mês; 21 períodos 
 Script: `scripts/model_periods.py` (só biblioteca padrão, sementes fixas, idempotente). Saída: `data/derived/periodos_abr_out.json`.
 Números abaixo: execução com dados até 2026-11-05 (chuva e nuvem); anos completos 1995–2025 (31 anos); 2026 fica fora da estimação.
 
-## A resposta em poucas palavras
+## Em linguagem simples: quando o tempo é bom
+
+Cada mês de abril a outubro foi dividido em três períodos (os decêndios): início (dias 1–10), meados (11–20) e fim (21 ao fim do mês). "Tempo bom" tem quatro versões: **dia bom** (céu aberto e sem chuva), **céu aberto**, **sem chuva** (< 1 mm) e **sem chuva forte** (< 5 mm); em todas, mais é melhor.
+
+**Como medimos a incerteza.** Refizemos a conta 1.000 vezes, cada vez com 31 anos sorteados (com repetição) entre 1995 e 2025, como se tivéssemos 1.000 históricos alternativos. "Melhor em 70% das simulações" quer dizer em 700 desses 1.000. As chances viram palavras na escala de probabilidade do IPCC (Mastrandrea et al. 2010), usando sempre o termo mais específico:
+
+| Termo | Chance |
+|---|---|
+| praticamente certo | 99% ou mais |
+| muito provável | 90% ou mais |
+| provável | 66% ou mais |
+| tão provável quanto improvável | 33% a 66% |
+| improvável | menos de 33% |
+| muito improvável | menos de 10% |
+| excepcionalmente improvável | menos de 1% |
+
+As chances medem só a variação entre anos dentro da reanálise; não incluem os erros do ERA5.
+
+- **Dia bom.** O melhor período vai do início de junho ao início de setembro: **praticamente certo** (mais de 99%). Dentro dessa faixa nenhum período se destaca claramente. No pico da curva sazonal, fim de julho (jul 21–31), são cerca de 5 dias bons em 11; estar entre os 3 melhores é **provável** (69%), mas ser exatamente o melhor é **improvável** (21%). O período que mais vezes fica em 1º nos dados é o início de julho (35%, **tão provável quanto improvável**). O pior está no início de abril ou na segunda metade de outubro (**praticamente certo**); no fim de outubro, cerca de 1 dia bom em 11.
+- **Céu aberto.** Mesmo desenho: o melhor período vai de meados de junho ao início de setembro (**praticamente certo**); pico em fim de julho, cerca de 5 dias de céu aberto em 11; entre os 3 melhores, **provável** (73%); o 1º exato é **improvável** para qualquer período.
+- **Sem chuva.** O melhor período vai do fim de maio ao início de setembro (**praticamente certo**); em meados de julho são cerca de 8 dias sem chuva em 10 (no ERA5; na realidade, mais). Para meados de julho, estar entre os 3 melhores é **improvável** (31%): a faixa seca é larga e plana.
+- **Sem chuva forte.** O melhor período vai do início de maio ao início de setembro (**praticamente certo**). Aqui um período se aproxima de vencer: meados de junho é o melhor em 58% das simulações (**tão provável quanto improvável**).
+
+**Em uma frase:** de junho ao início de setembro o tempo bom é muito mais comum do que em abril ou outubro, e isso é praticamente certo; qual semana exata dentro dessa faixa é a melhor, os dados não dizem.
+
+Os números acima são da execução com dados até 2026-11-05; a página `site/modelo.html` recalcula todos a cada atualização.
+
+## A resposta em poucas palavras (versão técnica)
 
 **Chuva.** A estação mais seca do ano no Rio vai, grosso modo, de **meados de junho a meados de agosto**. O centro dessa janela, segundo o modelo sazonal, é **jul 11–20**: chance de ~23% de um dia com chuva ≥ 1 mm, ou ~2,3 dias chuvosos em 10. Mas o fundo da curva é **plano**: de jun 11–20 a ago 11–20 todos os decêndios ficam entre 21% e 24% (dados brutos), e nenhum deles se separa dos vizinhos além do ruído entre anos. Escolher "jul 11–20" em vez de "jun 21–30" ou "ago 1–10" não é uma decisão que os dados sustentem; escolher **julho em vez do início de abril ou do fim de outubro** (mais de 50% de dias com chuva) é; maio e setembro ficam no meio (29–44%).
 
@@ -236,9 +263,9 @@ O resultado só muda quando os dados mudam (`meta.generated_at` = última data c
 - **Empates.** Nas proporções brutas, dois decêndios de 10 dias com a mesma contagem numa réplica empatam. Desde esta versão, empates são desfeitos ao acaso (semente fixa) em vez de favorecer o decêndio de índice menor; isso mudou os P(melhor) e P(top 3) sem forma em até ~4 p.p. (o maior caso: chuva ≥ 5 mm, jun 11–20, de 62% para 58%). Na comparação par a par, empate conta meio.
 - **Grupos (`tier`).** Grupo 1: o melhor do modelo e os decêndios cuja diferença bruta pareada para ele tem faixa de 90% que não exclui que sejam tão bons. Grupo 3: o mesmo em relação ao pior do modelo. Grupo 2: o resto; quem cair nos dois grupos fica no 2 e é marcado `tier_ambiguous`. É uma regra de comparação com um único decêndio de referência, sem correção para comparações múltiplas (julgamento meu: a pergunta é "dá para dizer que é pior que o melhor?", e a regra responde de forma conservadora).
 - **Anos bons.** Contagens absolutas no decêndio: chuva ≥ 1 mm, "até 2 dias chuvosos" e "nenhum dia chuvoso"; chuva ≥ 5 mm, "até 1 dia" e "nenhum dia"; céu aberto e dia bom, "5 ou mais" e "7 ou mais" dias. Decêndios de 11 dias têm um dia a mais (critério de chuva fica mais difícil; de céu aberto, mais fácil). Faixa de Wilson de 90% tratando os anos como independentes (julgamento: supõe que um ano não informa o seguinte, o que não testei).
-- **Matriz par a par.** Marca de "diferença distinguível": sem impor forma, a faixa de 90% da diferença bruta pareada exclui zero; na curva suave, P(melhor) ≥ 95% ou ≤ 5%. Na curva suave quase todo par parece distinguível porque a forma é imposta; a página abre na versão sem forma.
+- **Comparação de pares.** A página usa `pairwise` no confronto direto (dois períodos escolhidos) e na tabela "A contra os outros 20 períodos". "Diferença clara" = a faixa de 90% da diferença bruta pareada exclui zero. Pela curva sazonal quase todo par parece claramente diferente, porque a forma é imposta; os termos de probabilidade da página seguem os dados de cada período.
 
-A página `site/modelo.html` (gerada por `scripts/build_model.py` a partir deste JSON) mostra tudo isso.
+A página `site/modelo.html` (gerada por `scripts/build_model.py` a partir deste JSON) fala sempre em tempo bom: para chuva mostra a fração de dias **sem** chuva (1 − p; intervalos invertidos, diferenças com sinal trocado; P(melhor), postos e grupos não mudam, porque "melhor" no JSON já é "menos chuva"). O JSON não muda; a página principal continua lendo a chuva como está. Cada título traz o termo da escala acima, calculado a partir da chance correspondente: faixa do melhor (soma de P(melhor) nos períodos do grupo 1), faixa do pior (soma de P(último lugar) no grupo 3), estar entre os 3 melhores, vencer o confronto direto, e a fração dos anos em que o período foi bom.
 
 ## Referências
 
@@ -247,6 +274,7 @@ A página `site/modelo.html` (gerada por `scripts/build_model.py` a partir deste
 - Künsch, H. R. (1989). The jackknife and the bootstrap for general stationary observations. *Annals of Statistics* 17(3), 1217–1241.
 - Hastie, T., Tibshirani, R., & Friedman, J. (2009). *The Elements of Statistical Learning*, 2ª ed., §7.10 (validação cruzada e regra de 1 EP).
 - NOAA/NCEI, *Comparative Climatic Data for the United States* (classes de céu: "clear" = 0 a 3/10 de cobertura média nas horas de luz).
+- Mastrandrea, M. D. et al. (2010). *Guidance Note for Lead Authors of the IPCC Fifth Assessment Report on Consistent Treatment of Uncertainties*. IPCC.
 - Hersbach, H. et al. (2020). The ERA5 global reanalysis. *QJRMS* 146, 1999–2049.
 
 Julgamentos meus (não regra estabelecida): regra de 1 EP para K; usar diferenças brutas pareadas para "dentro do ruído"; usar a média diurna 09–17 h para "aberto" (o limiar de 30% é o padrão do site, `common.OPEN_THR`); descartar a insolação do ERA5; 1995 como início (herdado do projeto).

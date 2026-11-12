@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Modelo abril–outubro: os 21 decêndios comparados (chuva e céu aberto no Rio, ERA5)</title>
-<meta name="description" content="Comparação dos 21 decêndios de abril a outubro no Rio de Janeiro: probabilidade de chuva, de céu aberto e de dia bom, com incerteza por bootstrap de anos, chances de cada posto e comparação par a par.">
+<title>Tempo bom de abril a outubro no Rio: os 21 períodos comparados (ERA5)</title>
+<meta name="description" content="Quando há mais dias bons, de céu aberto e sem chuva entre abril e outubro no Rio de Janeiro: os 21 períodos de dez dias comparados, com o grau de confiança de cada conclusão.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap">
 <style>
@@ -123,24 +123,25 @@ footer p{margin:6px 0;max-width:88ch}
 <header>
   <h1>%%TITLE%%</h1>
   <p class="lead">%%LEAD%%</p>
+  <p class="note" style="margin:0 0 12px">%%UNC%%</p>
   <p class="warn">%%CAVEAT%%</p>
   <p class="meta">%%SOURCE%% <a href="#metodo">Método e limitações</a></p>
 </header>
 
 <div class="ctlbar stick" role="group" aria-label="Controles da página">
   <div class="ctl">
-    <span class="lb" id="lb-out">Desfecho</span>
+    <span class="lb" id="lb-out">Tempo bom significa</span>
     <div class="seg" role="radiogroup" aria-labelledby="lb-out">%%OUT_RADIOS%%</div>
   </div>
   <div class="ctl">
-    <span class="lb" id="lb-base">Estimativa usada nos gráficos de posição</span>
+    <span class="lb" id="lb-base">Estimativa nos gráficos de posição</span>
     <div class="seg" role="radiogroup" aria-labelledby="lb-base">
-      <label><input type="radio" name="base" value="raw" checked><span>Sem impor forma</span></label>
-      <label><input type="radio" name="base" value="model"><span>Curva suave</span></label>
+      <label><input type="radio" name="base" value="raw" checked><span>Dados de cada período</span></label>
+      <label><input type="radio" name="base" value="model"><span>Curva sazonal</span></label>
     </div>
   </div>
   <div class="ctl">
-    <span class="lb" id="lb-ord">Ordem dos decêndios</span>
+    <span class="lb" id="lb-ord">Ordem dos períodos</span>
     <div class="seg" role="radiogroup" aria-labelledby="lb-ord">
       <label><input type="radio" name="ord" value="cal" checked><span>Calendário</span></label>
       <label><input type="radio" name="ord" value="rank"><span>Do melhor ao pior</span></label>
@@ -149,14 +150,14 @@ footer p{margin:6px 0;max-width:88ch}
 </div>
 
 <section id="ranking" aria-labelledby="h-rank">
-  <h2 id="h-rank">Os 21 decêndios lado a lado</h2>
+  <h2 id="h-rank"></h2>
   <p class="head" id="head"></p>
   <figure>
     <h3 id="t1"></h3>
     <div id="ch1"></div>
     <div class="keyl" id="key1"></div>
     <p class="cap" id="cap1"></p>
-    <details class="tbl"><summary>Ver os 21 decêndios em tabela</summary><div class="tw" id="tbl1"></div></details>
+    <details class="tbl"><summary>Ver os 21 períodos em tabela</summary><div class="tw" id="tbl1"></div></details>
   </figure>
   <figure>
     <h3 id="t2"></h3>
@@ -166,33 +167,31 @@ footer p{margin:6px 0;max-width:88ch}
   </figure>
 </section>
 
-<section id="pares" aria-labelledby="h-pares">
-  <h2 id="h-pares">Comparação par a par</h2>
-  <p class="sub">Cada célula responde: em que fração das réplicas bootstrap o decêndio da <b>linha</b> foi melhor que o da <b>coluna</b>? Clique (ou use as setas e Enter) numa célula para levar o par ao confronto direto abaixo.</p>
+<section id="confronto" aria-labelledby="h-h2h">
+  <h2 id="h-h2h"></h2>
+  <p class="sub">Escolha dois períodos. A página abre comparando o pico da curva sazonal com o período que mais vezes fica em 1º nos dados de cada período (se forem o mesmo, com o segundo mais frequente).</p>
+  <div class="row" role="group" aria-label="Escolha do par">
+    <label class="lb" for="hA">Período A</label><select id="hA"></select>
+    <button type="button" id="swap" aria-label="Trocar A e B">⇄</button>
+    <label class="lb" for="hB">Período B</label><select id="hB"></select>
+  </div>
+  <div class="tiles" id="tiles4"></div>
   <figure>
-    <h3 id="t3"></h3>
-    <div id="ch3"></div>
-    <div class="ramp" id="ramp3"></div>
-    <p class="cap" id="cap3"></p>
-  </figure>
-  <figure id="h2h">
     <h3 id="t4"></h3>
-    <div class="row" role="group" aria-label="Escolha do par">
-      <label class="lb" for="hA">Decêndio A</label><select id="hA"></select>
-      <button type="button" id="swap" aria-label="Trocar A e B">⇄</button>
-      <label class="lb" for="hB">Decêndio B</label><select id="hB"></select>
-    </div>
-    <div class="tiles" id="tiles4"></div>
     <div id="ch4"></div>
     <div class="keyl" id="key4"></div>
     <p class="cap" id="cap4"></p>
-    <details class="tbl"><summary>Ver A contra todos os decêndios em tabela</summary><div class="tw" id="tbl4"></div></details>
+  </figure>
+  <figure>
+    <h3 id="t4b"></h3>
+    <div class="tw" id="tbl4"></div>
+    <p class="cap" id="cap4b"></p>
   </figure>
 </section>
 
 <section id="anos" aria-labelledby="h-anos">
-  <h2 id="h-anos">Ano a ano</h2>
-  <p class="sub">Contagens brutas de cada ano em cada decêndio. Mostram o quanto o mesmo período muda de um ano para outro e por que a ordem fina entre vizinhos é instável.</p>
+  <h2 id="h-anos"></h2>
+  <p class="sub">Contagens de cada ano em cada período. Mostram o quanto o mesmo período muda de um ano para outro e por que a ordem entre vizinhos é instável.</p>
   <figure>
     <h3 id="t5"></h3>
     <div id="ch5"></div>
@@ -202,7 +201,7 @@ footer p{margin:6px 0;max-width:88ch}
   <figure>
     <h3 id="t6"></h3>
     <div class="row" style="margin:0 0 6px">
-      <span class="lb" id="lb-rule">Critério de período bom</span>
+      <span class="lb" id="lb-rule">Período bom num ano</span>
       <div class="seg" role="radiogroup" aria-labelledby="lb-rule" id="rules"></div>
     </div>
     <div id="ch6"></div>
@@ -211,39 +210,32 @@ footer p{margin:6px 0;max-width:88ch}
 </section>
 
 <section id="confianca" aria-labelledby="h-conf">
-  <h2 id="h-conf">Quão confiável é</h2>
+  <h2 id="h-conf"></h2>
   <p class="sub" id="tiers"></p>
-  <div class="two">
-    <figure>
-      <h3 id="t7"></h3>
-      <div id="ch7"></div>
-      <div class="keyl" id="key7"></div>
-      <p class="cap" id="cap7"></p>
-    </figure>
-    <figure>
-      <h3 id="t8"></h3>
-      <div class="tw" id="tbl8"></div>
-      <p class="cap" id="cap8"></p>
-    </figure>
-  </div>
+  <figure>
+    <h3 id="t7"></h3>
+    <div id="ch7"></div>
+    <div class="keyl" id="key7"></div>
+    <p class="cap" id="cap7"></p>
+  </figure>
   <p class="note">%%PERS_TXT%%</p>
   <p class="note">%%SUN_TXT%%</p>
   <p class="note">%%GAL_TXT%%</p>
-  <details class="tbl"><summary>Ver todas as verificações de robustez</summary><div class="tw">%%ROB_TBL%%</div></details>
+  <details class="tbl"><summary>Ver todas as verificações com outras escolhas</summary><div class="tw">%%ROB_TBL%%</div></details>
 </section>
 
 <section id="metodo" class="method" aria-labelledby="h-met">
-  <details>
+  <details id="detMet">
     <summary><h2 id="h-met" style="display:inline">Método e limitações</h2></summary>
     <ul>
-      <li><b>Dados.</b> Chuva diária e nebulosidade horária do ERA5 (Open-Meteo), célula de ~25 km ao norte do centro, perto do Galeão. Dia chuvoso = chuva ≥ 1 mm (≥ 5 mm como alternativa, menos sensível à chuva fraca que o ERA5 exagera). %%OPEN_DEF%% Só anos completos (%%Y0%%–%%Y1%%, %%NY%% anos) entram no modelo.</li>
-      <li><b>Modelo suave.</b> Regressão logística da probabilidade diária no dia do ano com K pares de senos e cossenos, ajustada no ano inteiro; a probabilidade do decêndio é a média das diárias. K foi escolhido por validação cruzada deixando um ano de fora (perda logarítmica nos dias de abr–out), pelo menor K a até 1 erro-padrão do mínimo (regra de 1 EP; julgamento meu).</li>
-      <li><b>Sem impor forma.</b> Proporção bruta de dias com o desfecho em cada decêndio. Com K pequeno a curva suave é quase uma senoide: ela localiza bem o <i>centro</i> da estação, mas cria certeza artificial sobre a ordem entre vizinhos. Por isso a página abre na estimativa sem forma.</li>
-      <li><b>Incerteza.</b> %%NBOOT%% réplicas bootstrap que sorteiam anos inteiros com reposição (bootstrap em blocos; Künsch 1989; percentis, Efron &amp; Tibshirani 1993). Em cada réplica, o modelo é reajustado e os 21 decêndios são ordenados; daí saem as faixas de 90%, as chances de cada posto e as comparações par a par. Empates entre proporções brutas são desfeitos ao acaso, com semente fixa.</li>
-      <li><b>Grupos.</b> Grupo 1: o melhor do modelo e os decêndios cuja diferença bruta pareada para ele tem faixa de 90% que não exclui que sejam tão bons; grupo 3: idem em relação ao pior; grupo 2: o resto. Marcas na matriz: sem impor forma, a faixa de 90% da diferença bruta pareada exclui zero; na curva suave, P ≥ 95% ou ≤ 5%.</li>
-      <li><b>Anos bons.</b> Contagens absolutas no decêndio (10 ou 11 dias; os de 11 dias têm um dia a mais). Faixa de Wilson de 90% tratando anos como independentes.</li>
-      <li><b>Limitações.</b> Reanálise em grade, não pluviômetro; um único ponto de grade para uma cidade com relevo forte; o ERA5 superestima dias de chuva fraca e não tem validação observada da nebulosidade aqui; supõe a mesma sazonalidade nos %%NY%% anos; climatologia não é previsão para um ano específico.</li>
-      <li><b>Detalhes, tabelas e referências.</b> <a href="%%DOC%%">docs/modelo_periodos.md</a> (Wilson 1927; Efron &amp; Tibshirani 1993; Künsch 1989; Hastie, Tibshirani &amp; Friedman 2009; Hersbach et al. 2020). Código: <a href="%%REPO%%/blob/main/scripts/model_periods.py">scripts/model_periods.py</a>.</li>
+      <li><b>Dados.</b> Chuva diária e nebulosidade horária do ERA5 (Open-Meteo), célula de ~25 km ao norte do centro, perto do Galeão. Sem chuva = chuva diária &lt; 1 mm; sem chuva forte = &lt; 5 mm (a página mostra 1 − a probabilidade de chuva do modelo). %%OPEN_DEF%% Só anos completos (%%Y0%%–%%Y1%%, %%NY%% anos) entram no modelo.</li>
+      <li><b>Escala de probabilidade.</b> Termos da nota de orientação do IPCC AR5 sobre incertezas (Mastrandrea et al. 2010), aplicados à fração dos históricos simulados: praticamente certo 99–100%, muito provável 90–100%, provável 66–100%, tão provável quanto improvável 33–66%, improvável 0–33%, muito improvável 0–10%, excepcionalmente improvável 0–1%. Usa-se o termo mais específico (90% é &ldquo;muito provável&rdquo;, não só &ldquo;provável&rdquo;). As chances refletem só a variação entre anos dentro da reanálise; não incluem erro da reanálise nem mudança de clima.</li>
+      <li><b>Históricos simulados.</b> Bootstrap em blocos de anos: %%NBOOT%% réplicas, cada uma sorteando %%NY%% anos inteiros com reposição (Künsch 1989; intervalos percentis, Efron &amp; Tibshirani 1993). Anos inteiros preservam a persistência entre dias. Em cada réplica, a curva é reajustada e os 21 decêndios são ordenados; daí saem as faixas de 90% (percentis 5 e 95), as chances de cada posição e as comparações entre pares. Empates nas proporções brutas são desfeitos ao acaso, com semente fixa; na comparação de pares, empate conta meio.</li>
+      <li><b>Curva sazonal.</b> Regressão logística da probabilidade diária no dia do ano com K pares de harmônicos (senos e cossenos), ajustada no ano inteiro; a probabilidade do decêndio é a média das diárias. K pela validação cruzada deixando um ano de fora (log-loss nos dias de abril a outubro), menor K a até 1 erro-padrão do mínimo (Hastie, Tibshirani &amp; Friedman 2009, §7.10; a regra é julgamento meu). Com K pequeno a curva quase vira uma senoide: localiza bem o centro da estação, mas exagera a certeza sobre a ordem entre vizinhos; por isso a página abre nos dados de cada período (proporções brutas). A calibração usa a previsão deixando o ano de fora.<div id="ktabs">%%KTABS%%</div></li>
+      <li><b>Grupos.</b> Grupo 1: o melhor período da curva e os decêndios cuja diferença bruta pareada para ele tem intervalo de 90% que não exclui que sejam tão bons; grupo 3: idem em relação ao pior; grupo 2: o resto. &ldquo;Diferença clara&rdquo; = o intervalo de 90% da diferença pareada exclui zero (aproximadamente, um período vence em 95% ou mais das réplicas). Sem correção para comparações múltiplas.</li>
+      <li><b>Período bom num ano.</b> Contagens absolutas no decêndio (10 ou 11 dias). Faixa: intervalo de Wilson de 90%, tratando os anos como independentes.</li>
+      <li><b>Limitações.</b> Reanálise em grade, não pluviômetro; um único ponto de grade para uma cidade de relevo forte; o ERA5 exagera dias de chuva fraca (logo subestima dias sem chuva) e a nebulosidade não foi validada com observação; supõe a mesma sazonalidade nos %%NY%% anos; climatologia não é previsão para um ano específico.</li>
+      <li><b>Detalhes, tabelas e referências.</b> <a href="%%DOC%%">docs/modelo_periodos.md</a> (Wilson 1927; Efron &amp; Tibshirani 1993; Künsch 1989; Hastie, Tibshirani &amp; Friedman 2009; Mastrandrea et al. 2010; Hersbach et al. 2020). Código: <a href="%%REPO%%/blob/main/scripts/model_periods.py">scripts/model_periods.py</a>.</li>
     </ul>
   </details>
 </section>
@@ -255,31 +247,46 @@ footer p{margin:6px 0;max-width:88ch}
 </main>
 <div id="tip" hidden></div>
 <div class="sr" id="live" aria-live="polite"></div>
-
 <script>
 (()=>{
 'use strict';
 const D=%%DATA%%;
 const $=s=>document.querySelector(s);
-const L=D.labels, NP=L.length;
+const L=D.labels, FR=D.friendly, NP=L.length;
 const nf=(x,d=0)=>Number.isFinite(x)?x.toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d}):'–';
 const pc=(x,d=0)=>nf(100*x,d)+'%';
 const pp=(x,d=1)=>(x>0?'+':x<0?'−':'')+nf(Math.abs(100*x),d)+' p.p.';
+const ps=p=>{if(p>=.995)return 'mais de 99%';if(p<.005)return 'menos de 1%';const r=Math.round(100*p)/100;return [.99,.9,.66,.33,.1,.01].some(t=>p<t-1e-9&&r>=t)?pc(p,1):pc(p);};
+const term=p=>{for(const [t,n] of D.terms)if(p>=t-1e-9)return n;return D.terms[D.terms.length-1][1];};
+const cl=p=>`${term(p)} (${ps(p)})`;
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const F=i=>`${FR[i]} (${L[i]})`;
 const dark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
-const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
 const st={o:D.order[0],base:'raw',ord:'cal',A:null,B:null,rule:0};
 const O=()=>D.o[st.o];
 const live=t=>{$('#live').textContent=t;};
 const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+const COL='var(--c-open)';
+
+/* ---------- textos auxiliares ---------- */
+const POS={'1':['do início','ao início'],'11':['de meados','a meados'],'21':['do fim','ao fim']};
+const MES={abr:'abril',mai:'maio',jun:'junho',jul:'julho',ago:'agosto',set:'setembro',out:'outubro'};
+function part(i,to){const [m,d]=L[i].split(' ');return `${POS[d.split('–')[0]][to?1:0]} de ${MES[m]}`;}
+const runF=(a,b)=>a===b?FR[a]:`${part(a,false)} ${part(b,true)}`;
+function where(set){const v=[...set].sort((a,b)=>a-b);if(v.length&&v[v.length-1]-v[0]===v.length-1)return v.length===1?`é ${FR[v[0]]}`:`vai ${runF(v[0],v[v.length-1])}`;return `está em ${runsTxt(v)}`;}
+function runsTxt(idx){idx=[...idx].sort((a,b)=>a-b);if(!idx.length)return 'nenhum';const g=[];let c=[idx[0]];
+  for(const i of idx.slice(1)){if(i===c[c.length-1]+1)c.push(i);else{g.push(c);c=[i];}}g.push(c);
+  const parts=g.map(x=>x.length===1?L[x[0]]:`${L[x[0]]} a ${L[x[x.length-1]]}`);return parts.length===1?parts[0]:parts.slice(0,-1).join(', ')+' e '+parts[parts.length-1];}
+const tierName=['','sem diferença clara do melhor','intermediário','sem diferença clara do pior'];
+const ed=i=>O().pm[i]*O().nd[i];
+const cd=i=>{const x=ed(i),t=nf(x);return `${t} ${t==='1'?O().noun1:O().noun}`;};
 
 /* ---------- cores ---------- */
 function hex2rgb(h){return [1,3,5].map(i=>parseInt(h.substr(i,2),16));}
 function lerp(arr,t){t=Math.max(0,Math.min(1,t));const x=t*(arr.length-1),i=Math.min(arr.length-2,Math.floor(x)),f=x-i;
   const a=hex2rgb(arr[i]),b=hex2rgb(arr[i+1]);return 'rgb('+a.map((v,k)=>Math.round(v+(b[k]-v)*f)).join(',')+')';}
-const seq=(t,name)=>lerp(D.ramps[name||O().ramp][dark()?'dark':'light'],t);
-const div=p=>lerp(D.div[dark()?'dark':'light'],p);
-const hue=()=>css(O().css==='mm'?'--c-mm':'--c-open');
-function rampBar(el,stops,lo,hi,extra){el.innerHTML=`<span>${lo}</span><span class="bar" style="background:linear-gradient(90deg,${stops.join(',')})"></span><span>${hi}</span>${extra||''}`;}
+const seq=t=>lerp(D.ramp[dark()?'dark':'light'],t);
+function rampBar(el,lo,hi,extra){el.innerHTML=`<span>${lo}</span><span class="bar" style="background:linear-gradient(90deg,${D.ramp[dark()?'dark':'light'].join(',')})"></span><span>${hi}</span>${extra||''}`;}
 
 /* ---------- tooltip ---------- */
 const tip=$('#tip');
@@ -288,93 +295,102 @@ function showTip(html,e){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetW
 function showTipAt(html,r){tip.innerHTML=html;tip.hidden=false;const w=tip.offsetWidth,h=tip.offsetHeight;let x=r.left+r.width/2-w/2;x=Math.max(4,Math.min(innerWidth-w-4,x));
   let y=r.top-h-8;if(y<4)y=r.bottom+8;tip.style.left=x+'px';tip.style.top=y+'px';}
 const hideTip=()=>{tip.hidden=true;};
-
-/* ---------- utilidades do desfecho ---------- */
-const better=(a,b)=>O().mode==='min'?a<b:a>b;
-function est(base){const o=O();return (base||st.base)==='raw'?{p:o.pr,lo:o.prl,hi:o.prh}:{p:o.pm,lo:o.pml,hi:o.pmh};}
-function order(){const r=[...Array(NP).keys()];if(st.ord==='cal')return r;const p=est().p;const s=O().mode==='min'?1:-1;
-  return r.sort((a,b)=>s*(p[a]-p[b])||a-b);}
-const tierName=['','sem diferença do melhor','intermediário','sem diferença do pior'];
-const ext=()=>O().mode==='min'?'menos':'mais';
-function runsTxt(idx){idx=[...idx].sort((a,b)=>a-b);if(!idx.length)return 'nenhum';const g=[];let c=[idx[0]];
-  for(const i of idx.slice(1)){if(i===c[c.length-1]+1)c.push(i);else{g.push(c);c=[i];}}g.push(c);
-  const parts=g.map(x=>x.length===1?L[x[0]]:`${L[x[0]]} a ${L[x[x.length-1]]}`);return parts.length===1?parts[0]:parts.slice(0,-1).join(', ')+' e '+parts[parts.length-1];}
-function markShape(t,x,y,col){ // grupo 1: círculo cheio na cor; 2: losango cinza; 3: círculo vazado
-  if(t===1)return `<circle cx="${x}" cy="${y}" r="4.6" fill="${col}" stroke="var(--surface)" stroke-width="1.5"/>`;
-  if(t===2)return `<path d="M${x} ${y-4.6}L${x+4.6} ${y}L${x} ${y+4.6}L${x-4.6} ${y}Z" fill="var(--ink2)" stroke="var(--surface)" stroke-width="1.2"/>`;
-  return `<circle cx="${x}" cy="${y}" r="4" fill="var(--surface)" stroke="var(--muted)" stroke-width="1.8"/>`;}
-function nice(max,n=5){const raw=max/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p;const s=f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10;const step=s*p;return {max:Math.ceil(max/step)*step,step};}
-function keyNav(svg,get,set,move){ // navegação por teclado genérica
-  svg.addEventListener('keydown',e=>{const k=e.key;if(k==='Escape'){hideTip();return;}if(k==='Enter'||k===' '){if(move.enter){move.enter(get());e.preventDefault();}return;}
-    const c=move(get(),k);if(!c)return;e.preventDefault();set(c,true);});
+function keyNav(svg,get,set,move){
+  svg.addEventListener('keydown',e=>{const k=e.key;if(k==='Escape'){hideTip();return;}const c=move(get(),k);if(!c&&c!==0)return;e.preventDefault();set(c,true);});
   svg.addEventListener('focus',()=>set(get(),true));svg.addEventListener('blur',hideTip);}
 
-/* ---------- 1. ranking ---------- */
+/* ---------- utilidades ---------- */
+function est(base){const o=O();return (base||st.base)==='raw'?{p:o.pr,lo:o.prl,hi:o.prh}:{p:o.pm,lo:o.pml,hi:o.pmh};}
+function order(){const r=[...Array(NP).keys()];if(st.ord==='cal')return r;const p=est().p;return r.sort((a,b)=>(p[b]-p[a])||a-b);}
+function markShape(t,x,y){
+  if(t===1)return `<circle cx="${x}" cy="${y}" r="4.6" fill="${COL}" stroke="var(--surface)" stroke-width="1.5"/>`;
+  if(t===2)return `<path d="M${x} ${y-4.6}L${x+4.6} ${y}L${x} ${y+4.6}L${x-4.6} ${y}Z" fill="var(--ink2)" stroke="var(--surface)" stroke-width="1.2"/>`;
+  return `<circle cx="${x}" cy="${y}" r="4" fill="var(--surface)" stroke="var(--muted)" stroke-width="1.8"/>`;}
+function nice(max,n=5){const raw=max/n,p=Math.pow(10,Math.floor(Math.log10(raw))),f=raw/p;const s=f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10;const step=s*p;return {max:Math.min(1,Math.ceil(max/step)*step),step};}
+const baseNote=()=>st.base==='raw'?'':' (curva sazonal)';
+
+/* ---------- textos do desfecho ---------- */
+function renderText(){
+  const o=O(),t1=new Set(o.tier.map((t,i)=>t===1?i:-1).filter(i=>i>=0)),t3=new Set(o.tier.map((t,i)=>t===3?i:-1).filter(i=>i>=0));
+  let pr=0;t1.forEach(i=>{pr+=o.pbr[i];});let pw=0;t3.forEach(i=>{pw+=o.rdr[i][NP-1];});
+  $('#h-rank').textContent=`${o.short}: o melhor período ${where(t1)} — ${cl(pr)}`;
+  let h=`<b>${esc(cap(o.name))}.</b> No pico da curva sazonal, ${F(o.ib)}, são cerca de ${cd(o.ib)} em ${o.nd[o.ib]}. `+
+    `Que esse período seja exatamente o melhor de todos é ${cl(o.pbr[o.ib])}`+
+    (o.ibr!==o.ib?`; o que mais vezes fica em 1º nos dados é ${F(o.ibr)} (${ps(o.pbr[o.ibr])} das simulações). `:'. ')+
+    `No outro extremo, o pior período ${where(t3)} — ${cl(pw)}; no pior deles, ${F(o.iw)}, são cerca de ${cd(o.iw)} em ${o.nd[o.iw]}.`;
+  $('#head').innerHTML=h;
+  const ix=t=>o.tier.map((v,i)=>v===t?i:-1).filter(i=>i>=0);
+  const amb=o.amb.some(x=>x)?` Ficam no meio, sem diferença clara nem do melhor nem do pior: ${runsTxt(o.amb.map((v,i)=>v?i:-1).filter(i=>i>=0))}.`:'';
+  $('#tiers').innerHTML=`<b>${esc(o.short)} em três grupos.</b> Sem diferença clara do melhor (${L[o.ib]}): ${runsTxt(ix(1))}. Sem diferença clara do pior (${L[o.iw]}): ${runsTxt(ix(3))}. Intermediários: ${runsTxt(ix(2))}.${amb} `+
+    `&ldquo;Diferença clara&rdquo; quer dizer que a faixa de 90% da diferença entre os dois períodos fica toda de um lado do zero; na prática, um deles tem mais ${o.noun} em cerca de 95% ou mais das simulações.`;
+  document.querySelectorAll('#ktabs [data-out]').forEach(e=>{e.hidden=e.dataset.out!==st.o;});
+}
+
+/* ---------- 1. os 21 períodos ---------- */
 let cur1=0;
 function render1(){
   const o=O(),box=$('#ch1'),W=Math.max(300,box.clientWidth),sm=W<520;
   const lw=sm?74:92,rw=sm?62:118,pw=W-lw-rw-10,rowH=sm?21:22,top=24,H=top+NP*rowH+6;
-  const E=est(),Eo=est(st.base==='raw'?'model':'raw'),ord=order(),col=hue();
+  const E=est(),Eo=est(st.base==='raw'?'model':'raw'),ord=order();
   const mx=nice(Math.max(...E.hi,...Eo.p)*1.04,sm?4:6);const X=v=>lw+pw*v/mx.max;
-  let g=`<svg id="sv1" width="${W}" height="${H}" role="img" tabindex="0" aria-label="Probabilidade de ${esc(o.noun)} nos 21 decêndios, com faixa de 90%. Use as setas para percorrer." aria-describedby="cap1">`;
+  let g=`<svg id="sv1" width="${W}" height="${H}" role="img" tabindex="0" aria-label="Fração de ${esc(o.noun)} nos 21 períodos, com faixa de 90%. Use as setas para percorrer." aria-describedby="cap1">`;
   for(let v=0;v<=mx.max+1e-9;v+=mx.step){g+=`<line class="gl" x1="${X(v)}" x2="${X(v)}" y1="${top-4}" y2="${H-4}"/><text class="txs" x="${X(v)}" y="${top-9}" text-anchor="middle">${nf(100*v)}%</text>`;}
   g+=`<text class="txs" x="${W-4}" y="${top-9}" text-anchor="end">${sm?'dias esp.':'dias esperados'}</text>`;
   ord.forEach((i,r)=>{const y=top+r*rowH+rowH/2,t=o.tier[i];
-    if(t===1)g+=`<rect x="0" y="${y-rowH/2}" width="${W}" height="${rowH}" fill="${o.css==='mm'?'var(--wash2)':'var(--washg)'}"/>`;
-    const lc=t===1?col:t===2?'var(--ink2)':'var(--muted)';
+    if(t===1)g+=`<rect x="0" y="${y-rowH/2}" width="${W}" height="${rowH}" fill="var(--washg)"/>`;
+    const lc=t===1?COL:t===2?'var(--ink2)':'var(--muted)';
     g+=`<text class="${i===o.ib?'tx1':'tx'}" x="${lw-8}" y="${y+4}" text-anchor="end">${L[i]}</text>`;
     g+=`<line x1="${X(E.lo[i])}" x2="${X(E.hi[i])}" y1="${y}" y2="${y}" stroke="${lc}" stroke-width="2" stroke-linecap="round"/>`;
     g+=`<line x1="${X(Eo.p[i])}" x2="${X(Eo.p[i])}" y1="${y-6}" y2="${y+6}" stroke="var(--ink)" stroke-opacity=".55" stroke-width="1.5"/>`;
-    g+=markShape(t,X(E.p[i]),y,col);
-    const ed=E.p[i]*o.nd[i];g+=`<text class="tx" x="${W-4}" y="${y+4}" text-anchor="end">${nf(ed,1)}${sm?'':' em '+o.nd[i]+' dias'}</text>`;
+    g+=markShape(t,X(E.p[i]),y);
+    g+=`<text class="tx" x="${W-4}" y="${y+4}" text-anchor="end">${nf(E.p[i]*o.nd[i],1)}${sm?'':' em '+o.nd[i]+' dias'}</text>`;
     g+=`<rect data-i="${i}" x="0" y="${y-rowH/2}" width="${W}" height="${rowH}" fill="transparent"/>`;});
   g+=`<rect id="cur1" x="1" y="0" width="${W-2}" height="${rowH}" fill="none" stroke="var(--ink)" stroke-width="1" visibility="hidden"/></svg>`;
   box.innerHTML=g;const svg=$('#sv1');
-  const info=i=>{const b=st.base==='raw';const ed=E.p[i]*o.nd[i];
-    const h=`<span class="h">${L[i]}${i===o.ib?' (melhor do modelo)':''}</span>`+
-      `<span class="k">${b?'Sem impor forma':'Curva suave'}:</span> ${pc(E.p[i])} dos dias (90%: ${pc(E.lo[i])}–${pc(E.hi[i])})<br>`+
-      `<span class="k">${b?'Curva suave':'Sem impor forma'}:</span> ${pc(Eo.p[i])}<br>`+
-      `<span class="k">Dias esperados:</span> ${nf(ed,1)} em ${o.nd[i]}<br>`+
-      `<span class="k">P(melhor):</span> ${pc(o.pbr[i])} sem forma, ${pc(o.pb[i])} na curva<br>`+
-      `<span class="k">Grupo:</span> ${tierName[o.tier[i]]}${o.amb[i]?' (ambíguo)':''}`;
-    const plain=`${L[i]}: ${pc(E.p[i])} de ${o.noun}, faixa de 90% ${pc(E.lo[i])} a ${pc(E.hi[i])}, ${nf(ed,1)} dias esperados, grupo ${tierName[o.tier[i]]}.`;return {h,plain};};
+  const info=i=>{const b=st.base==='raw';
+    const h=`<span class="h">${F(i)}${i===o.ib?' · pico da curva':''}</span>`+
+      `<span class="k">${b?'Dados do período':'Curva sazonal'}:</span> ${pc(E.p[i])} de ${o.noun} (faixa de 90%: ${pc(E.lo[i])}–${pc(E.hi[i])})<br>`+
+      `<span class="k">${b?'Curva sazonal':'Dados do período'}:</span> ${pc(Eo.p[i])}<br>`+
+      `<span class="k">Dias esperados:</span> ${nf(E.p[i]*o.nd[i],1)} em ${o.nd[i]}<br>`+
+      `<span class="k">Melhor de todos:</span> ${term(o.pbr[i])} (${ps(o.pbr[i])})<br>`+
+      `<span class="k">Entre os 3 melhores:</span> ${term(o.pt3r[i])} (${ps(o.pt3r[i])})<br>`+
+      `<span class="k">Grupo:</span> ${tierName[o.tier[i]]}`;
+    const plain=`${F(i)}: ${pc(E.p[i])} de ${o.noun}, faixa de 90% de ${pc(E.lo[i])} a ${pc(E.hi[i])}; entre os 3 melhores: ${term(o.pt3r[i])}; grupo ${tierName[o.tier[i]]}.`;return {h,plain};};
   const set=(r,key,e)=>{cur1=Math.max(0,Math.min(NP-1,r));const c=$('#cur1');c.setAttribute('y',top+cur1*rowH);c.setAttribute('visibility','visible');const f=info(ord[cur1]);
     if(key){live(f.plain);const b=svg.getBoundingClientRect();showTipAt(f.h,{left:b.left+X(E.p[ord[cur1]])-1,width:2,top:b.top+top+cur1*rowH,bottom:b.top+top+(cur1+1)*rowH});}else showTip(f.h,e);};
   svg.addEventListener('pointermove',e=>{const t=e.target.dataset.i;if(t===undefined){hideTip();return;}set(ord.indexOf(+t),false,e);});
   svg.addEventListener('pointerleave',()=>{hideTip();if(document.activeElement!==svg)$('#cur1').setAttribute('visibility','hidden');});
   keyNav(svg,()=>cur1,(r,k)=>set(r,k),(r,k)=>k==='ArrowDown'?r+1:k==='ArrowUp'?r-1:k==='Home'?0:k==='End'?NP-1:null);
   svg.addEventListener('blur',()=>$('#cur1').setAttribute('visibility','hidden'));
-  const n1=o.tier.filter(t=>t===1).length;
-  $('#t1').textContent=`${o.short}: ${n1} de ${NP} decêndios não se distinguem do melhor (${L[o.ib]})`;
-  $('#key1').innerHTML=`<span><svg width="12" height="12"><circle cx="6" cy="6" r="4.6" fill="${col}"/></svg>${tierName[1]}</span>`+
+  $('#t1').textContent=`${cap(FR[o.ib])} (${L[o.ib]}) tem cerca de ${cd(o.ib)} em ${o.nd[o.ib]}; estar entre os 3 melhores é ${cl(o.pt3r[o.ib])}`;
+  $('#key1').innerHTML=`<span><svg width="12" height="12"><circle cx="6" cy="6" r="4.6" fill="${COL}"/></svg>${tierName[1]}</span>`+
     `<span><svg width="12" height="12"><path d="M6 1.4L10.6 6L6 10.6L1.4 6Z" fill="var(--ink2)"/></svg>${tierName[2]}</span>`+
     `<span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--muted)" stroke-width="1.8"/></svg>${tierName[3]}</span>`+
     `<span><svg width="14" height="12"><line x1="2" x2="12" y1="6" y2="6" stroke="var(--ink2)" stroke-width="2"/></svg>faixa de 90%</span>`+
-    `<span><svg width="8" height="14"><line x1="4" x2="4" y1="1" y2="13" stroke="var(--ink)" stroke-opacity=".55" stroke-width="1.5"/></svg>${st.base==='raw'?'curva suave':'sem impor forma'}</span>`;
-  $('#cap1').textContent=(st.base==='raw'?'Ponto: proporção bruta de dias com o desfecho em cada decêndio; faixa: 90% das réplicas bootstrap de anos inteiros. ':'Ponto: probabilidade média da curva suave no decêndio; faixa: 90% das réplicas bootstrap. ')+
-    `Dias esperados = probabilidade × dias do decêndio (os de 11 dias somam um dia a mais). Grupos: diferença bruta pareada com o melhor (ou o pior) do modelo, faixa de 90%.`;
-  // tabela
-  let t=`<table><caption>${esc(o.name)}: valores por decêndio (ordem do calendário).</caption><thead><tr><th>Decêndio</th><th>Sem forma (90%)</th><th>Curva suave (90%)</th><th>Dias esperados</th><th>P(melhor) sem forma</th><th>P(melhor) curva</th><th>Posto mediano sem forma (90%)</th><th>Grupo</th></tr></thead><tbody>`;
-  for(let i=0;i<NP;i++)t+=`<tr${i===o.ib?' class="sel"':''}><td>${L[i]}</td><td>${pc(o.pr[i])} (${pc(o.prl[i])}–${pc(o.prh[i])})</td><td>${pc(o.pm[i])} (${pc(o.pml[i])}–${pc(o.pmh[i])})</td><td>${nf(o.pm[i]*o.nd[i],1)} em ${o.nd[i]}</td><td>${pc(o.pbr[i])}</td><td>${pc(o.pb[i])}</td><td>${nf(o.rmr[i])} (${nf(o.rcr[i][0])}–${nf(o.rcr[i][1])})</td><td>${tierName[o.tier[i]]}</td></tr>`;
+    `<span><svg width="8" height="14"><line x1="4" x2="4" y1="1" y2="13" stroke="var(--ink)" stroke-opacity=".55" stroke-width="1.5"/></svg>${st.base==='raw'?'curva sazonal':'dados do período'}</span>`;
+  $('#cap1').textContent=(st.base==='raw'?`Ponto: fração de ${o.noun} em cada período, somando os ${D.years[1]-D.years[0]+1} anos. `:'Ponto: valor da curva sazonal, média dos dias do período. ')+
+    `Faixa: onde caem 90% dos históricos simulados. Dias esperados = fração × dias do período (os períodos de 11 dias têm um dia a mais). Grupos explicados em “Quão confiável é”.`;
+  let t=`<table><caption>${esc(cap(o.name))}: valores por período (ordem do calendário).</caption><thead><tr><th>Período</th><th>Dados (faixa de 90%)</th><th>Curva sazonal (faixa de 90%)</th><th>Dias esperados</th><th>Melhor de todos</th><th>Entre os 3 melhores</th><th>Posição mediana (faixa de 90%)</th><th>Grupo</th></tr></thead><tbody>`;
+  for(let i=0;i<NP;i++)t+=`<tr${i===o.ib?' class="sel"':''}><td>${L[i]}</td><td>${pc(o.pr[i])} (${pc(o.prl[i])}–${pc(o.prh[i])})</td><td>${pc(o.pm[i])} (${pc(o.pml[i])}–${pc(o.pmh[i])})</td><td>${nf(ed(i),1)} em ${o.nd[i]}</td><td>${ps(o.pbr[i])}</td><td>${ps(o.pt3r[i])}</td><td>${nf(o.rmr[i])}º (${nf(o.rcr[i][0])}º–${nf(o.rcr[i][1])}º)</td><td>${tierName[o.tier[i]]}</td></tr>`;
   $('#tbl1').innerHTML=t+'</tbody></table>';
 }
 
-/* ---------- 2. distribuição de postos ---------- */
+/* ---------- 2. chance de cada posição ---------- */
 let cur2={r:0,k:0};
 function render2(){
   const o=O(),box=$('#ch2'),W=Math.max(300,box.clientWidth),sm=W<520,b=st.base==='raw';
   const RD=b?o.rdr:o.rdm,RM=b?o.rmr:o.rmm,RC=b?o.rcr:o.rcm;
   const lw=sm?74:92,cw=Math.min(26,(W-lw-6)/NP),ch=Math.min(sm?16:18,cw),top=22,H=top+NP*ch+4,ord=order();
   let pmax=0;RD.forEach(r=>r.forEach(v=>{if(v>pmax)pmax=v;}));pmax=Math.max(.05,Math.ceil(pmax*20)/20);
-  let g=`<svg id="sv2" width="${lw+NP*cw+4}" height="${H}" role="img" tabindex="0" aria-label="Chance de cada decêndio ocupar cada posto, de 1 (melhor) a 21. Use as setas." aria-describedby="cap2">`;
+  let g=`<svg id="sv2" width="${lw+NP*cw+4}" height="${H}" role="img" tabindex="0" aria-label="Chance de cada período ficar em cada posição, de 1º (melhor) a 21º. Use as setas." aria-describedby="cap2">`;
   [1,5,10,15,21].forEach(k=>{g+=`<text class="txs" x="${lw+(k-.5)*cw}" y="${top-7}" text-anchor="middle">${k}º</text>`;});
   ord.forEach((i,r)=>{const y=top+r*ch;g+=`<text class="${i===o.ib?'tx1':'tx'}" x="${lw-8}" y="${y+ch/2+4}" text-anchor="end">${L[i]}</text>`;
     for(let k=0;k<NP;k++){const v=RD[i][k];g+=`<rect data-r="${r}" data-k="${k}" x="${lw+k*cw}" y="${y}" width="${cw-1}" height="${ch-1}" fill="${v>0?seq(v/pmax):'var(--bg)'}"/>`;}
     g+=`<circle cx="${lw+(RM[i]-.5)*cw}" cy="${y+ch/2-.5}" r="2.6" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.4" pointer-events="none"/>`;});
   g+=`<rect id="cur2" width="${cw}" height="${ch}" fill="none" stroke="var(--ink)" stroke-width="1.5" visibility="hidden" pointer-events="none"/></svg>`;
   box.innerHTML=g;const svg=$('#sv2');
-  const info=(r,k)=>{const i=ord[r];const h=`<span class="h">${L[i]}</span><span class="k">${k+1}º lugar:</span> ${pc(RD[i][k],1)} das réplicas<br><span class="k">Posto mediano:</span> ${nf(RM[i])}º (90%: ${nf(RC[i][0])}º a ${nf(RC[i][1])}º)<br><span class="k">Entre os 3 melhores:</span> ${pc(b?o.pt3r[i]:o.pt3[i])}`;
-    return {h,plain:`${L[i]}, ${k+1}º lugar em ${pc(RD[i][k],1)} das réplicas; posto mediano ${nf(RM[i])}.`};};
+  const info=(r,k)=>{const i=ord[r];const h=`<span class="h">${F(i)}</span><span class="k">${k+1}º lugar:</span> ${pc(RD[i][k],1)} das simulações<br><span class="k">Posição mediana:</span> ${nf(RM[i])}º (faixa de 90%: ${nf(RC[i][0])}º a ${nf(RC[i][1])}º)`;
+    return {h,plain:`${F(i)}: ${k+1}º lugar em ${pc(RD[i][k],1)} das simulações; posição mediana ${nf(RM[i])}º.`};};
   const set=(c,key,e)=>{cur2={r:Math.max(0,Math.min(NP-1,c.r)),k:Math.max(0,Math.min(NP-1,c.k))};const q=$('#cur2');q.setAttribute('x',lw+cur2.k*cw-.5);q.setAttribute('y',top+cur2.r*ch-.5);q.setAttribute('visibility','visible');
     const f=info(cur2.r,cur2.k);if(key){live(f.plain);const bb=svg.getBoundingClientRect();showTipAt(f.h,{left:bb.left+lw+cur2.k*cw,width:cw,top:bb.top+top+cur2.r*ch,bottom:bb.top+top+(cur2.r+1)*ch});}else showTip(f.h,e);};
   svg.addEventListener('pointermove',e=>{const d=e.target.dataset;if(d.r===undefined){hideTip();return;}set({r:+d.r,k:+d.k},false,e);});
@@ -382,77 +398,37 @@ function render2(){
   keyNav(svg,()=>cur2,(c,k)=>set(c,k),(c,k)=>k==='ArrowDown'?{r:c.r+1,k:c.k}:k==='ArrowUp'?{r:c.r-1,k:c.k}:k==='ArrowRight'?{r:c.r,k:c.k+1}:k==='ArrowLeft'?{r:c.r,k:c.k-1}:k==='Home'?{r:c.r,k:0}:k==='End'?{r:c.r,k:NP-1}:null);
   svg.addEventListener('blur',()=>$('#cur2').setAttribute('visibility','hidden'));
   const p1=RD.map(r=>r[0]),i1=p1.indexOf(Math.max(...p1));
-  $('#t2').textContent=`Ninguém tem o 1º lugar garantido: o decêndio que mais vezes fica em 1º (${L[i1]}) fica lá em ${pc(p1[i1])} das réplicas`+(b?'':' (curva suave)');
-  const R=D.ramps[o.ramp][dark()?'dark':'light'];
-  rampBar($('#ramp2'),R,'0%',pc(pmax)+' das réplicas',`<span><svg width="10" height="10"><circle cx="5" cy="5" r="2.6" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.4"/></svg> posto mediano</span>`);
-  $('#cap2').textContent=`Cada linha soma 100%: a cor de cada célula é a fração das ${nf(D.nBoot)} réplicas em que o decêndio ocupou aquele posto (1º = ${ext()} ${o.noun}). `+
-    (b?'Postos calculados com as proporções brutas, sem impor forma à curva.':'Postos da curva suave: ela fixa a forma e por isso concentra os postos mais do que os dados justificam.');
+  $('#t2').textContent=(p1[i1]<.66?`Ser exatamente o 1º é incerto para todos: quem mais vezes fica em 1º, ${F(i1)}, consegue isso em ${ps(p1[i1])} das simulações — ${term(p1[i1])}`:`${cap(F(i1))} fica em 1º em ${ps(p1[i1])} das simulações — ${term(p1[i1])}`)+baseNote();
+  rampBar($('#ramp2'),'0%',pc(pmax)+' das simulações',`<span><svg width="10" height="10"><circle cx="5" cy="5" r="2.6" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.4"/></svg> posição mediana</span>`);
+  $('#cap2').textContent=`Cada linha soma 100%: a cor de cada célula é a fração dos ${nf(D.nBoot)} históricos simulados em que o período ficou naquela posição (1º = mais ${o.noun}). `+
+    (b?'Posições calculadas com os dados de cada período.':'Posições da curva sazonal: como a forma da curva é fixa, ela concentra as posições mais do que os dados justificam.');
 }
 
-/* ---------- 3. matriz par a par ---------- */
-let cur3={r:0,c:1};
-function pairP(i,j){const o=O();return st.base==='raw'?o.pwr[i][j]:o.pwm[i][j];}
-function pairMark(i,j){const o=O();if(i===j)return false;if(st.base==='raw')return !!o.exz[i][j];const p=o.pwm[i][j];return p>=.95||p<=.05;}
-function render3(){
-  const o=O(),box=$('#ch3'),W=Math.max(300,box.clientWidth),sm=W<520,ord=order();
-  const lw=sm?66:92,cw=Math.min(28,(W-lw-6)/NP),th=sm?56:66,H=th+NP*cw+4;
-  let g=`<svg id="sv3" width="${lw+NP*cw+4}" height="${H}" role="img" tabindex="0" aria-label="Matriz de comparação par a par: chance de o decêndio da linha ser melhor que o da coluna. Setas para percorrer, Enter para escolher o par." aria-describedby="cap3">`;
-  ord.forEach((j,c)=>{const x=lw+c*cw+cw/2+(sm?3:3);g+=`<text class="txs" transform="translate(${x},${th-5}) rotate(${sm?-90:-60})" style="font-size:${sm?9:10.5}px">${L[j]}</text>`;});
-  ord.forEach((i,r)=>{const y=th+r*cw;g+=`<text class="${i===o.ib?'tx1':'tx'}" x="${lw-6}" y="${y+cw/2+4}" text-anchor="end" style="font-size:${sm?10.5:12}px">${L[i]}</text>`;
-    ord.forEach((j,c)=>{const x=lw+c*cw;if(i===j){g+=`<rect x="${x}" y="${y}" width="${cw-1}" height="${cw-1}" fill="var(--grid)"/>`;return;}
-      const p=pairP(i,j);g+=`<rect data-r="${r}" data-c="${c}" x="${x}" y="${y}" width="${cw-1}" height="${cw-1}" fill="${div(p)}"/>`;
-      if(pairMark(i,j)){const strong=Math.abs(p-.5)>.3;g+=`<circle cx="${x+cw/2-.5}" cy="${y+cw/2-.5}" r="${Math.max(1.6,cw*.13)}" fill="${strong?(dark()?'#111':'#fff'):'var(--ink)'}" pointer-events="none"/>`;}});});
-  const ra=ord.indexOf(st.A),rb=ord.indexOf(st.B);
-  if(ra>=0&&rb>=0&&ra!==rb)g+=`<rect x="${lw+rb*cw-1}" y="${th+ra*cw-1}" width="${cw+1}" height="${cw+1}" fill="none" stroke="var(--ink)" stroke-width="2" pointer-events="none"/>`;
-  g+=`<rect id="cur3" width="${cw}" height="${cw}" fill="none" stroke="var(--focus)" stroke-width="2" visibility="hidden" pointer-events="none"/></svg>`;
-  box.innerHTML=g;const svg=$('#sv3');
-  const info=(r,c)=>{const i=ord[r],j=ord[c];if(i===j)return {h:`<span class="h">${L[i]}</span>mesmo decêndio`,plain:`${L[i]} contra si mesmo.`};
-    const p=pairP(i,j),d=o.dif[i][j],ci=o.dci[i][j];
-    const h=`<span class="h">${L[i]} × ${L[j]}</span><span class="k">${L[i]} melhor em:</span> ${pc(p)} das réplicas (${st.base==='raw'?'sem forma':'curva suave'})<br>`+
-      `<span class="k">Diferença bruta (linha − coluna):</span> ${pp(d)} (90%: ${pp(ci[0])} a ${pp(ci[1])})<br>`+(pairMark(i,j)?'<b>Diferença distinguível</b>':'Diferença dentro do ruído')+`<br><span class="k">Enter ou clique:</span> confronto direto`;
-    return {h,plain:`${L[i]} melhor que ${L[j]} em ${pc(p)} das réplicas; diferença ${pp(d)}, ${pairMark(i,j)?'distinguível':'dentro do ruído'}.`};};
-  const set=(q,key,e)=>{cur3={r:Math.max(0,Math.min(NP-1,q.r)),c:Math.max(0,Math.min(NP-1,q.c))};const k=$('#cur3');k.setAttribute('x',lw+cur3.c*cw-.5);k.setAttribute('y',th+cur3.r*cw-.5);k.setAttribute('visibility','visible');
-    const f=info(cur3.r,cur3.c);if(key){live(f.plain);const b=svg.getBoundingClientRect();showTipAt(f.h,{left:b.left+lw+cur3.c*cw,width:cw,top:b.top+th+cur3.r*cw,bottom:b.top+th+(cur3.r+1)*cw});}else showTip(f.h,e);};
-  const pick=q=>{const i=ord[q.r],j=ord[q.c];if(i===j)return;st.A=i;st.B=j;syncSel();render3();render4();live(`Confronto direto: ${L[i]} contra ${L[j]}.`);const s=$('#sv3');if(s){s.focus();}};
-  svg.addEventListener('pointermove',e=>{const d=e.target.dataset;if(d.r===undefined){hideTip();return;}set({r:+d.r,c:+d.c},false,e);});
-  svg.addEventListener('pointerleave',()=>{hideTip();if(document.activeElement!==svg)$('#cur3').setAttribute('visibility','hidden');});
-  svg.addEventListener('click',e=>{const d=e.target.dataset;if(d.r===undefined)return;pick({r:+d.r,c:+d.c});});
-  const mv=(q,k)=>k==='ArrowDown'?{r:q.r+1,c:q.c}:k==='ArrowUp'?{r:q.r-1,c:q.c}:k==='ArrowRight'?{r:q.r,c:q.c+1}:k==='ArrowLeft'?{r:q.r,c:q.c-1}:null;mv.enter=pick;
-  keyNav(svg,()=>cur3,(q,k)=>set(q,k),mv);svg.addEventListener('blur',()=>$('#cur3').setAttribute('visibility','hidden'));
-  let ns=0;for(let i=0;i<NP;i++)for(let j=i+1;j<NP;j++)if(pairMark(i,j))ns++;
-  const tot=NP*(NP-1)/2;
-  $('#t3').textContent=`${ns} dos ${tot} pares têm diferença distinguível; os demais ${tot-ns} ficam dentro do ruído`+(st.base==='raw'?'':' (curva suave)');
-  const R=D.div[dark()?'dark':'light'];
-  rampBar($('#ramp3'),R,'linha pior','linha melhor',`<span style="margin-left:8px"><svg width="10" height="10"><circle cx="5" cy="5" r="2.4" fill="var(--ink)"/></svg> diferença distinguível</span>`);
-  $('#cap3').textContent=`Cor: fração das réplicas em que a linha foi melhor (${ext()} ${o.noun}) que a coluna; cinza = 50%, empate. Ponto: `+
-    (st.base==='raw'?'a faixa de 90% da diferença bruta pareada (linha − coluna) exclui zero.':'chance de 95% ou mais (ou 5% ou menos); na curva suave quase todo par parece distinguível porque a forma da curva é imposta.')+' Contorno escuro: par do confronto direto.';
-}
-
-/* ---------- 4. confronto direto ---------- */
+/* ---------- 3. confronto direto ---------- */
 function syncSel(){$('#hA').value=String(st.A);$('#hB').value=String(st.B);}
 let cur4=0;
 function render4(){
   const o=O(),A=st.A,B=st.B,py=o.py,ny=py.years.length-(py.partial?1:0);
+  if(A===B){$('#h-h2h').textContent='Confronto direto: escolha dois períodos diferentes';$('#tiles4').innerHTML='';$('#t4').textContent='';$('#ch4').innerHTML='';$('#key4').innerHTML='';$('#cap4').textContent='';}
+  else{
   const pr=o.pwr[A][B],pm=o.pwm[A][B],d=o.dif[A][B],ci=o.dci[A][B];
-  const nm=o.mode==='min'?'menos':'mais';
-  $('#t4').textContent=A===B?'Escolha dois decêndios diferentes':`Confronto direto: ${L[A]} foi melhor que ${L[B]} em ${pc(pr)} das réplicas (sem impor forma)`;
+  $('#h-h2h').textContent=`Confronto direto: ${F(A)} tem mais ${o.noun} que ${F(B)} — ${cl(pr)}`;
   const tile=(l,v,s)=>`<div class="tile"><span class="l">${l}</span><span class="v">${v}</span><span class="s">${s}</span></div>`;
-  $('#tiles4').innerHTML=A===B?'':tile(`${L[A]} melhor que ${L[B]}`,pc(pr),`na curva suave: ${pc(pm)}`)+
-    tile('Diferença (A − B)',pp(d),`90%: ${pp(ci[0])} a ${pp(ci[1])}${o.exz[A][B]?' · distinguível':' · dentro do ruído'}`)+
-    tile(`Dias esperados em ${L[A]}`,nf(o.pm[A]*o.nd[A],1),`de ${o.nd[A]} · bruto ${pc(o.pr[A])}`)+
-    tile(`Dias esperados em ${L[B]}`,nf(o.pm[B]*o.nd[B],1),`de ${o.nd[B]} · bruto ${pc(o.pr[B])}`);
-  // anos pareados
+  $('#tiles4').innerHTML=tile(`Chance de ${L[A]} ter mais ${o.noun}`,ps(pr),`${term(pr)} · pela curva sazonal: ${ps(pm)}`)+
+    tile('Diferença (A − B)',pp(d),`faixa de 90%: ${pp(ci[0])} a ${pp(ci[1])}${o.exz[A][B]?' · diferença clara':' · sem diferença clara'}`)+
+    tile(`Dias esperados em ${L[A]}`,nf(ed(A),1),`de ${o.nd[A]} · nos dados: ${pc(o.pr[A])}`)+
+    tile(`Dias esperados em ${L[B]}`,nf(ed(B),1),`de ${o.nd[B]} · nos dados: ${pc(o.pr[B])}`);
   const box=$('#ch4'),W=Math.max(300,box.clientWidth),sm=W<520,ml=34,mr=8,top=10,ph=sm?150:170,H=top+ph+26;
   const ys=py.years.slice(0,ny),pw=W-ml-mr,X=k=>ml+pw*(k+.5)/ny,ymax=Math.max(o.nd[A],o.nd[B]),Y=v=>top+ph*(1-v/ymax);
-  let g=`<svg id="sv4" width="${W}" height="${H}" role="img" tabindex="0" aria-label="Dias com o desfecho em cada ano, ${L[A]} contra ${L[B]}. Setas para percorrer os anos." aria-describedby="cap4">`;
+  let g=`<svg id="sv4" width="${W}" height="${H}" role="img" tabindex="0" aria-label="${esc(cap(o.noun))} em cada ano, ${L[A]} contra ${L[B]}. Setas para percorrer os anos." aria-describedby="cap4">`;
   for(let v=0;v<=ymax;v+=2)g+=`<line class="gl" x1="${ml}" x2="${W-mr}" y1="${Y(v)}" y2="${Y(v)}"/><text class="txs" x="${ml-6}" y="${Y(v)+4}" text-anchor="end">${v}</text>`;
   ys.forEach((y,k)=>{if(y%5===0||k===0||k===ny-1)g+=`<text class="txs" x="${X(k)}" y="${top+ph+16}" text-anchor="middle">${sm&&y%5!==0&&k!==0&&k!==ny-1?'':y}</text>`;});
-  const col=hue();let wa=0,wb=0,tie=0;
+  let wa=0,wb=0,tie=0;
   ys.forEach((y,k)=>{const a=py.count[k][A],b=py.count[k][B],sa=a/py.n[k][A],sb=b/py.n[k][B];
-    if(sa===sb)tie++;else if(better(sa,sb))wa++;else wb++;
+    if(sa===sb)tie++;else if(sa>sb)wa++;else wb++;
     g+=`<line x1="${X(k)}" x2="${X(k)}" y1="${Y(a)}" y2="${Y(b)}" stroke="var(--axis)" stroke-width="1.5"/>`;
     g+=`<circle cx="${X(k)}" cy="${Y(b)}" r="4" fill="var(--surface)" stroke="var(--ink)" stroke-width="1.6"/>`;
-    g+=`<circle cx="${X(k)}" cy="${Y(a)}" r="${a===b?2.6:4}" fill="${col}" stroke="var(--surface)" stroke-width="${a===b?0:1.5}"/>`;
+    g+=`<circle cx="${X(k)}" cy="${Y(a)}" r="${a===b?2.6:4}" fill="${COL}" stroke="var(--surface)" stroke-width="${a===b?0:1.5}"/>`;
     g+=`<rect data-k="${k}" x="${X(k)-pw/ny/2}" y="${top}" width="${pw/ny}" height="${ph}" fill="transparent"/>`;});
   g+=`<line id="cur4" y1="${top}" y2="${top+ph}" stroke="var(--ink)" stroke-width="1" visibility="hidden" pointer-events="none"/></svg>`;
   box.innerHTML=g;const svg=$('#sv4');
@@ -463,32 +439,38 @@ function render4(){
   svg.addEventListener('pointerleave',()=>{hideTip();if(document.activeElement!==svg)$('#cur4').setAttribute('visibility','hidden');});
   keyNav(svg,()=>cur4,(k,key)=>set(k,key),(k,key)=>key==='ArrowRight'?k+1:key==='ArrowLeft'?k-1:key==='Home'?0:key==='End'?ny-1:null);
   svg.addEventListener('blur',()=>$('#cur4').setAttribute('visibility','hidden'));
-  $('#key4').innerHTML=`<span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="${col}"/></svg>A: ${L[A]}</span><span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--ink)" stroke-width="1.6"/></svg>B: ${L[B]}</span>`;
-  $('#cap4').textContent=A===B?'':`Cada coluna é um ano completo (${ys[0]}–${ys[ny-1]}); eixo vertical: dias com ${o.name} no decêndio. ${L[A]} teve ${nm} ${o.noun} (em proporção) que ${L[B]} em ${wa} anos, ${L[B]} em ${wb}, empate em ${tie}. A chance “melhor em X% das réplicas” compara as proporções agregadas dos ${ny} anos sorteados, não anos isolados.`;
-  let t=`<table><caption>${esc(L[A])} contra cada decêndio (${esc(o.name)}).</caption><thead><tr><th>Contra</th><th>${esc(L[A])} melhor (sem forma)</th><th>Curva suave</th><th>Diferença bruta (90%)</th><th>Distinguível?</th></tr></thead><tbody>`;
-  for(let j=0;j<NP;j++){if(j===A)continue;t+=`<tr${j===B?' class="sel"':''}><td>${L[j]}</td><td>${pc(o.pwr[A][j])}</td><td>${pc(o.pwm[A][j])}</td><td>${pp(o.dif[A][j])} (${pp(o.dci[A][j][0])} a ${pp(o.dci[A][j][1])})</td><td>${o.exz[A][j]?'sim':'não'}</td></tr>`;}
+  $('#t4').textContent=`Ano a ano, ${L[A]} teve mais ${o.noun} que ${L[B]} em ${wa} dos ${ny} anos e menos em ${wb}`+(tie?`; empatou em ${tie}`:'');
+  $('#key4').innerHTML=`<span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="${COL}"/></svg>A: ${L[A]}</span><span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="none" stroke="var(--ink)" stroke-width="1.6"/></svg>B: ${L[B]}</span>`;
+  $('#cap4').textContent=`Cada coluna é um ano completo (${ys[0]}–${ys[ny-1]}); eixo vertical: ${o.noun} no período (comparação em proporção, porque alguns períodos têm 11 dias). A chance do título soma os ${ny} anos de cada histórico simulado; por isso pode ficar longe de 50% mesmo quando os anos isolados se dividem.`;
+  }
+  // A contra todos
+  let nm=0,nl=0;for(let j=0;j<NP;j++){if(j===A)continue;if(o.pwr[A][j]>=.9)nm++;if(o.pwr[A][j]<=.1)nl++;}
+  $('#t4b').textContent=`${cap(F(A))} contra os outros ${NP-1} períodos: com chance de pelo menos 90% (muito provável), tem mais ${o.noun} que ${nm} deles`+(nl?` e menos que ${nl}`:' e não fica atrás de nenhum')+`; com os outros ${NP-1-nm-nl}, não dá para dizer`;
+  let t=`<table><caption>${esc(L[A])} contra cada período — ${esc(o.name)}. Chance = fração dos históricos simulados em que ${esc(L[A])} teve mais ${esc(o.noun)}.</caption><thead><tr><th>Contra</th><th>Chance de ${esc(L[A])} ter mais</th><th>Em palavras</th><th>Pela curva sazonal</th><th>Diferença (faixa de 90%)</th></tr></thead><tbody>`;
+  for(let j=0;j<NP;j++){if(j===A)continue;t+=`<tr${j===B?' class="sel"':''}><td>${L[j]}</td><td>${ps(o.pwr[A][j])}</td><td>${term(o.pwr[A][j])}</td><td>${ps(o.pwm[A][j])}</td><td>${pp(o.dif[A][j])} (${pp(o.dci[A][j][0])} a ${pp(o.dci[A][j][1])})</td></tr>`;}
   $('#tbl4').innerHTML=t+'</tbody></table>';
+  $('#cap4b').textContent='A curva sazonal impõe uma forma suave à estação e por isso dá chances mais extremas do que os dados de cada período; as palavras seguem os dados. Linha em negrito: período B escolhido acima.';
 }
 
-/* ---------- 5. ano × decêndio ---------- */
+/* ---------- 4. ano × período ---------- */
 let cur5={r:0,c:0};
 function render5(){
   const o=O(),py=o.py,box=$('#ch5'),W=Math.max(300,box.clientWidth),sm=W<520;
   const ys=py.years,nr=ys.length,lw=40,cw=Math.min(30,(W-lw-6)/NP),ch=sm?11:13,top=20,gap=py.partial?8:0,H=top+nr*ch+gap+6;
   const Yr=r=>top+r*ch+(py.partial&&r===nr-1?gap:0);
-  let g=`<svg id="sv5" width="${lw+NP*cw+4}" height="${H}" role="img" tabindex="0" aria-label="Fração de ${esc(o.noun)} em cada ano e decêndio. Setas para percorrer." aria-describedby="cap5">`;
+  let g=`<svg id="sv5" width="${lw+NP*cw+4}" height="${H}" role="img" tabindex="0" aria-label="Fração de ${esc(o.noun)} em cada ano e período. Setas para percorrer." aria-describedby="cap5">`;
   g+=`<defs><pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="var(--ink)" stroke-opacity=".45" stroke-width="1.4"/></pattern></defs>`;
   for(let m=0;m<NP/3;m++)g+=`<text class="txs" x="${lw+(m*3+1.5)*cw}" y="${top-7}" text-anchor="middle">${L[m*3].split(' ')[0]}</text>`+(m?`<line class="ax" x1="${lw+m*3*cw-.5}" x2="${lw+m*3*cw-.5}" y1="${top-16}" y2="${top-2}"/>`:'');
-  ys.forEach((y,r)=>{const yy=Yr(r),part=py.partial&&r===nr-1;
-    if(y%5===0||r===0||part)g+=`<text class="txs" x="${lw-5}" y="${yy+ch-2}" text-anchor="end">${y}${part?'*':''}</text>`;
+  ys.forEach((y,r)=>{const yy=Yr(r),part_=py.partial&&r===nr-1;
+    if(y%5===0||r===0||part_)g+=`<text class="txs" x="${lw-5}" y="${yy+ch-2}" text-anchor="end">${y}${part_?'*':''}</text>`;
     for(let c=0;c<NP;c++){const n=py.n[r][c],k=py.count[r][c];const x=lw+c*cw;
       g+=`<rect data-r="${r}" data-c="${c}" x="${x}" y="${yy}" width="${cw-1}" height="${ch-1}" fill="${n?seq(k/n):'var(--bg)'}"/>`;
-      if(part)g+=`<rect x="${x}" y="${yy}" width="${cw-1}" height="${ch-1}" fill="url(#hatch)" pointer-events="none"/>`;}});
+      if(part_)g+=`<rect x="${x}" y="${yy}" width="${cw-1}" height="${ch-1}" fill="url(#hatch)" pointer-events="none"/>`;}});
   g+=`<rect x="${lw+o.ib*cw-1.5}" y="${top-1.5}" width="${cw+2}" height="${(nr-(py.partial?1:0))*ch+2}" fill="none" stroke="var(--ink)" stroke-width="1.5" pointer-events="none"/>`;
   g+=`<rect id="cur5" width="${cw}" height="${ch}" fill="none" stroke="var(--focus)" stroke-width="2" visibility="hidden" pointer-events="none"/></svg>`;
   box.innerHTML=g;const svg=$('#sv5');
-  const info=(r,c)=>{const y=ys[r],n=py.n[r][c],k=py.count[r][c],part=py.partial&&r===nr-1;
-    return {h:`<span class="h">${y}${part?' (parcial, fora do modelo)':''} · ${L[c]}</span>${n?`${k} de ${n} ${o.noun} (${pc(k/n)})`:'sem dados'}`,plain:`${y}${part?', parcial':''}, ${L[c]}: ${n?k+' de '+n+' '+o.noun:'sem dados'}.`};};
+  const info=(r,c)=>{const y=ys[r],n=py.n[r][c],k=py.count[r][c],part_=py.partial&&r===nr-1;
+    return {h:`<span class="h">${y}${part_?' (incompleto, fora das contas)':''} · ${L[c]}</span>${n?`${k} de ${n} ${o.noun} (${pc(k/n)})`:'sem dados'}`,plain:`${y}${part_?', incompleto':''}, ${L[c]}: ${n?k+' de '+n+' '+o.noun:'sem dados'}.`};};
   const set=(q,key,e)=>{cur5={r:Math.max(0,Math.min(nr-1,q.r)),c:Math.max(0,Math.min(NP-1,q.c))};const k=$('#cur5');k.setAttribute('x',lw+cur5.c*cw-.5);k.setAttribute('y',Yr(cur5.r)-.5);k.setAttribute('visibility','visible');
     const f=info(cur5.r,cur5.c);if(key){live(f.plain);const b=svg.getBoundingClientRect();showTipAt(f.h,{left:b.left+lw+cur5.c*cw,width:cw,top:b.top+Yr(cur5.r),bottom:b.top+Yr(cur5.r)+ch});}else showTip(f.h,e);};
   svg.addEventListener('pointermove',e=>{const d=e.target.dataset;if(d.r===undefined){hideTip();return;}set({r:+d.r,c:+d.c},false,e);});
@@ -496,87 +478,66 @@ function render5(){
   keyNav(svg,()=>cur5,(q,k)=>set(q,k),(q,k)=>k==='ArrowDown'?{r:q.r+1,c:q.c}:k==='ArrowUp'?{r:q.r-1,c:q.c}:k==='ArrowRight'?{r:q.r,c:q.c+1}:k==='ArrowLeft'?{r:q.r,c:q.c-1}:null);
   svg.addEventListener('blur',()=>$('#cur5').setAttribute('visibility','hidden'));
   const nc=nr-(py.partial?1:0),cb=[];for(let r=0;r<nc;r++)cb.push(py.count[r][o.ib]);
-  $('#t5').textContent=`Ano a ano, ${L[o.ib]} (melhor do modelo) teve de ${Math.min(...cb)} a ${Math.max(...cb)} ${o.noun} em ${o.nd[o.ib]}`;
-  rampBar($('#ramp5'),D.ramps[o.ramp][dark()?'dark':'light'],'0%','100% dos dias do decêndio',py.partial?`<span style="margin-left:8px"><span style="display:inline-block;width:14px;height:12px;vertical-align:-2px;border:1px solid var(--axis);background:repeating-linear-gradient(45deg,var(--muted) 0 1.5px,transparent 1.5px 4px)"></span> ${py.partial}*: parcial, fora do modelo</span>`:'');
-  $('#cap5').textContent=`Linhas: anos; colunas: decêndios de abril a outubro. Cor: fração dos dias do decêndio com ${o.name} (mais escuro = mais). Contorno: coluna do melhor decêndio do modelo.`+(py.partial?` ${py.partial} aparece só como referência e não entra em nenhuma estimativa.`:'');
+  // período mais regular: maior fração de anos com pelo menos metade dos dias bons
+  let jb=0,kb=-1;for(let c=0;c<NP;c++){let k=0;for(let r=0;r<nc;r++)if(py.count[r][c]*2>=py.n[r][c])k++;if(k>kb||(k===kb&&o.pm[c]>o.pm[jb])){kb=k;jb=c;}}
+  $('#h-anos').textContent=`Ano a ano, o mesmo período muda muito: ${F(o.ib)} teve de ${Math.min(...cb)} a ${Math.max(...cb)} ${o.noun} em ${o.nd[o.ib]}`;
+  $('#t5').textContent=(kb/nc>=.9?`O período mais regular, ${F(jb)}, teve ${o.noun} em pelo menos metade do período em ${kb} dos ${nc} anos`:`Nenhum período garante tempo bom: o mais regular, ${F(jb)}, teve ${o.noun} em pelo menos metade do período em só ${kb} dos ${nc} anos`)+` — num ano qualquer, ${cl(kb/nc)}`;
+  rampBar($('#ramp5'),'0%','100% dos dias do período',py.partial?`<span style="margin-left:8px"><span style="display:inline-block;width:14px;height:12px;vertical-align:-2px;border:1px solid var(--axis);background:repeating-linear-gradient(45deg,var(--muted) 0 1.5px,transparent 1.5px 4px)"></span> ${py.partial}*: ano incompleto, fora das contas</span>`:'');
+  $('#cap5').textContent=`Linhas: anos; colunas: períodos de abril a outubro. Cor: fração dos dias do período com ${o.name} (mais escuro = mais). Contorno: pico da curva sazonal.`+(py.partial?` ${py.partial} aparece só como referência.`:'');
 }
 
-/* ---------- 6. com que frequência o período foi bom ---------- */
+/* ---------- 5. com que frequência foi bom ---------- */
 function render6(){
   const o=O(),G=o.py.good,rule=G[Math.min(st.rule,G.length-1)],box=$('#ch6'),W=Math.max(300,box.clientWidth);
-  const lw=40,cw=Math.min(30,(W-lw-6)/NP),top=12,ph=130,H=top+ph+22,Y=v=>top+ph*(1-v),col=hue();
-  let g=`<svg id="sv6" width="${lw+NP*cw+4}" height="${H}" role="img" aria-label="Fração dos anos em que cada decêndio atingiu o critério: ${esc(rule.label)}.">`;
+  const lw=40,cw=Math.min(30,(W-lw-6)/NP),top=12,ph=130,H=top+ph+22,Y=v=>top+ph*(1-v);
+  let g=`<svg id="sv6" width="${lw+NP*cw+4}" height="${H}" role="img" aria-label="Fração dos anos em que cada período teve ${esc(rule.label)}.">`;
   [0,.25,.5,.75,1].forEach(v=>{g+=`<line class="gl" x1="${lw}" x2="${lw+NP*cw}" y1="${Y(v)}" y2="${Y(v)}"/><text class="txs" x="${lw-5}" y="${Y(v)+4}" text-anchor="end">${nf(100*v)}%</text>`;});
   for(let m=0;m<NP/3;m++)g+=`<text class="txs" x="${lw+(m*3+1.5)*cw}" y="${top+ph+16}" text-anchor="middle">${L[m*3].split(' ')[0]}</text>`;
   const ib=rule.share.indexOf(Math.max(...rule.share));
-  rule.share.forEach((v,c)=>{const x=lw+(c+.5)*cw,t=o.tier[c];g+=`<line x1="${x}" x2="${x}" y1="${Y(rule.ci[c][0])}" y2="${Y(rule.ci[c][1])}" stroke="${t===1?col:'var(--muted)'}" stroke-width="2" stroke-linecap="round"/>`+markShape(t,x,Y(v),col)+
-    `<rect x="${x-cw/2}" y="${top}" width="${cw}" height="${ph}" fill="transparent"><title>${L[c]}: ${pc(v)} dos anos (${rule.label}); 90%: ${pc(rule.ci[c][0])}–${pc(rule.ci[c][1])}</title></rect>`;});
+  rule.share.forEach((v,c)=>{const x=lw+(c+.5)*cw,t=o.tier[c];g+=`<line x1="${x}" x2="${x}" y1="${Y(rule.ci[c][0])}" y2="${Y(rule.ci[c][1])}" stroke="${t===1?COL:'var(--muted)'}" stroke-width="2" stroke-linecap="round"/>`+markShape(t,x,Y(v))+
+    `<rect x="${x-cw/2}" y="${top}" width="${cw}" height="${ph}" fill="transparent"><title>${L[c]}: ${pc(v)} dos anos (${rule.label}); faixa de 90%: ${pc(rule.ci[c][0])}–${pc(rule.ci[c][1])}</title></rect>`;});
   box.innerHTML=g+'</svg>';
   $('#rules').innerHTML=G.map((r,k)=>`<label><input type="radio" name="rule" value="${k}"${k===st.rule?' checked':''}><span>${r.label}</span></label>`).join('');
   $('#rules').querySelectorAll('input').forEach(i=>i.addEventListener('change',()=>{st.rule=+i.value;render6();live(`Critério: ${G[st.rule].label}.`);}));
   const ny=o.py.years.length-(o.py.partial?1:0);
-  $('#t6').textContent=`Com que frequência foi bom: o recorde é ${L[ib]}, com ${rule.label} em ${pc(rule.share[ib])} dos ${ny} anos`;
-  $('#cap6').textContent=`Fração dos anos completos em que o decêndio atingiu o critério, com faixa de Wilson de 90% (anos tratados como independentes). Marcas como no ranking (grupo do decêndio). Contagens absolutas: decêndios de 11 dias têm um dia a mais para acumular. Passe o mouse para ver os valores.`;
+  $('#t6').textContent=`${cap(rule.label)}: no melhor período, ${F(ib)}, isso aconteceu em ${Math.round(rule.share[ib]*ny)} dos ${ny} anos — num ano qualquer, ${cl(rule.share[ib])}`;
+  $('#cap6').textContent=`Fração dos anos completos em que o período atingiu o critério; a faixa de 90% mostra a margem de erro de contar só ${ny} anos. Marcas como no primeiro gráfico. Períodos de 11 dias têm um dia a mais para acumular. Passe o mouse para ver os valores.`;
 }
 
-/* ---------- 7. calibração ---------- */
+/* ---------- 6. a curva acerta anos que não viu ---------- */
 function render7(){
-  const o=O(),c=o.cal,box=$('#ch7'),W=Math.min(420,Math.max(280,box.clientWidth)),m=38,S=W-m-10,col=hue();
-  const vals=[...c.obs,...c.oci.flat(),...c.pin,...(c.ploo||[])];const lo=Math.max(0,Math.floor(Math.min(...vals)*20)/20),hi=Math.min(1,Math.ceil(Math.max(...vals)*20)/20);
+  const o=O(),c=o.cal,box=$('#ch7'),W=Math.min(420,Math.max(280,box.clientWidth)),m=38,S=W-m-10;
+  const P=c.ploo||c.pin;const vals=[...c.obs,...c.oci.flat(),...P];const lo=Math.max(0,Math.floor(Math.min(...vals)*20)/20),hi=Math.min(1,Math.ceil(Math.max(...vals)*20)/20);
   const X=v=>m+S*(v-lo)/(hi-lo),Y=v=>10+S*(1-(v-lo)/(hi-lo));
-  let g=`<svg width="${W}" height="${S+10+34}" role="img" aria-label="Calibração: probabilidade prevista contra proporção observada nos 21 decêndios.">`;
-  const st5=(hi-lo)>.3?.1:.05;
-  for(let v=Math.ceil(lo/st5)*st5;v<=hi+1e-9;v+=st5){g+=`<line class="gl" x1="${X(v)}" x2="${X(v)}" y1="10" y2="${10+S}"/><line class="gl" x1="${m}" x2="${m+S}" y1="${Y(v)}" y2="${Y(v)}"/><text class="txs" x="${X(v)}" y="${S+26}" text-anchor="middle">${nf(100*v)}%</text><text class="txs" x="${m-5}" y="${Y(v)+4}" text-anchor="end">${nf(100*v)}%</text>`;}
+  let g=`<svg width="${W}" height="${S+10+34}" role="img" aria-label="Previsto pela curva sazonal para anos deixados de fora contra o observado, nos 21 períodos.">`;
+  const s5=(hi-lo)>.3?.1:.05;
+  for(let v=Math.ceil(lo/s5-1e-9)*s5;v<=hi+1e-9;v+=s5){g+=`<line class="gl" x1="${X(v)}" x2="${X(v)}" y1="10" y2="${10+S}"/><line class="gl" x1="${m}" x2="${m+S}" y1="${Y(v)}" y2="${Y(v)}"/><text class="txs" x="${X(v)}" y="${S+26}" text-anchor="middle">${nf(100*v)}%</text><text class="txs" x="${m-5}" y="${Y(v)+4}" text-anchor="end">${nf(100*v)}%</text>`;}
   g+=`<line x1="${X(lo)}" y1="${Y(lo)}" x2="${X(hi)}" y2="${Y(hi)}" stroke="var(--axis)" stroke-width="1.5"/>`;
-  const P=c.ploo||c.pin;
-  for(let i=0;i<NP;i++){g+=`<line x1="${X(P[i])}" x2="${X(P[i])}" y1="${Y(c.oci[i][0])}" y2="${Y(c.oci[i][1])}" stroke="${col}" stroke-opacity=".55" stroke-width="1.5"/>`;
-    if(c.ploo)g+=`<circle cx="${X(c.pin[i])}" cy="${Y(c.obs[i])}" r="3" fill="none" stroke="var(--ink2)" stroke-width="1.2"/>`;
-    g+=`<circle cx="${X(P[i])}" cy="${Y(c.obs[i])}" r="4" fill="${col}" stroke="var(--surface)" stroke-width="1.5"><title>${L[i]}: previsto ${pc(P[i])}${c.ploo?' (fora da amostra)':''}, observado ${pc(c.obs[i])} (90%: ${pc(c.oci[i][0])}–${pc(c.oci[i][1])})</title></circle>`;}
-  g+=`<text class="txs" x="${m+S}" y="${S+40}" text-anchor="end">previsto pela curva suave</text><text class="txs" x="${m}" y="6">observado</text></svg>`;
+  for(let i=0;i<NP;i++){g+=`<line x1="${X(P[i])}" x2="${X(P[i])}" y1="${Y(c.oci[i][0])}" y2="${Y(c.oci[i][1])}" stroke="${COL}" stroke-opacity=".55" stroke-width="1.5"/>`;
+    g+=`<circle cx="${X(P[i])}" cy="${Y(c.obs[i])}" r="4" fill="${COL}" stroke="var(--surface)" stroke-width="1.5"><title>${L[i]}: previsto ${pc(P[i])}, observado ${pc(c.obs[i])} (faixa de 90%: ${pc(c.oci[i][0])}–${pc(c.oci[i][1])})</title></circle>`;}
+  g+=`<text class="txs" x="${m+S}" y="${S+40}" text-anchor="end">previsto pela curva para um ano que ela não viu</text><text class="txs" x="${m}" y="6">observado</text></svg>`;
   box.innerHTML=g;
   let inside=0;const out=[];for(let i=0;i<NP;i++){if(P[i]>=c.oci[i][0]&&P[i]<=c.oci[i][1])inside++;else out.push(i);}
-  $('#t7').textContent=`Calibração: a previsão fora da amostra cai dentro da faixa de 90% observada em ${inside} de ${NP} decêndios`;
-  $('#key7').innerHTML=`<span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="${col}"/></svg>previsão deixando o ano de fora</span><span><svg width="12" height="12"><circle cx="6" cy="6" r="3" fill="none" stroke="var(--ink2)" stroke-width="1.2"/></svg>ajuste com todos os anos</span><span><svg width="14" height="12"><line x1="2" x2="12" y1="10" y2="2" stroke="var(--axis)" stroke-width="1.5"/></svg>previsto = observado</span>`;
-  $('#cap7').textContent=`Cada ponto é um decêndio. Previsão fora da amostra: média, nos ${D.years[1]-D.years[0]+1} ajustes que deixam um ano de fora, da probabilidade prevista para o ano omitido. Barra: faixa de 90% (bootstrap de anos) da proporção observada.`+(out.length?` Fora da faixa: ${out.map(i=>L[i]).join(', ')}, onde a curva suave simplifica demais.`:'');
+  $('#h-conf').textContent=`Quão confiável é: a forma da estação, sim; a ordem exata dentro da faixa boa, não`;
+  $('#t7').textContent=`A curva sazonal acerta anos que não viu: o previsto cai dentro da faixa de 90% observada em ${inside} de ${NP} períodos`;
+  $('#key7').innerHTML=`<span><svg width="12" height="12"><circle cx="6" cy="6" r="4" fill="${COL}"/></svg>um período</span><span><svg width="14" height="12"><line x1="2" x2="12" y1="10" y2="2" stroke="var(--axis)" stroke-width="1.5"/></svg>previsto = observado</span>`;
+  $('#cap7').textContent=`Para cada ano, a curva foi ajustada sem ele e usada para prevê-lo; cada ponto é a média dessas ${D.years[1]-D.years[0]+1} previsões num período (horizontal) contra o observado, com a faixa de 90% (vertical).`+(out.length?` Fora da faixa: ${out.map(i=>L[i]).join(', ')}, onde a curva simplifica demais.`:'');
 }
 
-/* ---------- 8. tabela de K ---------- */
-function render8(){
-  const o=O();
-  $('#t8').textContent=`Escolha da curva: K = ${o.K} par${o.K>1?'es':''} de senos e cossenos`;
-  let t=`<table><caption>Perda logarítmica média por dia (abr–out) deixando um ano de fora; menor é melhor. EP entre anos.</caption><thead><tr><th>K</th><th>Parâm.</th><th>Perda CV (± EP)</th><th>Dif. p/ o mínimo (± EP)</th><th>AIC</th><th>BIC</th></tr></thead><tbody>`;
-  o.kt.forEach(r=>{t+=`<tr${r.K===o.K?' class="sel"':''}><td>${r.K}${r.K===o.K?' ✓':''}</td><td>${r.np}</td><td>${nf(r.cv,4)} ± ${nf(r.se,4)}</td><td>${nf(r.dv,4)} ± ${nf(r.dse,4)}</td><td>${nf(r.aic,0)}</td><td>${nf(r.bic,0)}</td></tr>`;});
-  $('#tbl8').innerHTML=t+'</tbody></table>';
-  const pk=Object.entries(o.pbk).map(([k,v])=>{const b=Object.entries(v).sort((a,b)=>b[1]-a[1])[0];return `${k.replace('K','K = ')}: ${L[D.keys.indexOf(b[0])]} (${pc(b[1])})`;}).join('; ');
-  $('#cap8').textContent=`Escolhido: menor K a até 1 EP do mínimo da validação cruzada (mínimo em K = ${o.kmin.cv}; AIC prefere K = ${o.kmin.aic}, BIC K = ${o.kmin.bic}; o AIC trata os dias como independentes e penaliza pouco). Proporções brutas por decêndio, como previsão para um ano novo: perda ${nf(o.rawcv,4)}. O melhor decêndio da curva muda com K — ${pk}.`;
-}
+function fillSel(){const opts=L.map((l,i)=>`<option value="${i}">${l} · ${FR[i]}</option>`).join('');$('#hA').innerHTML=opts;$('#hB').innerHTML=opts;}
+function defaultPair(){const o=O();let b=o.ibr;if(b===o.ib){const r=[...Array(NP).keys()].filter(i=>i!==o.ib).sort((x,y)=>o.pbr[y]-o.pbr[x]||x-y);b=r[0];}st.A=o.ib;st.B=b;syncSel();}
+function renderAll(){renderText();render1();render2();render4();render5();render6();render7();}
 
-/* ---------- textos ---------- */
-function renderText(){
-  const o=O();$('#head').innerHTML=o.head;
-  const ix=t=>o.tier.map((v,i)=>v===t?i:-1).filter(i=>i>=0);
-  const amb=o.amb.some(x=>x)?` Ambíguos (sem diferença nem do melhor nem do pior, contados no grupo 2): ${runsTxt(o.amb.map((v,i)=>v?i:-1).filter(i=>i>=0))}.`:'';
-  $('#tiers').innerHTML=`<b>${esc(o.short)}, em três grupos.</b> Sem diferença distinguível do melhor (${L[o.ib]}): ${runsTxt(ix(1))}. `+
-    `Sem diferença distinguível do pior (${L[o.iw]}): ${runsTxt(ix(3))}. Intermediários: ${runsTxt(ix(2))}.${amb} `+
-    `Regra: diferença bruta pareada, faixa de 90% das réplicas bootstrap de anos.`;
-}
-
-function fillSel(){const opts=L.map((l,i)=>`<option value="${i}">${l}</option>`).join('');$('#hA').innerHTML=opts;$('#hB').innerHTML=opts;}
-function renderAll(){renderText();render1();render2();render3();render4();render5();render6();render7();render8();}
-
-/* ---------- eventos ---------- */
-document.querySelectorAll('input[name=out]').forEach(i=>i.addEventListener('change',()=>{st.o=i.value;st.rule=0;renderAll();live(`Desfecho: ${O().short}.`);}));
-document.querySelectorAll('input[name=base]').forEach(i=>i.addEventListener('change',()=>{st.base=i.value;render1();render2();render3();live(st.base==='raw'?'Estimativa sem impor forma.':'Estimativa da curva suave.');}));
-document.querySelectorAll('input[name=ord]').forEach(i=>i.addEventListener('change',()=>{st.ord=i.value;render1();render2();render3();live(st.ord==='cal'?'Ordem do calendário.':'Do melhor ao pior.');}));
-$('#hA').addEventListener('change',()=>{st.A=+$('#hA').value;render3();render4();});
-$('#hB').addEventListener('change',()=>{st.B=+$('#hB').value;render3();render4();});
-$('#swap').addEventListener('click',()=>{[st.A,st.B]=[st.B,st.A];syncSel();render3();render4();live(`Trocados: ${L[st.A]} contra ${L[st.B]}.`);});
+document.querySelectorAll('input[name=out]').forEach(i=>i.addEventListener('change',()=>{st.o=i.value;st.rule=0;defaultPair();renderAll();live(`Tempo bom: ${O().short}.`);}));
+document.querySelectorAll('input[name=base]').forEach(i=>i.addEventListener('change',()=>{st.base=i.value;render1();render2();live(st.base==='raw'?'Dados de cada período.':'Curva sazonal.');}));
+document.querySelectorAll('input[name=ord]').forEach(i=>i.addEventListener('change',()=>{st.ord=i.value;render1();render2();live(st.ord==='cal'?'Ordem do calendário.':'Do melhor ao pior.');}));
+$('#hA').addEventListener('change',()=>{st.A=+$('#hA').value;render4();});
+$('#hB').addEventListener('change',()=>{st.B=+$('#hB').value;render4();});
+$('#swap').addEventListener('click',()=>{[st.A,st.B]=[st.B,st.A];syncSel();render4();live(`Trocados: ${L[st.A]} contra ${L[st.B]}.`);});
 let rz=null,lastW=innerWidth;addEventListener('resize',()=>{if(innerWidth===lastW)return;lastW=innerWidth;clearTimeout(rz);rz=setTimeout(renderAll,120);});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',renderAll);
 addEventListener('scroll',hideTip,{passive:true});
-fillSel();
-{const o=D.o[st.o];st.A=o.ib;st.B=o.ibr!==o.ib?o.ibr:(o.ib+1<NP?o.ib+1:o.ib-1);syncSel();}
-renderAll();
+fillSel();defaultPair();renderAll();
 })();
 </script>
 </body>
