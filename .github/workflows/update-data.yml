@@ -43,7 +43,7 @@ jobs:
 
       - name: Reconstruir páginas
         run: |
-          for s in scripts/build_main.py scripts/build_full.py; do
+          for s in scripts/build_model.py scripts/build_main.py scripts/build_full.py; do
             if [ -f "$s" ]; then
               echo "::group::python $s"
               python "$s"

@@ -10,6 +10,7 @@ Open-Meteo Historical Weather API (sem chave)
    ▼
 data/daily/era5.csv  ecmwf_ifs.csv  best_match.csv  era5_cloud.csv  meta.json
    │   scripts/model_periods.py → data/derived/periodos_abr_out.json   (modelo por decêndio; ver docs/modelo_periodos.md)
+   │   scripts/build_model.py  → site/modelo.html     (usa scripts/model_template.html; lê só o JSON do modelo)
    │   scripts/build_main.py   → site/index.html      (usa scripts/main_template.html)
    │   scripts/build_full.py   → site/completo.html   (usa scripts/full_template.html; ambos usam scripts/common.py)
    ▼
@@ -44,7 +45,7 @@ Se algo falha, o script sai com código 1, imprime o motivo (e os 10 maiores des
 Workflow `.github/workflows/update-data.yml` ("Update data"):
 
 - **Quando**: dia 7 de cada mês, 09:17 UTC (≈ 06:17 em Brasília), depois do atraso do ERA5. Também pode ser disparado à mão.
-- **O que faz**: checkout → Python 3.12 → testes do coletor → `python scripts/fetch_data.py` → `python scripts/model_periods.py` (pula com aviso se não existir; grava `data/derived/periodos_abr_out.json`) → `python scripts/build_main.py` → `python scripts/build_full.py` (pula com aviso se o script não existir) → se houver diferença em `data/` ou `site/`, faz commit `dados: atualização automática AAAA-MM-DD` e push na `main`.
+- **O que faz**: checkout → Python 3.12 → testes do coletor → `python scripts/fetch_data.py` → `python scripts/model_periods.py` (pula com aviso se não existir; grava `data/derived/periodos_abr_out.json`) → `python scripts/build_model.py` (página do modelo, `site/modelo.html`; pula com aviso se não existir) → `python scripts/build_main.py` → `python scripts/build_full.py` (pula com aviso se o script não existir) → se houver diferença em `data/` ou `site/`, faz commit `dados: atualização automática AAAA-MM-DD` e push na `main`.
 - **Publicação**: o commit altera `site/`. Como pushes feitos com o `GITHUB_TOKEN` não disparam outros workflows, o workflow `pages.yml` também escuta o término bem-sucedido de "Update data" (`workflow_run`) e publica o site.
 - **Permissões**: o repositório precisa permitir que Actions escrevam: Settings → Actions → General → Workflow permissions → "Read and write permissions" (o workflow já declara `contents: write`). Se a `main` tiver proteção de branch que bloqueie pushes do bot, é preciso liberar o `github-actions[bot]`.
 
@@ -90,6 +91,7 @@ python3 scripts/fetch_data.py
 
 # 4. recalcular o modelo por decêndio e reconstruir as páginas
 python3 scripts/model_periods.py   # data/derived/periodos_abr_out.json
+python3 scripts/build_model.py     # site/modelo.html (página do modelo abr–out)
 python3 scripts/build_main.py      # site/index.html
 python3 scripts/build_full.py      # site/completo.html
 

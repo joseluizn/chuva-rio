@@ -315,6 +315,8 @@ def select_k(S, N, kmax=K_MAX):
         aic = -2 * ll + 2 * (2 * K + 1)
         bic = -2 * ll + math.log(nobs) * (2 * K + 1)
         loss, cnt, per_year = 0.0, 0, []
+        cal_p = [0.0] * len(DECS)
+        cal_n = [0.0] * len(DECS)
         for y in range(ny):
             s = [tot_s[i] - S[y][i] for i in range(NCAL)]
             n = [tot_n[i] - N[y][i] for i in range(NCAL)]
@@ -329,8 +331,17 @@ def select_k(S, N, kmax=K_MAX):
             loss += ly
             cnt += cy
             per_year.append(ly / cy if cy else 0.0)
+            for j, d in enumerate(DECS):
+                for i in d["idx"]:
+                    if N[y][i]:
+                        cal_p[j] += pd[i] * N[y][i]
+                        cal_n[j] += N[y][i]
+        m_py = sum(per_year) / ny
+        se_py = math.sqrt(sum((x - m_py) ** 2 for x in per_year) / (ny - 1) / ny) if ny > 1 else 0.0
         table.append({"K": K, "n_params": 2 * K + 1, "loglik": ll, "aic": aic,
-                      "bic": bic, "cv_logloss": loss / cnt, "_per_year": per_year})
+                      "bic": bic, "cv_logloss": loss / cnt, "cv_logloss_se": se_py,
+                      "_per_year": per_year,
+                      "_cal": [a / b if b else None for a, b in zip(cal_p, cal_n)]})
     # Referência: proporção bruta do decêndio (21 parâmetros na estação).
     loss, cnt = 0.0, 0
     for y in range(ny):
@@ -354,9 +365,11 @@ def select_k(S, N, kmax=K_MAX):
         r["cv_diff_vs_best"] = m
         r["cv_diff_se"] = sd / math.sqrt(ny)
     chosen = next(r for r in table if r["cv_diff_vs_best"] <= r["cv_diff_se"])
+    cal = {r["K"]: r["_cal"] for r in table}
     for r in table:
         del r["_per_year"]
-    return chosen["K"], best["K"], table, raw_cv, betas_full
+        del r["_cal"]
+    return chosen["K"], best["K"], table, raw_cv, cal
 
 
 # --------------------------------------------------------------- bootstrap
@@ -377,7 +390,7 @@ def analyse_outcome(name, S, N, years, best, weights_list, K=None, mm=None,
     ny = len(years)
     res = {"outcome": name, "best_is": "lowest" if best == "min" else "highest"}
     if with_select:
-        K_sel, K_min, table, raw_cv, _ = select_k(S, N)
+        K_sel, K_min, table, raw_cv, cal_loyo = select_k(S, N)
         res["model_selection"] = {
             "criterion": "leave-one-year-out log-loss on Apr–Oct days, "
                          "smallest K within 1 SE of the minimum",
@@ -389,6 +402,8 @@ def analyse_outcome(name, S, N, years, best, weights_list, K=None, mm=None,
             "raw_decendio_cv_logloss": rnd(raw_cv, 6),
         }
         K = K_sel
+    else:
+        cal_loyo = None
     ones = [1] * ny
     s, n = aggregate(S, N, ones)
     beta, _ = fit_logit(s, n, K)
@@ -403,6 +418,10 @@ def analyse_outcome(name, S, N, years, best, weights_list, K=None, mm=None,
     cnt_top3 = [0] * nd
     cnt_best_raw = [0] * nd
     cnt_top3_raw = [0] * nd
+    # Empates nas proporções brutas (mesmo n, mesma contagem) são desfeitos
+    # ao acaso com semente fixa, para não favorecer o decêndio de índice menor.
+    rng_tie = random.Random(SEED + 7)
+    rk_m, rk_r = [], []
     for w in weights_list:
         sb, nb = aggregate(S, N, w)
         b, _ = fit_logit(sb, nb, K, beta)
@@ -410,7 +429,14 @@ def analyse_outcome(name, S, N, years, best, weights_list, K=None, mm=None,
         pr = dec_raw(sb, nb)
         bm.append(pm)
         br.append(pr)
-        rm, rr = ranks(pm, best), ranks(pr, best)
+        rm = ranks(pm, best)
+        tb = [rng_tie.random() for _ in range(nd)]
+        order_r = sorted(range(nd), key=lambda j: ((pr[j] if best == "min" else -pr[j]), tb[j]))
+        rr = [0] * nd
+        for pos, j in enumerate(order_r):
+            rr[j] = pos + 1
+        rk_m.append(rm)
+        rk_r.append(rr)
         for j in range(nd):
             if rm[j] == 1:
                 cnt_best[j] += 1
@@ -504,6 +530,85 @@ def analyse_outcome(name, S, N, years, best, weights_list, K=None, mm=None,
             cnt[ranks(dec_means(predict(b)), best).index(1)] += 1
         by_k["K%d" % Ka] = {DECS[j]["key"]: rnd(c / B) for j, c in enumerate(cnt) if c}
     res["P_best_by_K"] = by_k
+
+    # ---- distribuição de postos (1 = melhor) por decêndio
+    def rank_summary(rk):
+        dist = [[0] * nd for _ in range(nd)]
+        for r in rk:
+            for j in range(nd):
+                dist[j][r[j] - 1] += 1
+        out = []
+        for j in range(nd):
+            col = [r[j] for r in rk]
+            out.append({"p_rank": [rnd(c / B, 3) for c in dist[j]],
+                        "median": quantile(col, .5),
+                        "ci90": [quantile(col, .05), quantile(col, .95)]})
+        return out
+    rs_m, rs_r = rank_summary(rk_m), rank_summary(rk_r)
+    for j, e in enumerate(decs):
+        e["rank_raw_point"] = sorted(range(nd), key=lambda i: (p_raw[i] if best == "min" else -p_raw[i], i)).index(j) + 1
+        e["rank_dist_model"] = rs_m[j]["p_rank"]
+        e["rank_dist_raw"] = rs_r[j]["p_rank"]
+        e["rank_median_model"] = rs_m[j]["median"]
+        e["rank_ci90_model"] = rs_m[j]["ci90"]
+        e["rank_median_raw"] = rs_r[j]["median"]
+        e["rank_ci90_raw"] = rs_r[j]["ci90"]
+
+    # ---- comparação par a par (linha i contra coluna j)
+    sgn = 1 if best == "min" else -1
+
+    def p_better(samples, i, j):
+        c = 0.0
+        for b in samples:
+            a, z = sgn * b[i], sgn * b[j]
+            c += 1.0 if a < z else (0.5 if a == z else 0.0)
+        return c / B
+    pw = {"P_better_raw": [], "P_better_model": [], "diff_raw": [], "diff_raw_ci90": [],
+          "ci_excludes_zero": []}
+    for i in range(nd):
+        r1, r2, r3, r4, r5 = [], [], [], [], []
+        for j in range(nd):
+            if i == j:
+                r1.append(None); r2.append(None); r3.append(0.0); r4.append([0.0, 0.0]); r5.append(False)
+                continue
+            r1.append(rnd(p_better(br, i, j), 3))
+            r2.append(rnd(p_better(bm, i, j), 3))
+            dd = [b[i] - b[j] for b in br]
+            lo, hi = quantile(dd, .05), quantile(dd, .95)
+            r3.append(rnd(p_raw[i] - p_raw[j]))
+            r4.append([rnd(lo), rnd(hi)])
+            r5.append(lo > 0 or hi < 0)
+        pw["P_better_raw"].append(r1); pw["P_better_model"].append(r2)
+        pw["diff_raw"].append(r3); pw["diff_raw_ci90"].append(r4); pw["ci_excludes_zero"].append(r5)
+    res["pairwise"] = pw
+
+    # ---- grupos (tiers): indistinguível do melhor / meio / indistinguível do pior
+    jworst = r_point.index(nd)
+    for j, e in enumerate(decs):
+        rd = [b[j] - b[jworst] for b in br]
+        e["raw_diff_vs_worst"] = rnd(p_raw[j] - p_raw[jworst])
+        e["raw_diff_vs_worst_boot90"] = [rnd(quantile(rd, .05)), rnd(quantile(rd, .95))]
+    if best == "min":
+        near_worst = {e["key"] for e in decs if e["raw_diff_vs_worst_boot90"][1] >= 0}
+    else:
+        near_worst = {e["key"] for e in decs if e["raw_diff_vs_worst_boot90"][0] <= 0}
+    near_best = set(tied) | {DECS[jbest]["key"]}
+    near_worst |= {DECS[jworst]["key"]}
+    for e in decs:
+        kb, kw = e["key"] in near_best, e["key"] in near_worst
+        e["tier"] = 2 if (kb and kw) else (1 if kb else (3 if kw else 2))
+        e["tier_ambiguous"] = kb and kw
+    res["worst_point"] = DECS[jworst]["key"]
+    res["tiers_rule"] = ("1 = melhor do modelo ou sem diferença bruta pareada distinguível dele "
+                         "(IC 90% bootstrap de anos não exclui que seja tão bom); "
+                         "3 = pior do modelo ou sem diferença distinguível dele; 2 = demais "
+                         "(e os que caem nos dois grupos, marcados tier_ambiguous)")
+    res["calibration"] = {
+        "pred_in_sample": [rnd(v) for v in p_model],
+        "pred_loyo": [rnd(v) for v in cal_loyo[K]] if cal_loyo else None,
+        "obs": [rnd(v) for v in p_raw],
+        "obs_boot90": [decs[j]["p_raw_boot90"] for j in range(nd)],
+    }
     res.update({
         "K": K, "beta": [rnd(b, 6) for b in beta],
         "best_point": DECS[jbest]["key"],
@@ -518,6 +623,40 @@ def analyse_outcome(name, S, N, years, best, weights_list, K=None, mm=None,
         "decendios": decs,
     })
     return res
+
+
+# Limiares de "período bom num ano" (julgamento; documentado em docs/modelo_periodos.md):
+# contagens absolutas no decêndio (10 ou 11 dias).
+GOOD_RULES = {
+    "rain": [("le", 2, "até 2 dias chuvosos"), ("le", 0, "nenhum dia chuvoso")],
+    "rain_ge5mm": [("le", 1, "até 1 dia com ≥ 5 mm"), ("le", 0, "nenhum dia com ≥ 5 mm")],
+    "open": [("ge", 5, "5 ou mais dias abertos"), ("ge", 7, "7 ou mais dias abertos")],
+    "bom": [("ge", 5, "5 ou mais dias bons"), ("ge", 7, "7 ou mais dias bons")],
+}
+
+
+def per_year_block(key, years_c, fn, partial_year):
+    """Contagens por ano × decêndio (anos completos + ano parcial, marcado) e
+    fração de anos em que o decêndio foi "bom" segundo GOOD_RULES."""
+    ys = list(years_c) + ([partial_year] if partial_year else [])
+    S, N = year_matrix(ys, fn)
+    cnt = [[int(sum(S[y][i] for i in d["idx"])) for d in DECS] for y in range(len(ys))]
+    nn = [[int(sum(N[y][i] for i in d["idx"])) for d in DECS] for y in range(len(ys))]
+    good = []
+    nc = len(years_c)
+    for op, k, label in GOOD_RULES[key]:
+        share, ci = [], []
+        for j, d in enumerate(DECS):
+            ok = [cnt[y][j] for y in range(nc) if nn[y][j] == len(d["idx"])]
+            g = sum(1 for c in ok if (c <= k if op == "le" else c >= k))
+            share.append(rnd(g / len(ok)) if ok else None)
+            lo, hi = wilson(g, len(ok))
+            ci.append([rnd(lo), rnd(hi)])
+        good.append({"op": op, "k": k, "label": label, "share_years": share, "wilson90": ci})
+    return {"years": ys, "partial_year": partial_year, "count": cnt, "n": nn,
+            "n_days_window": [len(d["idx"]) for d in DECS], "good": good,
+            "good_note": "fração dos anos completos em que o decêndio atingiu o critério; "
+                         "IC de Wilson 90% tratando anos como independentes"}
 
 
 def quick_rank(S, N, K, best):
@@ -595,6 +734,9 @@ def main():
                                       rnd(quantile(col, .95) * nd, 1)]
     out["outcomes"]["rain"] = res_rain
     out["outcomes"]["rain_ge5mm"] = res_rain5
+    partial = last_rain.year if last_rain.year not in years else None
+    res_rain["per_year"] = per_year_block("rain", years, rain_fn(1.0), partial)
+    res_rain5["per_year"] = per_year_block("rain_ge5mm", years, rain_fn(5.0), partial)
 
     # Persistência (justifica o bootstrap por anos): P(chuva | ontem chuva)
     # vs P(chuva | ontem seco), dias abr–out; e fator de inflação da variância
@@ -713,6 +855,9 @@ def main():
         out["outcomes"]["open"] = analyse_outcome("open_cloud_le%g" % OPEN_THR, So, No, cyears, "max", Wc)
         Sb, Nb = year_matrix(cyears, bom_fn)
         out["outcomes"]["bom"] = analyse_outcome("bom_open_and_lt1mm", Sb, Nb, cyears, "max", Wc)
+        pc = partial if partial and partial > cyears[-1] else None
+        out["outcomes"]["open"]["per_year"] = per_year_block("open", cyears, open_fn(OPEN_THR), pc)
+        out["outcomes"]["bom"]["per_year"] = per_year_block("bom", cyears, bom_fn, pc)
         Ko = out["outcomes"]["open"]["K"]
         po = [e["p_model"] for e in out["outcomes"]["open"]["decendios"]]
         for thr in (25.0, 37.5, 50.0):
@@ -772,6 +917,60 @@ def main():
         cloud_meta["reason"] = cloud_info
     out["robustness"] = rob
 
+    # ---- diagnósticos organizados (para a página do modelo)
+    diag = {}
+    for key, o in out["outcomes"].items():
+        ms = o["model_selection"]
+        diag[key] = {
+            "K_chosen": ms["K_chosen"], "K_min_cv": ms["K_min_cv"],
+            "K_min_aic": ms["K_min_aic"], "K_min_bic": ms["K_min_bic"],
+            "k_table": [{"K": r["K"], "n_params": r["n_params"], "cv_logloss": r["cv_logloss"],
+                         "cv_logloss_se": r["cv_logloss_se"], "cv_diff_vs_min": r["cv_diff_vs_best"],
+                         "cv_diff_se": r["cv_diff_se"], "aic": round(r["aic"], 1),
+                         "bic": round(r["bic"], 1)} for r in ms["table"]],
+            "raw_decendio_cv_logloss": ms["raw_decendio_cv_logloss"],
+            "calibration": o["calibration"],
+        }
+    rows = []
+
+    def addrow(group, label, outcome, r, sp_key):
+        rows.append({"group": group, "label": label, "outcome": outcome,
+                     "top3": r.get("top3") or r.get("top3_5mm"),
+                     "spearman": r.get(sp_key), "share_days_apr_oct": r.get("share_days_apr_oct"),
+                     "P_best": r.get("P_best")})
+    for k, r in rob.items():
+        if k.startswith("rain_split_"):
+            addrow("split", "Chuva ≥ 1 mm, " + k[len("rain_split_"):].replace("-", "–"), "rain", r, "spearman_vs_full_model")
+        elif k.startswith("open_split_"):
+            addrow("split", "Céu aberto, " + k[len("open_split_"):].replace("-", "–"), "open", r, "spearman_vs_full_model")
+        elif k == "rain_threshold_5mm_vs_1mm":
+            rows.append({"group": "threshold", "label": "Chuva ≥ 5 mm (K próprio)", "outcome": "rain",
+                         "top3": r["top3_5mm"], "spearman": r["spearman_model"],
+                         "share_days_apr_oct": None, "P_best": None})
+        elif k.startswith("rain_threshold_"):
+            addrow("threshold", "Chuva ≥ " + k[len("rain_threshold_"):].replace("mm", " mm").replace(".", ","),
+                   "rain", r, "spearman_vs_1mm_model")
+        elif k.startswith("rain_K"):
+            addrow("K", "Chuva ≥ 1 mm com K = " + k[len("rain_K"):], "rain", r, "spearman_vs_chosen")
+        elif k.startswith("open_cloud_le"):
+            addrow("threshold", "Nuvem diurna ≤ " + k[len("open_cloud_le"):].replace(".", ",") + "%", "open", r,
+                   "spearman_vs_main")
+        elif k.startswith("open_24h_cloud_mean_le"):
+            addrow("cloud24h", "Média de 24 h ≤ " + k[len("open_24h_cloud_mean_le"):].replace(".", ",") + "%",
+                   "open", r, "spearman_vs_main")
+        elif k.startswith("open_sunshine_frac_"):
+            lab = ("Insolação ≥ 0,6 do dia" if k.endswith("0.6")
+                   else "Insolação ≥ %s (mesma fração de dias)" % str(r["threshold"]).replace(".", ","))
+            addrow("sunshine", lab, "open", r, "spearman_vs_main")
+        elif k == "ghcn_galeao_ge1mm":
+            rows.append({"group": "obs", "label": "Galeão (GHCN), chuva ≥ 1 mm, proporção bruta", "outcome": "rain",
+                         "top3": r["top3"], "spearman": r["spearman_vs_era5_raw"],
+                         "share_days_apr_oct": None, "P_best": None})
+    diag["robustness_rows"] = rows
+    diag["robustness_note"] = ("spearman = correlação de postos dos 21 decêndios com o ajuste principal "
+                               "do mesmo desfecho (Galeão: com a proporção bruta do ERA5)")
+    out["meta"]["diagnostics"] = diag
+
     last = last_rain if last_cloud is None else max(last_rain, last_cloud)
     out["meta"].update({
         "generated_at": last.isoformat(),
@@ -779,7 +978,7 @@ def main():
         "last_cloud_date": last_cloud.isoformat() if last_cloud else None,
         "source": "Open-Meteo Historical Weather API, modelo era5, célula -22.75/-43.25",
         "years_used_rain": [years[0], years[-1]], "n_years_rain": ny,
-        "partial_year_excluded": last_rain.year if last_rain.year not in years else None,
+        "partial_year_excluded": partial,
         "cloud": cloud_meta,
         "open_column": cloud_meta.get("cloud_column_used"),
         "open_threshold_pct": OPEN_THR,

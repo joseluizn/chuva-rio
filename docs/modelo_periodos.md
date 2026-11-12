@@ -9,12 +9,12 @@ Números abaixo: execução com dados até 2026-11-05 (chuva e nuvem); anos comp
 **Chuva.** A estação mais seca do ano no Rio vai, grosso modo, de **meados de junho a meados de agosto**. O centro dessa janela, segundo o modelo sazonal, é **jul 11–20**: chance de ~23% de um dia com chuva ≥ 1 mm, ou ~2,3 dias chuvosos em 10. Mas o fundo da curva é **plano**: de jun 11–20 a ago 11–20 todos os decêndios ficam entre 21% e 24% (dados brutos), e nenhum deles se separa dos vizinhos além do ruído entre anos. Escolher "jul 11–20" em vez de "jun 21–30" ou "ago 1–10" não é uma decisão que os dados sustentem; escolher **julho em vez do início de abril ou do fim de outubro** (mais de 50% de dias com chuva) é; maio e setembro ficam no meio (29–44%).
 
 - Confiança no *centro* da estação seca (modelo suave): jul 11–20 é o mínimo em 98% das réplicas bootstrap, e em 84–87% em cada metade da série (1995–2010 e 2011–2025).
-- Confiança num *decêndio específico* (sem impor forma): nenhum passa de 30%. jul 21–31 (29%), jun 21–30 (25%), ago 1–10 (17%) e jul 11–20 (9%) juntos cobrem 80% das réplicas.
-- Para chuva mais forte (≥ 5 mm), o centro do modelo é o mesmo (jul 11–20), mas os dados brutos favorecem **jun 11–20** (6% dos dias, P(melhor) sem forma = 62%; está no top 3 em 97% das réplicas). Se a pergunta é "evitar chuva que atrapalha", a segunda quinzena de junho é tão boa quanto julho, possivelmente melhor.
+- Confiança num *decêndio específico* (sem impor forma): nenhum passa de 30%. jul 21–31 (29%), jun 21–30 (24%), ago 1–10 (18%) e jul 11–20 (10%) juntos cobrem 80% das réplicas.
+- Para chuva mais forte (≥ 5 mm), o centro do modelo é o mesmo (jul 11–20), mas os dados brutos favorecem **jun 11–20** (6% dos dias, P(melhor) sem forma = 58%; está no top 3 em 97% das réplicas). Se a pergunta é "evitar chuva que atrapalha", a segunda quinzena de junho é tão boa quanto julho, possivelmente melhor.
 
-**Céu aberto.** Dia aberto = nuvem média diurna (09–17 h) ≤ 30%, a classe "clear" do NOAA/NCEI (0 a 3/10 de céu coberto); 32% dos dias de abr–out. O pico vem um pouco depois do mínimo de chuva: o modelo coloca o centro em **jul 21–31** (~47% dos dias abertos, ~5,1 em 11 dias; P(melhor) 89%). De novo há um platô, mais longo: de jun 11–20 a set 1–10 a fração bruta fica em 39–46%, sem diferença distinguível do ruído. Sem impor forma, o P(melhor) se espalha (jul 1–10 36%, jul 21–31 25%, ago 1–10 12%). Outubro é o pior período para céu aberto (13–18%).
+**Céu aberto.** Dia aberto = nuvem média diurna (09–17 h) ≤ 30%, a classe "clear" do NOAA/NCEI (0 a 3/10 de céu coberto); 32% dos dias de abr–out. O pico vem um pouco depois do mínimo de chuva: o modelo coloca o centro em **jul 21–31** (~47% dos dias abertos, ~5,1 em 11 dias; P(melhor) 89%). De novo há um platô, mais longo: de jun 11–20 a set 1–10 a fração bruta fica em 39–46%, sem diferença distinguível do ruído. Sem impor forma, o P(melhor) se espalha (jul 1–10 35%, jul 21–31 24%, ago 1–10 12%). Outubro é o pior período para céu aberto (13–18%).
 
-**Dia bom (aberto e sem chuva ≥ 1 mm).** Praticamente igual ao aberto: centro em **jul 21–31** (~46%, P(melhor) 90%; sem impor forma, jul 1–10 36%, jul 21–31 21%), platô de meados de junho ao início de setembro.
+**Dia bom (aberto e sem chuva ≥ 1 mm).** Praticamente igual ao aberto: centro em **jul 21–31** (~46%, P(melhor) 90%; sem impor forma, jul 1–10 35%, jul 21–31 21%), platô de meados de junho ao início de setembro.
 
 **Em uma frase:** julho é a aposta; dentro de julho, a primeira metade é um pouco mais seca e a segunda um pouco mais aberta, mas essas diferenças estão dentro do ruído. Entre meados de junho e meados de agosto, nenhum decêndio se distingue estatisticamente dos vizinhos.
 
@@ -68,15 +68,15 @@ Negrito = mínimo do modelo. "Dias esperados" = probabilidade do modelo × dias 
 | mai 11–20 | 38% (34–43) | 32–45 | 33% (31–35) | 3,3 | 0% | 0% | 0% | 25 (19–31) |
 | mai 21–31 | 29% (25–34) | 24–34 | 30% (28–31) | 3,3 | 0% | 0% | 1% | 23 (19–28) |
 | jun 1–10 | 29% (25–33) | 24–34 | 27% (26–29) | 2,7 | 0% | 0% | 1% | 18 (14–23) |
-| jun 11–20 | 24% (20–28) | 20–28 | 25% (24–27) | 2,5 | 0% | 4% | 23% | 12 (9–15) |
-| jun 21–30 | 21% (18–25) | 17–25 | 24% (23–25) | 2,4 | 0% | 25% | 64% | 13 (10–16) |
-| jul 1–10 | 23% (20–27) | 18–28 | 23% (22–25) | 2,3 | 2% | 8% | 32% | 15 (11–20) |
-| **jul 11–20** | 24% (20–28) | 19–29 | 23% (22–24) | 2,3 | 98% | 9% | 30% | 15 (10–21) |
+| jun 11–20 | 24% (20–28) | 20–28 | 25% (24–27) | 2,5 | 0% | 3% | 21% | 12 (9–15) |
+| jun 21–30 | 21% (18–25) | 17–25 | 24% (23–25) | 2,4 | 0% | 24% | 62% | 13 (10–16) |
+| jul 1–10 | 23% (20–27) | 18–28 | 23% (22–25) | 2,3 | 2% | 8% | 31% | 15 (11–20) |
+| **jul 11–20** | 24% (20–28) | 19–29 | 23% (22–24) | 2,3 | 98% | 10% | 30% | 15 (10–21) |
 | jul 21–31 | 21% (18–25) | 17–26 | 23% (22–25) | 2,6 | 0% | 29% | 67% | 14 (10–17) |
-| ago 1–10 | 23% (19–27) | 18–28 | 24% (23–26) | 2,4 | 0% | 17% | 43% | 14 (10–18) |
-| ago 11–20 | 24% (20–28) | 19–29 | 26% (24–27) | 2,6 | 0% | 6% | 27% | 12 (9–15) |
-| ago 21–31 | 26% (23–30) | 22–31 | 28% (26–30) | 3,1 | 0% | 0% | 6% | 21 (15–27) |
-| set 1–10 | 26% (23–31) | 21–32 | 31% (29–33) | 3,1 | 0% | 1% | 7% | 19 (13–24) |
+| ago 1–10 | 23% (19–27) | 18–28 | 24% (23–26) | 2,4 | 0% | 18% | 44% | 14 (10–18) |
+| ago 11–20 | 24% (20–28) | 19–29 | 26% (24–27) | 2,6 | 0% | 6% | 28% | 12 (9–15) |
+| ago 21–31 | 26% (23–30) | 22–31 | 28% (26–30) | 3,1 | 0% | 0% | 7% | 21 (15–27) |
+| set 1–10 | 26% (23–31) | 21–32 | 31% (29–33) | 3,1 | 0% | 1% | 8% | 19 (13–24) |
 | set 11–20 | 34% (29–38) | 28–39 | 34% (32–36) | 3,4 | 0% | 0% | 0% | 26 (20–32) |
 | set 21–30 | 44% (39–48) | 38–50 | 38% (36–40) | 3,8 | 0% | 0% | 0% | 33 (26–39) |
 | out 1–10 | 48% (43–52) | 41–55 | 42% (40–44) | 4,2 | 0% | 0% | 0% | 38 (31–47) |
@@ -99,7 +99,7 @@ Leitura:
 | 2011–2025 (15 anos) | jul 11–20, jul 1–10, jul 21–31 | P(melhor): jul 11–20 84%, jul 1–10 9%, jul 21–31 7%. Top 3 bruto: jun 21–30, jul 21–31, jul 11–20 |
 | ≥ 0,5 mm | jul 11–20, jul 21–31, jul 1–10 | Spearman com ≥ 1 mm: 0,999 |
 | ≥ 2 mm | jul 11–20, jul 1–10, jul 21–31 | Spearman 1,00 |
-| ≥ 5 mm (K escolhido = 1) | jul 11–20, jul 1–10, jul 21–31 | Modelo: P(melhor) jul 11–20 75%, jul 1–10 25%. **Sem forma: jun 11–20 62%, jun 21–30 23%** |
+| ≥ 5 mm (K escolhido = 1) | jul 11–20, jul 1–10, jul 21–31 | Modelo: P(melhor) jul 11–20 75%, jul 1–10 25%. **Sem forma: jun 11–20 58%, jun 21–30 25%** |
 | ≥ 10 mm | jul 11–20, jul 1–10, jul 21–31 | Spearman 0,99 |
 | K = 2 | jul 11–20, jul 21–31, jul 1–10 | Spearman com K = 1: 0,996 |
 | Galeão (GHCN, observação) | jun 21–30, mai 1–10, jul 1–10 | Spearman com ERA5 bruto 0,74; ver abaixo |
@@ -127,15 +127,15 @@ Leitura:
 | mai 11–20 | 24% (20–28) | 18–30 | 28% (25–31) | 2,8 | 0% | 0% | 0% |
 | mai 21–31 | 28% (24–32) | 22–34 | 31% (28–34) | 3,4 | 0% | 0% | 0% |
 | jun 1–10 | 37% (32–41) | 30–44 | 34% (31–37) | 3,4 | 0% | 0% | 3% |
-| jun 11–20 | 41% (36–45) | 35–47 | 38% (35–41) | 3,8 | 0% | 6% | 17% |
+| jun 11–20 | 41% (36–45) | 35–47 | 38% (35–41) | 3,8 | 0% | 6% | 16% |
 | jun 21–30 | 39% (34–43) | 33–45 | 41% (39–44) | 4,1 | 0% | 0% | 5% |
-| jul 1–10 | 46% (41–50) | 39–52 | 44% (42–47) | 4,4 | 0% | 36% | 66% |
+| jul 1–10 | 46% (41–50) | 39–52 | 44% (42–47) | 4,4 | 0% | 35% | 66% |
 | jul 11–20 | 42% (37–46) | 36–47 | 46% (44–48) | 4,6 | 7% | 5% | 25% |
-| **jul 21–31** | 46% (41–50) | 41–50 | 47% (44–49) | 5,1 | 89% | 25% | 74% |
+| **jul 21–31** | 46% (41–50) | 41–50 | 47% (44–49) | 5,1 | 89% | 24% | 73% |
 | ago 1–10 | 43% (39–48) | 37–49 | 46% (43–48) | 4,6 | 4% | 12% | 39% |
 | ago 11–20 | 39% (35–44) | 33–45 | 43% (41–46) | 4,3 | 0% | 2% | 7% |
-| ago 21–31 | 43% (39–48) | 38–49 | 39% (37–42) | 4,3 | 0% | 7% | 36% |
-| set 1–10 | 42% (37–47) | 35–49 | 34% (31–37) | 3,4 | 0% | 8% | 27% |
+| ago 21–31 | 43% (39–48) | 38–49 | 39% (37–42) | 4,3 | 0% | 8% | 37% |
+| set 1–10 | 42% (37–47) | 35–49 | 34% (31–37) | 3,4 | 0% | 8% | 28% |
 | set 11–20 | 31% (27–35) | 24–38 | 29% (26–31) | 2,9 | 0% | 0% | 0% |
 | set 21–30 | 22% (18–26) | 16–27 | 23% (21–26) | 2,3 | 0% | 0% | 0% |
 | out 1–10 | 18% (15–22) | 13–24 | 19% (17–21) | 1,9 | 0% | 0% | 0% |
@@ -152,16 +152,16 @@ Leitura:
 | mai 1–10 | 29% (25–33) | 23–35 | 24% (21–27) | 2,4 | 0% | 0% | 0% |
 | mai 11–20 | 22% (18–26) | 16–28 | 26% (23–29) | 2,6 | 0% | 0% | 0% |
 | mai 21–31 | 26% (23–30) | 21–32 | 29% (27–32) | 3,2 | 0% | 0% | 0% |
-| jun 1–10 | 36% (32–41) | 29–43 | 33% (30–36) | 3,3 | 0% | 0% | 5% |
-| jun 11–20 | 39% (35–44) | 33–46 | 37% (34–39) | 3,7 | 0% | 5% | 16% |
+| jun 1–10 | 36% (32–41) | 29–43 | 33% (30–36) | 3,3 | 0% | 0% | 4% |
+| jun 11–20 | 39% (35–44) | 33–46 | 37% (34–39) | 3,7 | 0% | 5% | 15% |
 | jun 21–30 | 38% (33–42) | 32–44 | 40% (37–43) | 4,0 | 0% | 0% | 5% |
-| jul 1–10 | 45% (40–50) | 38–51 | 43% (40–46) | 4,3 | 0% | 36% | 65% |
+| jul 1–10 | 45% (40–50) | 38–51 | 43% (40–46) | 4,3 | 0% | 35% | 64% |
 | jul 11–20 | 41% (36–46) | 35–47 | 45% (43–48) | 4,5 | 5% | 6% | 27% |
 | **jul 21–31** | 45% (40–49) | 39–50 | 46% (43–48) | 5,0 | 90% | 21% | 69% |
-| ago 1–10 | 42% (37–47) | 36–48 | 45% (43–47) | 4,5 | 6% | 10% | 35% |
+| ago 1–10 | 42% (37–47) | 36–48 | 45% (43–47) | 4,5 | 6% | 11% | 35% |
 | ago 11–20 | 38% (34–43) | 32–45 | 43% (40–45) | 4,3 | 0% | 2% | 9% |
-| ago 21–31 | 43% (39–48) | 38–49 | 39% (36–41) | 4,2 | 0% | 12% | 49% |
-| set 1–10 | 40% (36–45) | 33–48 | 33% (31–36) | 3,4 | 0% | 6% | 21% |
+| ago 21–31 | 43% (39–48) | 38–49 | 39% (36–41) | 4,2 | 0% | 13% | 49% |
+| set 1–10 | 40% (36–45) | 33–48 | 33% (31–36) | 3,4 | 0% | 6% | 22% |
 | set 11–20 | 30% (26–34) | 24–37 | 28% (26–31) | 2,8 | 0% | 0% | 0% |
 | set 21–30 | 21% (18–25) | 16–26 | 23% (20–25) | 2,3 | 0% | 0% | 0% |
 | out 1–10 | 18% (15–22) | 13–23 | 18% (16–20) | 1,8 | 0% | 0% | 0% |
@@ -171,7 +171,7 @@ Leitura:
 Leitura:
 
 - **Centro**: o máximo de céu aberto vem um pouco depois do mínimo de chuva: **jul 21–31** (modelo: ~47% de dias abertos, ~5,1 em 11 dias; P(melhor) 89%, com jul 11–20 em 7% e ago 1–10 em 4%). Para "dia bom" o resultado é praticamente o mesmo, porque dias abertos quase nunca têm chuva ≥ 1 mm: jul 21–31, ~46%, P(melhor) 90%.
-- **Platô**: de jun 11–20 a set 1–10 a fração bruta de dias abertos fica entre 39% e 46%, e nenhum decêndio desse trecho se distingue de jul 21–31 além do ruído (diferenças pareadas por bootstrap; a única exceção é jun 1–10 para "bom", que também entra). Sem impor forma, o P(melhor) se espalha: jul 1–10 36%, jul 21–31 25%, ago 1–10 12%, set 1–10 8%, ago 21–31 7%, jun 11–20 6%. O platô de céu aberto avança mais pelo fim de agosto e início de setembro do que o platô seco.
+- **Platô**: de jun 11–20 a set 1–10 a fração bruta de dias abertos fica entre 39% e 46%, e nenhum decêndio desse trecho se distingue de jul 21–31 além do ruído (diferenças pareadas por bootstrap; a única exceção é jun 1–10 para "bom", que também entra). Sem impor forma, o P(melhor) se espalha: jul 1–10 35%, jul 21–31 24%, ago 1–10 12%, set 1–10 8%, ago 21–31 8%, jun 11–20 6%. O platô de céu aberto avança mais pelo fim de agosto e início de setembro do que o platô seco.
 - **K importa no detalhe**: com K = 1 o centro iria para jul 1–10 (84%); com K = 3 para ago 1–10 (58%); com K = 4 fica dividido entre ago 1–10 (44%) e jul 21–31 (40%). A posição exata do pico (do início de julho ao início de agosto) depende da forma assumida; o platô não.
 - **Abril–maio**: há uma janela secundária em abr 21–mai 10 (31–34% de dias abertos, brutos) que a curva com K = 2 suaviza, seguida de queda em mai 11–20 (24%). Pode ser ruído (os ICs são largos) ou um padrão real; não testei.
 - **Outubro** é o pior período para céu aberto (13–18%), pior que abril.
@@ -225,6 +225,20 @@ O resultado só muda quando os dados mudam (`meta.generated_at` = última data c
 - `outcomes.<rain|rain_ge5mm|open|bom>.decendios[]`: `p_raw` + `p_raw_boot90` (ponto e barra de erro), `p_model` + `p_model_boot90`, `P_best`, `P_best_raw`, `P_top3`, `P_top3_raw`, `expected_days`, `year_share_by_year`, e (só chuva) `mean_mm_window`.
 - `outcomes.<...>.best_point` (para destacar), `daily_curve` (214 probabilidades diárias de 1/abr a 31/out, para a linha do modelo), `within_noise_of_best`, `set_covering_80pct_P_best[_raw]`, `P_best_by_K`, `model_selection`.
 - `robustness`: subamostras, limiares, K alternativo, Galeão.
+- `outcomes.<...>.decendios[]` também traz a distribuição de postos (`rank_dist_model`, `rank_dist_raw`: P(posto = k), k = 1…21, 1 = melhor; `rank_median_*`, `rank_ci90_*`), o grupo (`tier`: 1 = sem diferença distinguível do melhor, 2 = intermediário, 3 = sem diferença do pior; `tier_ambiguous`) e `raw_diff_vs_worst[_boot90]`.
+- `outcomes.<...>.pairwise`: matrizes 21 × 21 (linha i contra coluna j) com `P_better_raw` e `P_better_model` (fração das réplicas em que i foi melhor que j; empate conta 0,5), `diff_raw` e `diff_raw_ci90` (diferença bruta pareada i − j e faixa de 90%) e `ci_excludes_zero`.
+- `outcomes.<...>.per_year`: contagens por ano × decêndio (`count`, `n`; inclui o ano parcial, marcado em `partial_year`, que não entra em nenhuma estimativa) e `good`: fração dos anos completos em que o decêndio foi "bom", com faixa de Wilson de 90%.
+- `outcomes.<...>.calibration`: previsto (com todos os anos e deixando o ano de fora) × observado por decêndio.
+- `meta.diagnostics`: por desfecho, tabela de K (log-loss CV ± EP entre anos, diferença para o mínimo ± EP, AIC, BIC) e calibração; `robustness_rows` resume subamostras, limiares, nuvem de 24 h, insolação e Galeão com top 3 e Spearman.
+
+### Ranking, grupos e anos bons (regras)
+
+- **Empates.** Nas proporções brutas, dois decêndios de 10 dias com a mesma contagem numa réplica empatam. Desde esta versão, empates são desfeitos ao acaso (semente fixa) em vez de favorecer o decêndio de índice menor; isso mudou os P(melhor) e P(top 3) sem forma em até ~4 p.p. (o maior caso: chuva ≥ 5 mm, jun 11–20, de 62% para 58%). Na comparação par a par, empate conta meio.
+- **Grupos (`tier`).** Grupo 1: o melhor do modelo e os decêndios cuja diferença bruta pareada para ele tem faixa de 90% que não exclui que sejam tão bons. Grupo 3: o mesmo em relação ao pior do modelo. Grupo 2: o resto; quem cair nos dois grupos fica no 2 e é marcado `tier_ambiguous`. É uma regra de comparação com um único decêndio de referência, sem correção para comparações múltiplas (julgamento meu: a pergunta é "dá para dizer que é pior que o melhor?", e a regra responde de forma conservadora).
+- **Anos bons.** Contagens absolutas no decêndio: chuva ≥ 1 mm, "até 2 dias chuvosos" e "nenhum dia chuvoso"; chuva ≥ 5 mm, "até 1 dia" e "nenhum dia"; céu aberto e dia bom, "5 ou mais" e "7 ou mais" dias. Decêndios de 11 dias têm um dia a mais (critério de chuva fica mais difícil; de céu aberto, mais fácil). Faixa de Wilson de 90% tratando os anos como independentes (julgamento: supõe que um ano não informa o seguinte, o que não testei).
+- **Matriz par a par.** Marca de "diferença distinguível": sem impor forma, a faixa de 90% da diferença bruta pareada exclui zero; na curva suave, P(melhor) ≥ 95% ou ≤ 5%. Na curva suave quase todo par parece distinguível porque a forma é imposta; a página abre na versão sem forma.
+
+A página `site/modelo.html` (gerada por `scripts/build_model.py` a partir deste JSON) mostra tudo isso.
 
 ## Referências
 

@@ -3,6 +3,7 @@
 Visualização de 30 anos de chuva diária no Rio de Janeiro (ponto -22.9068, -43.1729), com a série da reanálise ERA5 via Open-Meteo, comparada a referências de estações (Alerta Rio, INMET, Galeão).
 
 - Site: https://joseluizn.github.io/chuva-rio/
+- Modelo abril–outubro (os 21 decêndios comparados): https://joseluizn.github.io/chuva-rio/modelo.html
 - Versão completa: https://joseluizn.github.io/chuva-rio/completo.html
 
 ## Achados principais
@@ -19,9 +20,9 @@ Os números mudam a cada atualização mensal; veja-os no site.
 data/daily/   era5.csv, ecmwf_ifs.csv, best_match.csv (date,precip_mm), era5_cloud.csv (nebulosidade) e meta.json
 data/derived/ periodos_abr_out.json (modelo por decêndio, gerado por scripts/model_periods.py)
 data/refs/    referências estáticas (Alerta Rio, INMET, Galeão/NOAA)
-scripts/      fetch_data.py (coleta + validação), test_fetch_data.py, model_periods.py, build_main.py, build_full.py, common.py,
-              main_template.html e full_template.html (modelos das duas páginas; os builds dependem deles)
-site/         index.html e completo.html (publicados no GitHub Pages)
+scripts/      fetch_data.py (coleta + validação), test_fetch_data.py, model_periods.py, build_model.py, build_main.py, build_full.py, common.py,
+              main_template.html, full_template.html e model_template.html (modelos das três páginas; os builds dependem deles)
+site/         index.html, modelo.html e completo.html (publicados no GitHub Pages)
 docs/         ATUALIZACAO.md, analise_modelos.md, modelo_periodos.md, revisao_opus.md
 .github/workflows/   update-data.yml (mensal) e pages.yml (deploy)
 ```
@@ -31,7 +32,8 @@ docs/         ATUALIZACAO.md, analise_modelos.md, modelo_periodos.md, revisao_op
 ```bash
 python3 -m unittest scripts/test_fetch_data.py   # testes do coletor, sem rede
 python3 scripts/fetch_data.py                    # atualiza data/daily (precisa de internet)
-python3 scripts/build_main.py && python3 scripts/build_full.py
+python3 scripts/model_periods.py                 # modelo por decêndio (~2 min)
+python3 scripts/build_model.py && python3 scripts/build_main.py && python3 scripts/build_full.py
 open site/index.html                             # Linux: xdg-open
 ```
 
